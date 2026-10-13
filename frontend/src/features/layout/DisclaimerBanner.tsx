@@ -1,11 +1,17 @@
+import { TriangleAlert } from 'lucide-react'
+
+/** Always visible on every tab. Not dismissible by design (CLAUDE.md hard rule 5). */
 export function DisclaimerBanner() {
   return (
     <div
       role="note"
-      className="sticky top-0 z-50 border-b border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-900"
+      className="flex items-center gap-2 border-b border-notice-border bg-notice px-(--gutter) py-2 text-[0.8125rem] leading-snug text-notice-foreground"
     >
-      Decision support / educational only. Not a substitute for diagnostic imaging or clinical
-      judgement.
+      <TriangleAlert aria-hidden className="size-4 shrink-0" />
+      <p>
+        <strong className="font-semibold">Decision support / educational only.</strong> Not a
+        substitute for diagnostic imaging or clinical judgement.
+      </p>
     </div>
   )
 }

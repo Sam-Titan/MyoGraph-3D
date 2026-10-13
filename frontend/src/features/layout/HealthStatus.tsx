@@ -3,11 +3,23 @@ import { useHealth } from '@/api/queries'
 export function HealthStatus() {
   const { data, isPending, isError } = useHealth()
 
-  if (isPending) return <p className="text-sm text-zinc-500">API: checking…</p>
-  if (isError) return <p className="text-sm text-red-600">API: unreachable</p>
+  const state = isPending ? 'checking' : isError ? 'unreachable' : 'ok'
+  const dot = {
+    checking: 'bg-muted-foreground/40',
+    unreachable: 'bg-destructive',
+    ok: 'bg-primary',
+  }[state]
+
   return (
-    <p className="text-sm text-zinc-600">
-      API: {data.status} · model version: {data.model_version}
+    <p className="flex items-center gap-2 text-xs text-muted-foreground" aria-live="polite">
+      <span aria-hidden className={`size-1.5 rounded-full ${dot}`} />
+      {state === 'checking' && 'API: checking…'}
+      {state === 'unreachable' && 'API: unreachable'}
+      {state === 'ok' && (
+        <span>
+          API ok · model <span className="num">{data?.model_version}</span>
+        </span>
+      )}
     </p>
   )
 }

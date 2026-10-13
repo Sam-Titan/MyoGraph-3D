@@ -1,9 +1,49 @@
 import type { components } from '@/api/schema'
 
-export type HealthResponse = components['schemas']['HealthResponse']
+type Schemas = components['schemas']
 
-export async function getHealth(signal?: AbortSignal): Promise<HealthResponse> {
-  const res = await fetch('/api/health', { signal })
-  if (!res.ok) throw new Error(`health check failed: ${res.status}`)
-  return res.json() as Promise<HealthResponse>
+export type HealthResponse = Schemas['HealthResponse']
+export type FeaturesResponse = Schemas['FeaturesResponse']
+export type FeatureInfo = Schemas['FeatureInfo']
+export type GroupInfo = Schemas['GroupInfo']
+export type TargetInfo = Schemas['TargetInfo']
+export type Preset = Schemas['Preset']
+export type PredictRequest = Schemas['PredictRequest']
+export type PredictResponse = Schemas['PredictResponse']
+export type MetricsResponse = Schemas['MetricsResponse']
+
+export class ApiError extends Error {
+  readonly status: number
+  readonly detail: unknown
+
+  constructor(status: number, detail: unknown) {
+    super(`API request failed: ${status}`)
+    this.name = 'ApiError'
+    this.status = status
+    this.detail = detail
+  }
 }
+
+async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(`/api${path}`, init)
+  if (!res.ok) {
+    const detail: unknown = await res.json().catch(() => null)
+    throw new ApiError(res.status, detail)
+  }
+  return res.json() as Promise<T>
+}
+
+export const getHealth = (signal?: AbortSignal) => apiFetch<HealthResponse>('/health', { signal })
+export const getFeatures = (signal?: AbortSignal) =>
+  apiFetch<FeaturesResponse>('/features', { signal })
+export const getPresets = (signal?: AbortSignal) => apiFetch<Preset[]>('/presets', { signal })
+export const getMetrics = (signal?: AbortSignal) =>
+  apiFetch<MetricsResponse>('/metrics', { signal })
+
+export const postPredict = (body: PredictRequest, signal?: AbortSignal) =>
+  apiFetch<PredictResponse>('/predict', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    signal,
+  })

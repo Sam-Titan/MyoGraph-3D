@@ -234,7 +234,9 @@ Short sections:
 
 ### 6.6 Visual direction
 Calm clinical:
-- Light neutral UI (slate/zinc), Inter or Geist font, generous spacing.
+- Light neutral UI (cool slate neutrals, hue ~255, low chroma), generous spacing. One teal-blue accent for interaction/selection.
+- **Type pairing: Geist (UI) + Geist Mono** (all numbers, units, probabilities via the `.num` utility, tabular figures).
+- All colour, type and layout-scale values live as tokens in `frontend/src/index.css` (`--risk-*`, `--notice-*`, `--viewport-*`, `--gutter`, …).
 - **The 3D viewport sits on a dark navy radial gradient** so vessel colours pop.
 - Risk colours are reserved for risk only: never use red/green for decoration.
 - Motion is subtle: number tweening, panel fades. No gimmicks.
