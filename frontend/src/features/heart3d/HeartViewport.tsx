@@ -1,32 +1,36 @@
+import { lazy, Suspense } from 'react'
 import { useFeatures } from '@/api/queries'
-import { vesselTargets } from '@/lib/features'
-import { useAppStore } from '@/store/app'
 
-/** Placeholder viewport on the dark navy gradient. The R3F scene lands in Phase 7. */
+// three/R3F stay out of the initial bundle: they load when the workspace first renders.
+const HeartScene = lazy(() => import('./HeartScene'))
+
+function webglAvailable(): boolean {
+  try {
+    const c = document.createElement('canvas')
+    return Boolean(c.getContext('webgl2') ?? c.getContext('webgl'))
+  } catch {
+    return false
+  }
+}
+const HAS_WEBGL = webglAvailable()
+
+const Message = ({ children }: { children: string }) => (
+  <div className="flex h-full items-center justify-center p-6 text-center text-sm text-viewport-muted">
+    {children}
+  </div>
+)
+
+/** SPEC 6.3 viewport: dark navy surface (from the parent), R3F scene + toolbar/legend overlays. */
 export function HeartViewport() {
-  const { data } = useFeatures()
-  const selected = useAppStore((s) => s.selectedTarget)
-  const nodes = data ? vesselTargets(data.targets) : []
-
+  const features = useFeatures()
+  if (!HAS_WEBGL) return <Message>WebGL isn’t available, so the 3D heart can’t be shown.</Message>
+  if (features.isError) return <Message>Couldn’t load the model targets for the 3D view.</Message>
+  if (!features.data) return <Message>Loading…</Message>
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-4 p-6 text-center">
-      <p className="label-caps !text-(--viewport-muted)">3D heart viewport</p>
-      <p className="max-w-xs text-sm text-viewport-muted">
-        Interactive heart model arrives in Phase 7.
-      </p>
-      {nodes.length > 0 && (
-        <ul className="flex flex-wrap justify-center gap-2" aria-label="Vessel mesh nodes">
-          {nodes.map((t) => (
-            <li
-              key={t.id}
-              data-selected={t.id === selected}
-              className="num rounded-md border border-white/15 px-2 py-1 text-xs text-viewport-muted data-[selected=true]:border-white/50 data-[selected=true]:text-viewport-foreground"
-            >
-              {t.label} · {t.node}
-            </li>
-          ))}
-        </ul>
-      )}
+    <div className="relative h-full w-full">
+      <Suspense fallback={<Message>Loading 3D view…</Message>}>
+        <HeartScene targets={features.data.targets} />
+      </Suspense>
     </div>
   )
 }

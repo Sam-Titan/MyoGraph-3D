@@ -203,11 +203,19 @@ Pydantic models are the source of truth. `make types` dumps the schema offline (
   - Click heart body → select CAD.
   - Click empty space / Reset → default view.
   - Optional auto-spin.
-- **Labels**: `<Html>` anchored at each vessel's midpoint: "LAD 81%". Toggleable.
+- **Labels**: `<Html>` anchored at each vessel's `anchor` (glTF node extras, written by `build_heart_glb.py`: a point ON the vessel surface, not the centroid, which can lie inside the heart): "LAD 81%". Toggleable; the legend and result cards always show the numbers.
 - **No-GPU performance**:
   - `dpr={[1, 1.5]}`, `frameloop="demand"` (invalidate on change and interaction), no shadows.
   - Small `Environment` preset or simple 3-light rig.
-  - Total < 80k triangles, drei `PerformanceMonitor` to drop dpr.
+  - Total < 80k triangles. `useGLTF(url, false)`: no Draco decoder fetch.
+  - Selection is always shown by an emissive boost on the selected node (no postprocessing needed). The
+    postprocessing `Outline` is rendered only while the frame budget is OK; when it declines, the
+    `EffectComposer` is unmounted and dpr stays at 1. The budget monitor (`FrameBudget.tsx`) replaces drei's
+    `PerformanceMonitor`, which counts frames per wall-clock window and so misreads idle time under
+    `frameloop="demand"` as a slow GPU.
+  - Click/drag: a press that travels >= 5 px is a drag; vessel, heart and empty-space clicks only fire for
+    real clicks, so orbiting never changes selection or camera.
+  - The workspace tab stays mounted while hidden; the canvas invalidates (without re-framing) when shown again.
   - Acceptance: usable (≥ 20 fps) in Chrome launched with `--disable-gpu`.
 
 ### 6.4 Model Performance tab

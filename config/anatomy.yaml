@@ -21,6 +21,8 @@
 # Some FMA IDs are COMPOSITES (no .obj of their own; their children carry the geometry). The build script
 # must log found/missing per node and FAIL LOUDLY if a target vessel ends up with zero geometry (then use
 # the procedural-tube fallback below).
+# Each built node also carries glTF extras `anchor` [x,y,z]: a point on its surface for <Html> labels
+# (farthest-outward vertex if the centroid is inside the heart, else the vertex nearest the centroid).
 # The API exposes `nodes[].name` + `target` (via GET /api/features -> targets[].node), so the frontend
 # never hard-codes vessel names. A pytest checks every target in features.yaml has exactly one node here.
 

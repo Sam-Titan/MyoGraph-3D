@@ -95,6 +95,24 @@ def surface_centroid(mesh: trimesh.Trimesh) -> np.ndarray:
     return mesh.triangles_center.T @ area / area.sum()
 
 
+def surface_anchor(vessel: trimesh.Trimesh, heart: trimesh.Trimesh) -> np.ndarray:
+    """A point ON the vessel surface for its label.
+
+    A vessel's centroid can lie inside the heart (RCA's does), which would hide the label. If the
+    centroid is inside the heart's convex hull, take the vertex farthest outward along the vessel's
+    mean direction from the heart centroid; otherwise the vertex nearest the centroid. Always a real
+    vertex, and argmax/argmin pick the first hit, so the result is deterministic.
+    """
+    c, hc = surface_centroid(vessel), surface_centroid(heart)
+    verts = np.asarray(vessel.vertices)
+    hull = heart.convex_hull  # convex, so "inside" = behind every face plane (no rtree needed)
+    if np.all(np.einsum("ij,ij->i", hull.face_normals, c - hull.triangles_center) <= 0):
+        d = c - hc
+        d = d / np.linalg.norm(d)
+        return verts[int(np.argmax((verts - hc) @ d))]
+    return verts[int(np.argmin(np.linalg.norm(verts - c, axis=1)))]
+
+
 def decimate(mesh: trimesh.Trimesh, budget: int) -> trimesh.Trimesh:
     if len(mesh.faces) <= budget:
         return mesh
@@ -189,6 +207,8 @@ def main() -> int:
                 "target": node.get("target"),
                 "optional": bool(node.get("optional", False)),
                 "defaultVisible": bool(node.get("default_visible", True)),
+                # Label anchor: a point on the node's surface (see surface_anchor).
+                "anchor": [round(float(v), 4) for v in surface_anchor(final[name], final[heart])],
             }
     glb = inject_extras(scene.export(file_type="glb"), extras)
     out = ROOT / cfg["output"]
@@ -235,6 +255,20 @@ def main() -> int:
         )
         if not ok:
             checks.append(f"{node['name']} not {side} of heart centroid")
+    print("\n== label anchors (on-surface points; used by <Html> labels) ==")
+    for node in nodes:
+        name = node["name"]
+        if not node.get("target") or name not in final or name == heart:
+            continue
+        a = np.array(extras[name]["anchor"])
+        dist = float(np.linalg.norm(final[name].vertices - a, axis=1).min())
+        c = surface_centroid(final[name])
+        print(
+            f"{name:7} anchor ({a[0]:+.3f}, {a[1]:+.3f}, {a[2]:+.3f})  "
+            f"{np.linalg.norm(a - c):.3f} from centroid, {dist:.4f} from nearest vertex"
+        )
+        if dist > 1e-3:
+            checks.append(f"{name} anchor is not on its mesh")
     if total >= TOTAL_TRIANGLE_LIMIT:
         checks.append(f"total triangles {total} >= {TOTAL_TRIANGLE_LIMIT}")
     if len(glb) >= GLB_SIZE_LIMIT:
