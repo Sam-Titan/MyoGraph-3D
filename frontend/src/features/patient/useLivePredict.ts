@@ -1,0 +1,39 @@
+import { useEffect, useMemo } from 'react'
+import type { z } from 'zod'
+import { usePredict } from '@/api/queries'
+import { useDebouncedValue } from '@/lib/useDebouncedValue'
+import { useAppStore } from '@/store/app'
+import type { FormValues } from './formSchema'
+
+export const PREDICT_DEBOUNCE_MS = 300
+
+export type LiveState = 'live' | 'busy' | 'paused' | 'error'
+
+/**
+ * Debounce → validate → predict. Only zod-valid values are ever sent; the validated values are
+ * published to the store so the results panel reads the same cached query.
+ */
+export function useLivePredict(values: FormValues, schema: z.ZodType<FormValues, FormValues>) {
+  // Key on the serialised values: `watch()` returns a fresh object each render.
+  const key = JSON.stringify(values)
+  const debouncedKey = useDebouncedValue(key, PREDICT_DEBOUNCE_MS)
+  const setPredictValues = useAppStore((s) => s.setPredictValues)
+
+  const valid = useMemo(() => schema.safeParse(values).success, [schema, values])
+  const debounced = useMemo(() => {
+    const parsed = schema.safeParse(JSON.parse(debouncedKey))
+    return parsed.success ? parsed.data : null
+  }, [schema, debouncedKey])
+
+  const query = usePredict(debounced)
+  useEffect(() => setPredictValues(debounced), [debounced, setPredictValues])
+
+  const pending = key !== debouncedKey
+  const stale = pending || query.isFetching || query.isPlaceholderData
+  let state: LiveState = 'live'
+  if (!valid) state = 'paused'
+  else if (query.isError) state = 'error'
+  else if (stale) state = 'busy'
+
+  return { query, valid, state, /** shown data lags the form */ stale }
+}

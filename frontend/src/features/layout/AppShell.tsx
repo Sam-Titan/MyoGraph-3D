@@ -2,6 +2,7 @@ import { Toaster } from 'sonner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { AboutPanel } from '@/features/about/AboutPanel'
 import { DisclaimerBanner } from '@/features/layout/DisclaimerBanner'
+import { ErrorBoundary } from '@/features/layout/ErrorBoundary'
 import { HealthStatus } from '@/features/layout/HealthStatus'
 import { useInitSelectedTarget } from '@/features/layout/useInitSelectedTarget'
 import { WorkspaceLayout } from '@/features/patient/WorkspaceLayout'
@@ -50,15 +51,17 @@ export function AppShell() {
         </header>
       </div>
 
-      <TabsContent value="workspace" keepMounted className={PANEL}>
-        <WorkspaceLayout />
-      </TabsContent>
-      <TabsContent value="performance" keepMounted className={`${PANEL} overflow-y-auto`}>
-        <PerformancePanel />
-      </TabsContent>
-      <TabsContent value="about" keepMounted className={`${PANEL} overflow-y-auto`}>
-        <AboutPanel />
-      </TabsContent>
+      <ErrorBoundary>
+        <TabsContent value="workspace" keepMounted className={PANEL}>
+          <WorkspaceLayout />
+        </TabsContent>
+        <TabsContent value="performance" keepMounted className={`${PANEL} overflow-y-auto`}>
+          <PerformancePanel />
+        </TabsContent>
+        <TabsContent value="about" keepMounted className={`${PANEL} overflow-y-auto`}>
+          <AboutPanel />
+        </TabsContent>
+      </ErrorBoundary>
       <Toaster position="bottom-right" />
     </Tabs>
   )

@@ -1,5 +1,6 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import {
+  ApiError,
   getFeatures,
   getHealth,
   getMetrics,
@@ -54,6 +55,8 @@ export function usePredict(values: PredictRequest['values'] | null) {
     queryKey: queryKeys.predict(values ?? {}),
     queryFn: ({ signal }) => postPredict({ values: values ?? {} }, signal),
     enabled: values !== null,
+    // A 4xx is a deterministic rejection (e.g. 422 field errors): surface it, don't retry.
+    retry: (count, err) => !(err instanceof ApiError && err.status < 500) && count < 2,
     placeholderData: keepPreviousData,
   })
 }
