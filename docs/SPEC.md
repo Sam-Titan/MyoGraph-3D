@@ -43,7 +43,7 @@ Always with a visible disclaimer: *decision support / educational only — not a
 ## 4. ML pipeline
 
 ### 4.1 Split & validation
-- Stratified **80/20 hold-out**, stratified on *number of stenotic vessels (0–3)* so all four targets stay balanced. `random_state=42`. Saved as `artifacts/split.json` (row indices).
+- Stratified **80/20 hold-out**, stratified on the *number of stenotic vessels (0–3)*, counted over the targets with `role: vessel` in `features.yaml`, so all four targets stay balanced. `random_state=42`. Saved as `artifacts/split.json` (row indices).
 - **Development metrics**: `RepeatedStratifiedKFold(n_splits=5, n_repeats=3, random_state=42)` on the 80% train set only.
 - **Final report**: CV mean ± std (primary) **and** hold-out test (secondary sanity check; n≈61, so noisy — say so).
 - **Presets come only from the hold-out set**, so the demo never shows a patient the model trained on.
@@ -110,7 +110,7 @@ Pydantic models are the source of truth. `make types` dumps the schema offline (
 | Method & path | Purpose |
 |---|---|
 | `GET /api/health` | `{status, model_version}` |
-| `GET /api/features` | Form schema: `targets[{id, label, node}]` (node from `anatomy.yaml`), groups, and per-input `{id, label, group, kind, unit, input{min,max,step}, options[], reference{low,high}, observed{min,max}, default, help}`. Built from `features.yaml` + `anatomy.yaml` + `feature_stats.json`. |
+| `GET /api/features` | Form schema: `targets[{id, label, role, node}]` (`role` = `overall | vessel` from `features.yaml`; node from `anatomy.yaml`), groups, and per-input `{id, label, group, kind, unit, input{min,max,step}, options[], reference{low,high}, observed{min,max}, default, help}`. Built from `features.yaml` + `anatomy.yaml` + `feature_stats.json`. |
 | `GET /api/presets` | `[{id, label, description, values{input_id: value}, truth{CAD,LAD,LCX,RCA: bool}}]` |
 | `POST /api/predict` | Body `{values: {input_id: value}}` (all 49 inputs; derived fields are ignored if sent) → response below |
 | `GET /api/metrics` | Contents of `metrics.json` (typed) |

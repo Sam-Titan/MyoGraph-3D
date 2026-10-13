@@ -15,11 +15,15 @@
 # `observed` (min/max/median/mode) is computed at train time into artifacts/feature_stats.json —
 #   used for defaults and the "outside training range" warning. Do not hard-code it here.
 
+# Every target has a `role`:
+#   overall -> the patient-level label (exactly one); drawn as the CAD card, not on a vessel
+#   vessel  -> a per-artery stenosis label (at least one); the split stratifies on how many of these are positive
+# Code and UI read the role instead of hard-coding target ids.
 targets:
-  CAD: { column: Cath, positive: CAD,      label: "Overall CAD" }
-  LAD: { column: LAD,  positive: Stenotic, label: "LAD stenosis" }
-  LCX: { column: LCX,  positive: Stenotic, label: "LCX stenosis" }
-  RCA: { column: RCA,  positive: Stenotic, label: "RCA stenosis" }
+  CAD: { column: Cath, positive: CAD,      label: "Overall CAD",   role: overall }
+  LAD: { column: LAD,  positive: Stenotic, label: "LAD stenosis",  role: vessel }
+  LCX: { column: LCX,  positive: Stenotic, label: "LCX stenosis",  role: vessel }
+  RCA: { column: RCA,  positive: Stenotic, label: "RCA stenosis",  role: vessel }
 
 # Leakage guard: these columns must NEVER appear in model inputs for ANY target. Enforced by a test.
 excluded_from_inputs: [Cath, LAD, LCX, RCA]
