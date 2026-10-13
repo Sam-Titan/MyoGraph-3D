@@ -1,0 +1,32 @@
+[project]
+name = "cardiolens-backend"
+version = "0.1.0"
+description = "CardioLens 3D API and ML pipeline"
+requires-python = ">=3.14,<3.15"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "pydantic>=2",
+    "xgboost",
+    "scikit-learn",
+    "pandas",
+    "numpy",
+    "pyyaml",
+]
+
+[project.optional-dependencies]
+assets = ["trimesh", "fast-simplification"]
+
+[dependency-groups]
+dev = ["pytest", "httpx", "ruff"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

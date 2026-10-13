@@ -1,0 +1,58 @@
+# 3D anatomy map — the ONE place that links model targets to geometry.
+# Source meshes: BodyParts3D 3.0 (DBCLS), Wavefront OBJ named <FMA_ID>.obj. Free, no account needed.
+#   Download BodyParts3D_3.0_obj_99.zip (~127 MB) from
+#   https://dbarchive.biosciencedbc.jp/en/bodyparts3d/download.html  (or ftp://ftp.biosciencedbc.jp/archive/bodyparts3d/)
+#   and place it, still zipped, at data/raw/bp3d/BodyParts3D_3.0_obj_99.zip (gitignored; the script reads it in place).
+#   It contains .obj 3D meshes, not images. Only the built frontend/public/models/heart.glb is committed.
+# License: CC BY-SA 2.1 Japan. Required credit:
+#   "BodyParts3D, Copyright© The Database Center for Life Science licensed by CC Attribution-Share Alike 2.1 Japan"
+#
+# `fma` entries:
+#   - a plain ID            -> include it if its .obj exists
+#   - a list of IDs [A, B]  -> ALTERNATIVES: use the first one whose .obj exists, ignore the rest
+#                              (avoids double geometry, e.g. a part and its "nsn" variant, or heart vs wall-of-heart)
+# Some FMA IDs are COMPOSITES (no .obj of their own). The build script must log found/missing per node and
+# FAIL LOUDLY if a target vessel ends up with zero geometry (then use the procedural-tube fallback below).
+# The API exposes `nodes[].name` + `target` (via GET /api/features -> targets[].node), so the frontend
+# never hard-codes vessel names. A pytest checks every target in features.yaml has exactly one node here.
+
+output: frontend/public/models/heart.glb
+units: "BodyParts3D is in millimetres in a whole-body frame -> recentre on heart centroid, scale to ~2 scene units tall, convert to Y-up"
+
+nodes:
+  # --- target vessels: node names MUST equal target ids (LAD/LCX/RCA). Colour is driven by predictions. ---
+  - name: LAD
+    target: LAD
+    fma: [[FMA3862, FMA3862nsn], FMA71670]   # anterior interventricular branch (+ septal branches of LCA, which arise from the LAD)
+    max_triangles: 8000
+  - name: LCX
+    target: LCX
+    fma: [FMA3895]                            # circumflex branch of left coronary artery
+    max_triangles: 8000
+  - name: RCA
+    target: RCA
+    fma: [FMA3802, FMA3818, [FMA3840, FMA3840nsn], FMA76994, FMA71669]  # trunk, marginal, posterior descending, posterolateral, septal
+    max_triangles: 10000
+
+  # --- context anatomy: neutral colours, not prediction-driven ---
+  - name: LM
+    fma: [FMA4685]                            # left main stem — rendered neutral (not a dataset target)
+    max_triangles: 2000
+  - name: heart
+    target: CAD                               # clicking the heart body selects overall CAD
+    fma: [[FMA7274, FMA9462, FMA7088]]        # wall of heart, else myocardium, else heart — exactly one
+    max_triangles: 40000
+  - name: aorta
+    fma: [FMA3736, FMA3768]                   # ascending aorta + arch (trim to keep the scene compact)
+    max_triangles: 6000
+    optional: true
+  - name: veins
+    fma: [FMA4706, FMA4707, FMA4713, FMA4714] # coronary sinus + cardiac veins
+    max_triangles: 6000
+    optional: true
+    default_visible: false
+
+fallback:
+  # If a target vessel has no usable geometry, render it as a TubeGeometry along a CatmullRomCurve3
+  # through points in frontend/src/features/heart3d/vessels.fallback.json (captured with the dev point picker).
+  tube_radius: 0.035

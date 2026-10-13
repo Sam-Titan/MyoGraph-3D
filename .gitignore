@@ -1,0 +1,61 @@
+# ===================== Python =====================
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+build/
+dist/
+
+# ===================== Node / frontend =====================
+node_modules/
+frontend/dist/
+.vite/
+*.tsbuildinfo
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+
+# ===================== Data =====================
+# BodyParts3D archive (127 MB) — never committed; only the built heart.glb is.
+data/raw/bp3d/
+# Any scratch / intermediate data
+data/interim/
+data/processed/
+# Original Excel export (the code reads the CSV)
+data/raw/*.xlsx
+
+# ===================== Secrets / env =====================
+.env
+.env.*
+!.env.example
+
+# ===================== Editors / OS =====================
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.DS_Store
+Thumbs.db
+desktop.ini
+# Created when copying files from Windows into WSL
+*:Zone.Identifier
+
+# ===================== Logs / misc =====================
+*.log
+*.tmp
+.cache/
+
+# ----------------------------------------------------------------------
+# Deliberately NOT ignored (these MUST be committed):
+#   data/raw/z_alizadeh_sani_ext.csv        dataset (CC BY 4.0, cited)
+#   backend/artifacts/                      trained model weights + metrics + presets
+#   frontend/public/models/heart.glb        built 3D asset (CC BY-SA 2.1 JP)
+#   frontend/openapi.json, frontend/src/api/schema.d.ts   generated API types (Docker needs them)
+#   backend/uv.lock, frontend/package-lock.json           reproducible installs
+# ----------------------------------------------------------------------
