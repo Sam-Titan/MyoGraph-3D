@@ -4,7 +4,6 @@ Deterministic: fixed seeds, single-threaded XGBoost, no wall-clock values in met
 """
 
 import hashlib
-import json
 import logging
 import subprocess
 from datetime import UTC, datetime
@@ -15,7 +14,16 @@ import pandas as pd
 from sklearn.model_selection import RepeatedStratifiedKFold
 
 from app.core.config import ARTIFACTS_DIR, REPO_ROOT
-from ml.evaluate import METRICS, calibration_bins, confusion, roc_points, score, summarize
+from ml.artifacts import write_json
+from ml.evaluate import (
+    METRICS,
+    THRESHOLD,
+    calibration_bins,
+    confusion,
+    roc_points,
+    score,
+    summarize,
+)
 from ml.explain import global_importance
 from ml.models import Calibration, create_model
 from ml.models.xgb import DEFAULT_PARAMS
@@ -31,48 +39,51 @@ N_SPLITS, N_REPEATS = 5, 3
 MODELS_DIR = ARTIFACTS_DIR / "models"
 
 
-def _round(obj: Any, nd: int = 6) -> Any:
-    if isinstance(obj, float):
-        return round(obj, nd)
-    if isinstance(obj, dict):
-        return {k: _round(v, nd) for k, v in obj.items()}
-    if isinstance(obj, list):
-        return [_round(v, nd) for v in obj]
-    return obj
+def cross_validate(
+    X: pd.DataFrame, y: np.ndarray
+) -> tuple[dict[str, list[dict[str, float]]], list[float], np.ndarray]:
+    """Repeated stratified CV on the train set.
 
-
-def _write_json(name: str, data: Any) -> None:
-    ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
-    (ARTIFACTS_DIR / name).write_text(json.dumps(_round(data), indent=2, sort_keys=True) + "\n")
-
-
-def cross_validate(X: pd.DataFrame, y: np.ndarray) -> tuple[list[dict[str, float]], np.ndarray]:
-    """Repeated stratified CV on the train set. Returns per-fold scores and OOF probabilities
-    (averaged over repeats)."""
+    Each fold's tuned threshold comes from that fold's own training OOF (inside `fit`), so the
+    validation fold never influences it. Returns per-fold scores at the default and tuned
+    thresholds, the per-fold tuned thresholds, and OOF probabilities averaged over repeats.
+    """
     cv = RepeatedStratifiedKFold(n_splits=N_SPLITS, n_repeats=N_REPEATS, random_state=SEED)
-    folds: list[dict[str, float]] = []
+    folds: dict[str, list[dict[str, float]]] = {"default": [], "tuned": []}
+    thresholds: list[float] = []
     oof = np.zeros(len(y))
     for tr, va in cv.split(X, y):
         model = create_model(MODEL_NAME)
         model.fit(X.iloc[tr], y[tr])
+        assert model.calibration is not None
+        t = model.calibration.threshold
         p = model.predict_proba(X.iloc[va])
-        folds.append(score(y[va], p))
+        folds["default"].append(score(y[va], p))
+        folds["tuned"].append(score(y[va], p, t))
+        thresholds.append(t)
         oof[va] += p / N_REPEATS
-    return folds, oof
+    return folds, thresholds, oof
 
 
 def _table(schema: FeatureSchema, metrics: dict[str, Any]) -> str:
     lines: list[str] = []
     for t, m in metrics["targets"].items():
-        prev = m["prevalence"]
+        prev, thr = m["prevalence"], m["threshold"]
         lines.append(
             f"{t} ({schema.targets[t].label})  prevalence train {prev['train']:.2f} / "
-            f"test {prev['test']:.2f}"
+            f"test {prev['test']:.2f}  tuned threshold {thr['tuned']:.3f} "
+            f"(CV folds {thr['cv_mean']:.3f} ± {thr['cv_std']:.3f})"
         )
-        lines.append(f"  {'metric':<10}{'CV mean ± std (5x3, train)':<30}hold-out")
+        lines.append(
+            f"  {'metric':<10}{'CV @0.5':<16}{'CV @tuned':<16}{'hold-out @0.5':<15}hold-out @tuned"
+        )
         for k in METRICS:
-            cv = m["cv"][k]
-            lines.append(f"  {k:<10}{cv['mean']:.3f} ± {cv['std']:.3f}{'':<17}{m['test'][k]:.3f}")
+            row = [
+                f"{m['cv'][v][k]['mean']:.3f} ± {m['cv'][v][k]['std']:.3f}"
+                for v in ("default", "tuned")
+            ]
+            row += [f"{m['test'][v][k]:.3f}" for v in ("default", "tuned")]
+            lines.append(f"  {k:<10}{row[0]:<16}{row[1]:<16}{row[2]:<15}{row[3]}")
     return "\n".join(lines)
 
 
@@ -100,7 +111,7 @@ def main() -> None:
     for t in schema.targets:
         y_tr, y_te = Y_train[t].to_numpy(), Y_test[t].to_numpy()
         log.info("%s: cross-validating (%dx%d)", t, N_SPLITS, N_REPEATS)
-        folds, oof = cross_validate(X_train, y_tr)
+        folds, cv_thresholds, oof = cross_validate(X_train, y_tr)
 
         model = create_model(MODEL_NAME)
         model.fit(X_train, y_tr)
@@ -110,17 +121,29 @@ def main() -> None:
         model.save(MODELS_DIR / f"{t}.ubj")
 
         test_probs[t] = p_te
-        calibration[t] = {"a": cal.a, "b": cal.b}
+        calibration[t] = {"a": cal.a, "b": cal.b, "threshold": cal.threshold}
         scale_pos_weight[t] = model.params_used["scale_pos_weight"]
         importance[t] = global_importance(model.explain(X_train), schema)
         target_metrics[t] = {
             "label": schema.targets[t].label,
             "role": schema.targets[t].role,
             "prevalence": {"train": float(y_tr.mean()), "test": float(y_te.mean())},
-            "cv": summarize(folds),
-            "test": score(y_te, p_te),
+            "threshold": {
+                "default": THRESHOLD,
+                "tuned": cal.threshold,
+                "cv_mean": float(np.mean(cv_thresholds)),
+                "cv_std": float(np.std(cv_thresholds, ddof=1)),
+            },
+            "cv": {v: summarize(folds[v]) for v in folds},
+            "test": {
+                "default": score(y_te, p_te),
+                "tuned": score(y_te, p_te, cal.threshold),
+            },
             "roc_test": roc_points(y_te, p_te),
-            "confusion_test": confusion(y_te, p_te),
+            "confusion_test": {
+                "default": confusion(y_te, p_te),
+                "tuned": confusion(y_te, p_te, cal.threshold),
+            },
             "calibration_bins": calibration_bins(y_tr, oof),
         }
 
@@ -133,20 +156,24 @@ def main() -> None:
             "stratify_on": split.stratify_on,
         },
         "cv": {"n_splits": N_SPLITS, "n_repeats": N_REPEATS, "seed": SEED},
-        "threshold": 0.5,
         "targets": target_metrics,
         "feature_importance": importance,
     }
-    _write_json("metrics.json", metrics)
-    _write_json("calibration.json", calibration)
-    _write_json(
+    write_json("metrics.json", metrics)
+    write_json("calibration.json", calibration)
+    write_json(
         "params.json",
         {"model": MODEL_NAME, "params": DEFAULT_PARAMS, "scale_pos_weight": scale_pos_weight},
     )
-    presets = build_presets(df.iloc[split.test_idx], test_probs, schema)
-    _write_json("presets.json", presets)
+    presets = build_presets(
+        df.iloc[split.test_idx],
+        test_probs,
+        {t: c["threshold"] for t, c in calibration.items()},
+        schema,
+    )
+    write_json("presets.json", presets)
     data_sha = hashlib.sha256(RAW_CSV.read_bytes()).hexdigest()
-    _write_json(
+    write_json(
         "model_card.json",
         {
             "model_version": f"{MODEL_NAME}-v1-{data_sha[:8]}",

@@ -9,6 +9,7 @@ import xgboost as xgb
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import StratifiedKFold
 
+from ml.evaluate import youden_threshold
 from ml.models.base import Calibration, Explanation, register
 
 SEED = 42
@@ -61,7 +62,10 @@ class XGBRiskModel:
             clf = self._classifier(spw).fit(X.iloc[tr], y[tr])
             oof[va] = clf.predict(X.iloc[va], output_margin=True)
         platt = LogisticRegression(C=1e6).fit(oof.reshape(-1, 1), y)
-        self.calibration = Calibration(a=float(platt.coef_[0, 0]), b=float(platt.intercept_[0]))
+        a, b = float(platt.coef_[0, 0]), float(platt.intercept_[0])
+        self.calibration = Calibration(
+            a=a, b=b, threshold=youden_threshold(y, _sigmoid(a * oof + b))
+        )
         self._booster = self._classifier(spw).fit(X, y).get_booster()
         self.params_used = {**self.params, "scale_pos_weight": spw}
 

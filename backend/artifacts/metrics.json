@@ -1100,35 +1100,71 @@
         }
       ],
       "confusion_test": {
-        "fn": 10,
-        "fp": 6,
-        "tn": 11,
-        "tp": 34
+        "default": {
+          "fn": 10,
+          "fp": 6,
+          "tn": 11,
+          "tp": 34
+        },
+        "tuned": {
+          "fn": 10,
+          "fp": 6,
+          "tn": 11,
+          "tp": 34
+        }
       },
       "cv": {
-        "accuracy": {
-          "mean": 0.898214,
-          "std": 0.036451
+        "default": {
+          "accuracy": {
+            "mean": 0.898214,
+            "std": 0.036451
+          },
+          "brier": {
+            "mean": 0.085264,
+            "std": 0.016299
+          },
+          "f1": {
+            "mean": 0.928935,
+            "std": 0.026656
+          },
+          "precision": {
+            "mean": 0.917609,
+            "std": 0.02385
+          },
+          "recall": {
+            "mean": 0.942297,
+            "std": 0.050658
+          },
+          "roc_auc": {
+            "mean": 0.932149,
+            "std": 0.029722
+          }
         },
-        "brier": {
-          "mean": 0.085264,
-          "std": 0.016299
-        },
-        "f1": {
-          "mean": 0.928935,
-          "std": 0.026656
-        },
-        "precision": {
-          "mean": 0.917609,
-          "std": 0.02385
-        },
-        "recall": {
-          "mean": 0.942297,
-          "std": 0.050658
-        },
-        "roc_auc": {
-          "mean": 0.932149,
-          "std": 0.029722
+        "tuned": {
+          "accuracy": {
+            "mean": 0.8803,
+            "std": 0.042936
+          },
+          "brier": {
+            "mean": 0.085264,
+            "std": 0.016299
+          },
+          "f1": {
+            "mean": 0.913657,
+            "std": 0.033985
+          },
+          "precision": {
+            "mean": 0.928072,
+            "std": 0.029749
+          },
+          "recall": {
+            "mean": 0.903641,
+            "std": 0.071212
+          },
+          "roc_auc": {
+            "mean": 0.932149,
+            "std": 0.029722
+          }
         }
       },
       "label": "Overall CAD",
@@ -1192,12 +1228,28 @@
       },
       "role": "overall",
       "test": {
-        "accuracy": 0.737705,
-        "brier": 0.174115,
-        "f1": 0.809524,
-        "precision": 0.85,
-        "recall": 0.772727,
-        "roc_auc": 0.823529
+        "default": {
+          "accuracy": 0.737705,
+          "brier": 0.174115,
+          "f1": 0.809524,
+          "precision": 0.85,
+          "recall": 0.772727,
+          "roc_auc": 0.823529
+        },
+        "tuned": {
+          "accuracy": 0.737705,
+          "brier": 0.174115,
+          "f1": 0.809524,
+          "precision": 0.85,
+          "recall": 0.772727,
+          "roc_auc": 0.823529
+        }
+      },
+      "threshold": {
+        "cv_mean": 0.637161,
+        "cv_std": 0.067999,
+        "default": 0.5,
+        "tuned": 0.477299
       }
     },
     "LAD": {
@@ -1254,35 +1306,71 @@
         }
       ],
       "confusion_test": {
-        "fn": 4,
-        "fp": 11,
-        "tn": 16,
-        "tp": 30
+        "default": {
+          "fn": 4,
+          "fp": 11,
+          "tn": 16,
+          "tp": 30
+        },
+        "tuned": {
+          "fn": 6,
+          "fp": 9,
+          "tn": 18,
+          "tp": 28
+        }
       },
       "cv": {
-        "accuracy": {
-          "mean": 0.778118,
-          "std": 0.037027
+        "default": {
+          "accuracy": {
+            "mean": 0.778118,
+            "std": 0.037027
+          },
+          "brier": {
+            "mean": 0.161236,
+            "std": 0.02229
+          },
+          "f1": {
+            "mean": 0.819773,
+            "std": 0.03763
+          },
+          "precision": {
+            "mean": 0.786906,
+            "std": 0.038617
+          },
+          "recall": {
+            "mean": 0.862233,
+            "std": 0.085989
+          },
+          "roc_auc": {
+            "mean": 0.835234,
+            "std": 0.053601
+          }
         },
-        "brier": {
-          "mean": 0.161236,
-          "std": 0.02229
-        },
-        "f1": {
-          "mean": 0.819773,
-          "std": 0.03763
-        },
-        "precision": {
-          "mean": 0.786906,
-          "std": 0.038617
-        },
-        "recall": {
-          "mean": 0.862233,
-          "std": 0.085989
-        },
-        "roc_auc": {
-          "mean": 0.835234,
-          "std": 0.053601
+        "tuned": {
+          "accuracy": {
+            "mean": 0.75326,
+            "std": 0.05931
+          },
+          "brier": {
+            "mean": 0.161236,
+            "std": 0.02229
+          },
+          "f1": {
+            "mean": 0.794561,
+            "std": 0.071894
+          },
+          "precision": {
+            "mean": 0.771286,
+            "std": 0.043147
+          },
+          "recall": {
+            "mean": 0.83399,
+            "std": 0.140049
+          },
+          "roc_auc": {
+            "mean": 0.835234,
+            "std": 0.053601
+          }
         }
       },
       "label": "LAD stenosis",
@@ -1346,12 +1434,28 @@
       },
       "role": "vessel",
       "test": {
-        "accuracy": 0.754098,
-        "brier": 0.182951,
-        "f1": 0.8,
-        "precision": 0.731707,
-        "recall": 0.882353,
-        "roc_auc": 0.803922
+        "default": {
+          "accuracy": 0.754098,
+          "brier": 0.182951,
+          "f1": 0.8,
+          "precision": 0.731707,
+          "recall": 0.882353,
+          "roc_auc": 0.803922
+        },
+        "tuned": {
+          "accuracy": 0.754098,
+          "brier": 0.182951,
+          "f1": 0.788732,
+          "precision": 0.756757,
+          "recall": 0.823529,
+          "roc_auc": 0.803922
+        }
+      },
+      "threshold": {
+        "cv_mean": 0.50959,
+        "cv_std": 0.077542,
+        "default": 0.5,
+        "tuned": 0.534633
       }
     },
     "LCX": {
@@ -1408,35 +1512,71 @@
         }
       ],
       "confusion_test": {
-        "fn": 15,
-        "fp": 7,
-        "tn": 27,
-        "tp": 12
+        "default": {
+          "fn": 15,
+          "fp": 7,
+          "tn": 27,
+          "tp": 12
+        },
+        "tuned": {
+          "fn": 10,
+          "fp": 8,
+          "tn": 26,
+          "tp": 17
+        }
       },
       "cv": {
-        "accuracy": {
-          "mean": 0.679138,
-          "std": 0.048659
+        "default": {
+          "accuracy": {
+            "mean": 0.679138,
+            "std": 0.048659
+          },
+          "brier": {
+            "mean": 0.203152,
+            "std": 0.022465
+          },
+          "f1": {
+            "mean": 0.478553,
+            "std": 0.080415
+          },
+          "precision": {
+            "mean": 0.655494,
+            "std": 0.137064
+          },
+          "recall": {
+            "mean": 0.395517,
+            "std": 0.103894
+          },
+          "roc_auc": {
+            "mean": 0.729142,
+            "std": 0.080139
+          }
         },
-        "brier": {
-          "mean": 0.203152,
-          "std": 0.022465
-        },
-        "f1": {
-          "mean": 0.478553,
-          "std": 0.080415
-        },
-        "precision": {
-          "mean": 0.655494,
-          "std": 0.137064
-        },
-        "recall": {
-          "mean": 0.395517,
-          "std": 0.103894
-        },
-        "roc_auc": {
-          "mean": 0.729142,
-          "std": 0.080139
+        "tuned": {
+          "accuracy": {
+            "mean": 0.662727,
+            "std": 0.065245
+          },
+          "brier": {
+            "mean": 0.203152,
+            "std": 0.022465
+          },
+          "f1": {
+            "mean": 0.607091,
+            "std": 0.064462
+          },
+          "precision": {
+            "mean": 0.554038,
+            "std": 0.068976
+          },
+          "recall": {
+            "mean": 0.689864,
+            "std": 0.120252
+          },
+          "roc_auc": {
+            "mean": 0.729142,
+            "std": 0.080139
+          }
         }
       },
       "label": "LCX stenosis",
@@ -1496,12 +1636,28 @@
       },
       "role": "vessel",
       "test": {
-        "accuracy": 0.639344,
-        "brier": 0.203633,
-        "f1": 0.521739,
-        "precision": 0.631579,
-        "recall": 0.444444,
-        "roc_auc": 0.783224
+        "default": {
+          "accuracy": 0.639344,
+          "brier": 0.203633,
+          "f1": 0.521739,
+          "precision": 0.631579,
+          "recall": 0.444444,
+          "roc_auc": 0.783224
+        },
+        "tuned": {
+          "accuracy": 0.704918,
+          "brier": 0.203633,
+          "f1": 0.653846,
+          "precision": 0.68,
+          "recall": 0.62963,
+          "roc_auc": 0.783224
+        }
+      },
+      "threshold": {
+        "cv_mean": 0.379928,
+        "cv_std": 0.048989,
+        "default": 0.5,
+        "tuned": 0.394695
       }
     },
     "RCA": {
@@ -1558,35 +1714,71 @@
         }
       ],
       "confusion_test": {
-        "fn": 15,
-        "fp": 6,
-        "tn": 33,
-        "tp": 7
+        "default": {
+          "fn": 15,
+          "fp": 6,
+          "tn": 33,
+          "tp": 7
+        },
+        "tuned": {
+          "fn": 11,
+          "fp": 6,
+          "tn": 33,
+          "tp": 11
+        }
       },
       "cv": {
-        "accuracy": {
-          "mean": 0.659807,
-          "std": 0.036174
+        "default": {
+          "accuracy": {
+            "mean": 0.659807,
+            "std": 0.036174
+          },
+          "brier": {
+            "mean": 0.216089,
+            "std": 0.01105
+          },
+          "f1": {
+            "mean": 0.374587,
+            "std": 0.195657
+          },
+          "precision": {
+            "mean": 0.559977,
+            "std": 0.25969
+          },
+          "recall": {
+            "mean": 0.311696,
+            "std": 0.183429
+          },
+          "roc_auc": {
+            "mean": 0.698057,
+            "std": 0.058362
+          }
         },
-        "brier": {
-          "mean": 0.216089,
-          "std": 0.01105
-        },
-        "f1": {
-          "mean": 0.374587,
-          "std": 0.195657
-        },
-        "precision": {
-          "mean": 0.559977,
-          "std": 0.25969
-        },
-        "recall": {
-          "mean": 0.311696,
-          "std": 0.183429
-        },
-        "roc_auc": {
-          "mean": 0.698057,
-          "std": 0.058362
+        "tuned": {
+          "accuracy": {
+            "mean": 0.611706,
+            "std": 0.061357
+          },
+          "brier": {
+            "mean": 0.216089,
+            "std": 0.01105
+          },
+          "f1": {
+            "mean": 0.587914,
+            "std": 0.060292
+          },
+          "precision": {
+            "mean": 0.49633,
+            "std": 0.049382
+          },
+          "recall": {
+            "mean": 0.735283,
+            "std": 0.127668
+          },
+          "roc_auc": {
+            "mean": 0.698057,
+            "std": 0.058362
+          }
         }
       },
       "label": "RCA stenosis",
@@ -1658,14 +1850,29 @@
       },
       "role": "vessel",
       "test": {
-        "accuracy": 0.655738,
-        "brier": 0.204515,
-        "f1": 0.4,
-        "precision": 0.538462,
-        "recall": 0.318182,
-        "roc_auc": 0.694639
+        "default": {
+          "accuracy": 0.655738,
+          "brier": 0.204515,
+          "f1": 0.4,
+          "precision": 0.538462,
+          "recall": 0.318182,
+          "roc_auc": 0.694639
+        },
+        "tuned": {
+          "accuracy": 0.721311,
+          "brier": 0.204515,
+          "f1": 0.564103,
+          "precision": 0.647059,
+          "recall": 0.5,
+          "roc_auc": 0.694639
+        }
+      },
+      "threshold": {
+        "cv_mean": 0.348751,
+        "cv_std": 0.044075,
+        "default": 0.5,
+        "tuned": 0.461735
       }
     }
-  },
-  "threshold": 0.5
+  }
 }

@@ -70,7 +70,7 @@ Always with a visible disclaimer: *decision support / educational only — not a
   - Use native `pred_contribs`, not the `shap` package, for serving: no version-compatibility risk. The `shap` package is optional, for offline plots only.
 - **Display aggregation**: contributions of multi-column inputs (`bbb_*`, smoking, chest-pain) are **summed** back to their input id (exact, by additivity).
 - **Global importance**: mean |SHAP| over the train set per input id → `metrics.json`.
-- Decision threshold: 0.5 on the calibrated probability (reported; no threshold tuning on the test set).
+- **Decision threshold (per target)**: the threshold maximising Youden's J (TPR − FPR) on the **train out-of-fold calibrated probabilities**; never the hold-out. Stored in `calibration.json`; the API uses it for `positive`. Inside each CV fold it is chosen from that fold's own training OOF, so CV stays honest. Both 0.5 and the tuned value are reported. Youden thresholds are noisy on n≈240 (see the CV spread in `metrics.json`).
 
 ### 4.4 Expected performance (baseline, 5×3 CV on all 303 rows, uncalibrated)
 
@@ -85,19 +85,21 @@ If a run lands far below these, suspect a preprocessing bug before tuning. **LCX
 
 ### 4.5 Metrics stored (`artifacts/metrics.json`)
 Per target:
-- CV mean/std and test values for accuracy, precision, recall, F1, ROC-AUC, Brier
+- CV mean/std and test values for accuracy, precision, recall, F1, ROC-AUC, Brier, each at the default 0.5 and at the tuned threshold (`cv.{default,tuned}`, `test.{default,tuned}`); the threshold value and its CV-fold spread (`threshold`)
 - prevalence
 - ROC curve points (test)
-- confusion matrix (test, threshold 0.5)
+- confusion matrix (test) at 0.5 and at the tuned threshold
 - calibration bins (10 quantile bins, OOF on train)
 
 Global: split info, feature importance.
+
+`artifacts/stability.json` (`make stability`, separate from `make train`): hold-out ROC-AUC and Brier over split seeds 0..19 (same stratification, model seed 42) with median, IQR, min, max and the percentile of the official seed-42 hold-out. Touches no other artifact.
 
 ### 4.6 Artifacts (committed to git; `make train` regenerates them deterministically)
 ```
 backend/artifacts/
   models/{CAD,LAD,LCX,RCA}.ubj   # XGBoost native format
-  calibration.json               # {target: {a, b}}
+  calibration.json               # {target: {a, b, threshold}}
   params.json, split.json, feature_stats.json (median/mode/min/max per input on train)
   metrics.json, presets.json, model_card.json (version, git sha, trained_at, data hash)
 ```

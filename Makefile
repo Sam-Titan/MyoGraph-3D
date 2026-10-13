@@ -1,4 +1,4 @@
-.PHONY: setup dev dev-api dev-web prepare train assets types lint fmt test check docker
+.PHONY: setup dev dev-api dev-web prepare train stability assets types lint fmt test check docker
 
 setup:
 	cd backend && uv sync --extra assets
@@ -18,6 +18,9 @@ prepare:
 
 train: prepare
 	cd backend && uv run python -m ml.train
+
+stability:
+	cd backend && uv run python -m ml.stability
 
 assets:
 	@echo "make assets: not implemented yet (phase 5)" && exit 1

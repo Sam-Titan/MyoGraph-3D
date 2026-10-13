@@ -10,7 +10,6 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from ml.evaluate import THRESHOLD
 from ml.preprocess import raw_targets, raw_to_inputs
 from ml.schema import FeatureSchema, load_schema
 
@@ -27,6 +26,7 @@ def _first(mask: np.ndarray, taken: set[int]) -> int | None:
 def build_presets(
     test_df: pd.DataFrame,
     probs: dict[str, np.ndarray],
+    thresholds: dict[str, float],
     schema: FeatureSchema | None = None,
 ) -> list[dict[str, Any]]:
     """`test_df` rows must be the hold-out rows in ascending dataset-index order."""
@@ -95,17 +95,25 @@ def build_presets(
             add(pid, label, desc, i)
 
     err = np.column_stack([np.abs(probs[t] - truth[t].to_numpy()) for t in schema.targets])
+    wrong = np.column_stack(
+        [(probs[t] >= thresholds[t]) != (truth[t].to_numpy() == 1) for t in schema.targets]
+    )
+    err[~wrong] = -1.0  # only actual misclassifications (at each target's tuned threshold)
     err[sorted(taken)] = -1.0
     i, j = np.unravel_index(int(np.argmax(err)), err.shape)  # first max -> smallest index
-    target = list(schema.targets)[j]
-    p, actual = float(probs[target][i]), bool(truth.loc[i, target])
-    if (p >= THRESHOLD) != actual:
-        desc = (
-            f"The model misclassifies this patient on {schema.targets[target].label}: "
-            f"estimated probability {p:.0%}, but the actual finding is "
-            f"{'stenosis present' if actual else 'no stenosis'}."
-        )
-        add("hard-case", "Hard case (model is wrong)", desc, int(i))
-    else:
+    if err[i, j] < 0:
         log.warning("hard case: no misclassified hold-out patient left")
+        return out
+    target = list(schema.targets)[j]
+    p_hat, actual = float(probs[target][i]), bool(truth.loc[i, target])
+    if target == overall:
+        finding = f"{target} present" if actual else f"no {target}"
+    else:
+        finding = f"stenosis in {target}" if actual else f"no stenosis in {target}"
+    desc = (
+        f"The model misclassifies this patient on {schema.targets[target].label}: estimated "
+        f"probability {p_hat:.0%} (decision threshold {thresholds[target]:.0%}), but the "
+        f"actual finding is {finding}."
+    )
+    add("hard-case", "Hard case (model is wrong)", desc, int(i))
     return out

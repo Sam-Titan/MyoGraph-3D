@@ -310,7 +310,7 @@
     }
   },
   {
-    "description": "The model misclassifies this patient on Overall CAD: estimated probability 98%, but the actual finding is no stenosis.",
+    "description": "The model misclassifies this patient on Overall CAD: estimated probability 98% (decision threshold 48%), but the actual finding is no CAD.",
     "id": "hard-case",
     "label": "Hard case (model is wrong)",
     "truth": {

@@ -11,10 +11,14 @@ import pandas as pd
 
 @dataclass(frozen=True)
 class Calibration:
-    """Platt scaling: calibrated logit = a * margin + b."""
+    """Platt scaling (calibrated logit = a * margin + b) and the tuned decision threshold.
+
+    `threshold` maximises Youden's J on the train out-of-fold calibrated probabilities.
+    """
 
     a: float
     b: float
+    threshold: float = 0.5
 
 
 @dataclass(frozen=True)
