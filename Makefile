@@ -16,8 +16,8 @@ dev-web:
 prepare:
 	cd backend && uv run python -m ml.prepare
 
-train:
-	@echo "make train: not implemented yet (phase 2)" && exit 1
+train: prepare
+	cd backend && uv run python -m ml.train
 
 assets:
 	@echo "make assets: not implemented yet (phase 5)" && exit 1

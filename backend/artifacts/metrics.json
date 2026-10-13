@@ -1,0 +1,1671 @@
+{
+  "cv": {
+    "n_repeats": 3,
+    "n_splits": 5,
+    "seed": 42
+  },
+  "feature_importance": {
+    "CAD": [
+      {
+        "id": "chest_pain",
+        "importance": 1.494061,
+        "label": "Chest pain type"
+      },
+      {
+        "id": "age",
+        "importance": 0.699542,
+        "label": "Age"
+      },
+      {
+        "id": "ef_tte",
+        "importance": 0.586514,
+        "label": "Ejection fraction (TTE)"
+      },
+      {
+        "id": "tg",
+        "importance": 0.58145,
+        "label": "Triglycerides"
+      },
+      {
+        "id": "htn",
+        "importance": 0.393565,
+        "label": "Hypertension"
+      },
+      {
+        "id": "t_inversion",
+        "importance": 0.374936,
+        "label": "T inversion"
+      },
+      {
+        "id": "fbs",
+        "importance": 0.321126,
+        "label": "Fasting blood sugar"
+      },
+      {
+        "id": "region_rwma",
+        "importance": 0.28607,
+        "label": "Regions with wall-motion abnormality"
+      },
+      {
+        "id": "bmi",
+        "importance": 0.265701,
+        "label": "BMI"
+      },
+      {
+        "id": "dm",
+        "importance": 0.254961,
+        "label": "Diabetes mellitus"
+      },
+      {
+        "id": "na",
+        "importance": 0.220237,
+        "label": "Sodium"
+      },
+      {
+        "id": "ldl",
+        "importance": 0.185048,
+        "label": "LDL cholesterol"
+      },
+      {
+        "id": "k",
+        "importance": 0.175931,
+        "label": "Potassium"
+      },
+      {
+        "id": "dyspnea",
+        "importance": 0.13732,
+        "label": "Dyspnea"
+      },
+      {
+        "id": "bp",
+        "importance": 0.131777,
+        "label": "Systolic blood pressure"
+      },
+      {
+        "id": "esr",
+        "importance": 0.118801,
+        "label": "ESR"
+      },
+      {
+        "id": "lymph",
+        "importance": 0.109296,
+        "label": "Lymphocytes"
+      },
+      {
+        "id": "hb",
+        "importance": 0.101039,
+        "label": "Hemoglobin"
+      },
+      {
+        "id": "wbc",
+        "importance": 0.09052,
+        "label": "White blood cells"
+      },
+      {
+        "id": "pr",
+        "importance": 0.075662,
+        "label": "Pulse rate"
+      },
+      {
+        "id": "neut",
+        "importance": 0.074636,
+        "label": "Neutrophils"
+      },
+      {
+        "id": "bun",
+        "importance": 0.054639,
+        "label": "Blood urea nitrogen"
+      },
+      {
+        "id": "weight",
+        "importance": 0.05455,
+        "label": "Weight"
+      },
+      {
+        "id": "plt",
+        "importance": 0.050536,
+        "label": "Platelets"
+      },
+      {
+        "id": "height",
+        "importance": 0.047446,
+        "label": "Height"
+      },
+      {
+        "id": "smoking",
+        "importance": 0.032312,
+        "label": "Smoking status"
+      },
+      {
+        "id": "cr",
+        "importance": 0.023947,
+        "label": "Creatinine"
+      },
+      {
+        "id": "hdl",
+        "importance": 0.022523,
+        "label": "HDL cholesterol"
+      },
+      {
+        "id": "dlp",
+        "importance": 0.011895,
+        "label": "Dyslipidemia"
+      },
+      {
+        "id": "vhd",
+        "importance": 0.008614,
+        "label": "Valvular heart disease"
+      },
+      {
+        "id": "function_class",
+        "importance": 0.007888,
+        "label": "Functional class"
+      },
+      {
+        "id": "st_depression",
+        "importance": 0.005884,
+        "label": "ST depression"
+      },
+      {
+        "id": "sex",
+        "importance": 0.005849,
+        "label": "Sex"
+      },
+      {
+        "id": "airway_disease",
+        "importance": 0.0,
+        "label": "Airway disease"
+      },
+      {
+        "id": "bbb",
+        "importance": 0.0,
+        "label": "Bundle branch block"
+      },
+      {
+        "id": "chf",
+        "importance": 0.0,
+        "label": "Congestive heart failure"
+      },
+      {
+        "id": "crf",
+        "importance": 0.0,
+        "label": "Chronic renal failure"
+      },
+      {
+        "id": "cva",
+        "importance": 0.0,
+        "label": "Prior stroke (CVA)"
+      },
+      {
+        "id": "diastolic_murmur",
+        "importance": 0.0,
+        "label": "Diastolic murmur"
+      },
+      {
+        "id": "edema",
+        "importance": 0.0,
+        "label": "Edema"
+      },
+      {
+        "id": "fh",
+        "importance": 0.0,
+        "label": "Family history of CAD"
+      },
+      {
+        "id": "lowth_ang",
+        "importance": 0.0,
+        "label": "Low-threshold angina"
+      },
+      {
+        "id": "lung_rales",
+        "importance": 0.0,
+        "label": "Lung rales"
+      },
+      {
+        "id": "lvh",
+        "importance": 0.0,
+        "label": "LV hypertrophy"
+      },
+      {
+        "id": "obesity",
+        "importance": 0.0,
+        "label": "Obesity"
+      },
+      {
+        "id": "poor_r_progression",
+        "importance": 0.0,
+        "label": "Poor R-wave progression"
+      },
+      {
+        "id": "q_wave",
+        "importance": 0.0,
+        "label": "Q wave"
+      },
+      {
+        "id": "st_elevation",
+        "importance": 0.0,
+        "label": "ST elevation"
+      },
+      {
+        "id": "systolic_murmur",
+        "importance": 0.0,
+        "label": "Systolic murmur"
+      },
+      {
+        "id": "thyroid_disease",
+        "importance": 0.0,
+        "label": "Thyroid disease"
+      },
+      {
+        "id": "weak_peripheral_pulse",
+        "importance": 0.0,
+        "label": "Weak peripheral pulse"
+      }
+    ],
+    "LAD": [
+      {
+        "id": "chest_pain",
+        "importance": 0.677841,
+        "label": "Chest pain type"
+      },
+      {
+        "id": "ef_tte",
+        "importance": 0.490681,
+        "label": "Ejection fraction (TTE)"
+      },
+      {
+        "id": "age",
+        "importance": 0.439031,
+        "label": "Age"
+      },
+      {
+        "id": "region_rwma",
+        "importance": 0.351074,
+        "label": "Regions with wall-motion abnormality"
+      },
+      {
+        "id": "tg",
+        "importance": 0.218439,
+        "label": "Triglycerides"
+      },
+      {
+        "id": "height",
+        "importance": 0.216141,
+        "label": "Height"
+      },
+      {
+        "id": "esr",
+        "importance": 0.19665,
+        "label": "ESR"
+      },
+      {
+        "id": "t_inversion",
+        "importance": 0.192904,
+        "label": "T inversion"
+      },
+      {
+        "id": "neut",
+        "importance": 0.156316,
+        "label": "Neutrophils"
+      },
+      {
+        "id": "htn",
+        "importance": 0.130172,
+        "label": "Hypertension"
+      },
+      {
+        "id": "lymph",
+        "importance": 0.119332,
+        "label": "Lymphocytes"
+      },
+      {
+        "id": "ldl",
+        "importance": 0.106349,
+        "label": "LDL cholesterol"
+      },
+      {
+        "id": "plt",
+        "importance": 0.102013,
+        "label": "Platelets"
+      },
+      {
+        "id": "bmi",
+        "importance": 0.094243,
+        "label": "BMI"
+      },
+      {
+        "id": "na",
+        "importance": 0.089634,
+        "label": "Sodium"
+      },
+      {
+        "id": "fbs",
+        "importance": 0.08423,
+        "label": "Fasting blood sugar"
+      },
+      {
+        "id": "pr",
+        "importance": 0.080803,
+        "label": "Pulse rate"
+      },
+      {
+        "id": "hb",
+        "importance": 0.077329,
+        "label": "Hemoglobin"
+      },
+      {
+        "id": "function_class",
+        "importance": 0.07322,
+        "label": "Functional class"
+      },
+      {
+        "id": "k",
+        "importance": 0.061001,
+        "label": "Potassium"
+      },
+      {
+        "id": "weight",
+        "importance": 0.058876,
+        "label": "Weight"
+      },
+      {
+        "id": "cr",
+        "importance": 0.056022,
+        "label": "Creatinine"
+      },
+      {
+        "id": "hdl",
+        "importance": 0.050965,
+        "label": "HDL cholesterol"
+      },
+      {
+        "id": "bun",
+        "importance": 0.049379,
+        "label": "Blood urea nitrogen"
+      },
+      {
+        "id": "wbc",
+        "importance": 0.043848,
+        "label": "White blood cells"
+      },
+      {
+        "id": "st_depression",
+        "importance": 0.040991,
+        "label": "ST depression"
+      },
+      {
+        "id": "dyspnea",
+        "importance": 0.039732,
+        "label": "Dyspnea"
+      },
+      {
+        "id": "sex",
+        "importance": 0.037763,
+        "label": "Sex"
+      },
+      {
+        "id": "bp",
+        "importance": 0.036207,
+        "label": "Systolic blood pressure"
+      },
+      {
+        "id": "dlp",
+        "importance": 0.033145,
+        "label": "Dyslipidemia"
+      },
+      {
+        "id": "fh",
+        "importance": 0.024346,
+        "label": "Family history of CAD"
+      },
+      {
+        "id": "dm",
+        "importance": 0.013094,
+        "label": "Diabetes mellitus"
+      },
+      {
+        "id": "vhd",
+        "importance": 0.012331,
+        "label": "Valvular heart disease"
+      },
+      {
+        "id": "smoking",
+        "importance": 0.001952,
+        "label": "Smoking status"
+      },
+      {
+        "id": "airway_disease",
+        "importance": 0.0,
+        "label": "Airway disease"
+      },
+      {
+        "id": "bbb",
+        "importance": 0.0,
+        "label": "Bundle branch block"
+      },
+      {
+        "id": "chf",
+        "importance": 0.0,
+        "label": "Congestive heart failure"
+      },
+      {
+        "id": "crf",
+        "importance": 0.0,
+        "label": "Chronic renal failure"
+      },
+      {
+        "id": "cva",
+        "importance": 0.0,
+        "label": "Prior stroke (CVA)"
+      },
+      {
+        "id": "diastolic_murmur",
+        "importance": 0.0,
+        "label": "Diastolic murmur"
+      },
+      {
+        "id": "edema",
+        "importance": 0.0,
+        "label": "Edema"
+      },
+      {
+        "id": "lowth_ang",
+        "importance": 0.0,
+        "label": "Low-threshold angina"
+      },
+      {
+        "id": "lung_rales",
+        "importance": 0.0,
+        "label": "Lung rales"
+      },
+      {
+        "id": "lvh",
+        "importance": 0.0,
+        "label": "LV hypertrophy"
+      },
+      {
+        "id": "obesity",
+        "importance": 0.0,
+        "label": "Obesity"
+      },
+      {
+        "id": "poor_r_progression",
+        "importance": 0.0,
+        "label": "Poor R-wave progression"
+      },
+      {
+        "id": "q_wave",
+        "importance": 0.0,
+        "label": "Q wave"
+      },
+      {
+        "id": "st_elevation",
+        "importance": 0.0,
+        "label": "ST elevation"
+      },
+      {
+        "id": "systolic_murmur",
+        "importance": 0.0,
+        "label": "Systolic murmur"
+      },
+      {
+        "id": "thyroid_disease",
+        "importance": 0.0,
+        "label": "Thyroid disease"
+      },
+      {
+        "id": "weak_peripheral_pulse",
+        "importance": 0.0,
+        "label": "Weak peripheral pulse"
+      }
+    ],
+    "LCX": [
+      {
+        "id": "age",
+        "importance": 0.415009,
+        "label": "Age"
+      },
+      {
+        "id": "tg",
+        "importance": 0.299933,
+        "label": "Triglycerides"
+      },
+      {
+        "id": "chest_pain",
+        "importance": 0.294353,
+        "label": "Chest pain type"
+      },
+      {
+        "id": "na",
+        "importance": 0.276588,
+        "label": "Sodium"
+      },
+      {
+        "id": "cr",
+        "importance": 0.249149,
+        "label": "Creatinine"
+      },
+      {
+        "id": "esr",
+        "importance": 0.164216,
+        "label": "ESR"
+      },
+      {
+        "id": "plt",
+        "importance": 0.150065,
+        "label": "Platelets"
+      },
+      {
+        "id": "height",
+        "importance": 0.148956,
+        "label": "Height"
+      },
+      {
+        "id": "fbs",
+        "importance": 0.13966,
+        "label": "Fasting blood sugar"
+      },
+      {
+        "id": "hdl",
+        "importance": 0.137662,
+        "label": "HDL cholesterol"
+      },
+      {
+        "id": "bmi",
+        "importance": 0.132684,
+        "label": "BMI"
+      },
+      {
+        "id": "hb",
+        "importance": 0.123504,
+        "label": "Hemoglobin"
+      },
+      {
+        "id": "weight",
+        "importance": 0.117715,
+        "label": "Weight"
+      },
+      {
+        "id": "bun",
+        "importance": 0.112434,
+        "label": "Blood urea nitrogen"
+      },
+      {
+        "id": "wbc",
+        "importance": 0.103567,
+        "label": "White blood cells"
+      },
+      {
+        "id": "ef_tte",
+        "importance": 0.097695,
+        "label": "Ejection fraction (TTE)"
+      },
+      {
+        "id": "k",
+        "importance": 0.084809,
+        "label": "Potassium"
+      },
+      {
+        "id": "ldl",
+        "importance": 0.072557,
+        "label": "LDL cholesterol"
+      },
+      {
+        "id": "sex",
+        "importance": 0.063603,
+        "label": "Sex"
+      },
+      {
+        "id": "bp",
+        "importance": 0.06145,
+        "label": "Systolic blood pressure"
+      },
+      {
+        "id": "function_class",
+        "importance": 0.04691,
+        "label": "Functional class"
+      },
+      {
+        "id": "neut",
+        "importance": 0.034471,
+        "label": "Neutrophils"
+      },
+      {
+        "id": "dlp",
+        "importance": 0.034119,
+        "label": "Dyslipidemia"
+      },
+      {
+        "id": "t_inversion",
+        "importance": 0.031292,
+        "label": "T inversion"
+      },
+      {
+        "id": "lymph",
+        "importance": 0.029254,
+        "label": "Lymphocytes"
+      },
+      {
+        "id": "region_rwma",
+        "importance": 0.018799,
+        "label": "Regions with wall-motion abnormality"
+      },
+      {
+        "id": "vhd",
+        "importance": 0.018795,
+        "label": "Valvular heart disease"
+      },
+      {
+        "id": "pr",
+        "importance": 0.016838,
+        "label": "Pulse rate"
+      },
+      {
+        "id": "q_wave",
+        "importance": 0.011047,
+        "label": "Q wave"
+      },
+      {
+        "id": "htn",
+        "importance": 0.009748,
+        "label": "Hypertension"
+      },
+      {
+        "id": "fh",
+        "importance": 0.009535,
+        "label": "Family history of CAD"
+      },
+      {
+        "id": "systolic_murmur",
+        "importance": 0.009224,
+        "label": "Systolic murmur"
+      },
+      {
+        "id": "dm",
+        "importance": 0.008855,
+        "label": "Diabetes mellitus"
+      },
+      {
+        "id": "smoking",
+        "importance": 0.006244,
+        "label": "Smoking status"
+      },
+      {
+        "id": "dyspnea",
+        "importance": 0.005198,
+        "label": "Dyspnea"
+      },
+      {
+        "id": "st_depression",
+        "importance": 0.002949,
+        "label": "ST depression"
+      },
+      {
+        "id": "airway_disease",
+        "importance": 0.0,
+        "label": "Airway disease"
+      },
+      {
+        "id": "bbb",
+        "importance": 0.0,
+        "label": "Bundle branch block"
+      },
+      {
+        "id": "chf",
+        "importance": 0.0,
+        "label": "Congestive heart failure"
+      },
+      {
+        "id": "crf",
+        "importance": 0.0,
+        "label": "Chronic renal failure"
+      },
+      {
+        "id": "cva",
+        "importance": 0.0,
+        "label": "Prior stroke (CVA)"
+      },
+      {
+        "id": "diastolic_murmur",
+        "importance": 0.0,
+        "label": "Diastolic murmur"
+      },
+      {
+        "id": "edema",
+        "importance": 0.0,
+        "label": "Edema"
+      },
+      {
+        "id": "lowth_ang",
+        "importance": 0.0,
+        "label": "Low-threshold angina"
+      },
+      {
+        "id": "lung_rales",
+        "importance": 0.0,
+        "label": "Lung rales"
+      },
+      {
+        "id": "lvh",
+        "importance": 0.0,
+        "label": "LV hypertrophy"
+      },
+      {
+        "id": "obesity",
+        "importance": 0.0,
+        "label": "Obesity"
+      },
+      {
+        "id": "poor_r_progression",
+        "importance": 0.0,
+        "label": "Poor R-wave progression"
+      },
+      {
+        "id": "st_elevation",
+        "importance": 0.0,
+        "label": "ST elevation"
+      },
+      {
+        "id": "thyroid_disease",
+        "importance": 0.0,
+        "label": "Thyroid disease"
+      },
+      {
+        "id": "weak_peripheral_pulse",
+        "importance": 0.0,
+        "label": "Weak peripheral pulse"
+      }
+    ],
+    "RCA": [
+      {
+        "id": "chest_pain",
+        "importance": 0.213605,
+        "label": "Chest pain type"
+      },
+      {
+        "id": "age",
+        "importance": 0.208797,
+        "label": "Age"
+      },
+      {
+        "id": "dm",
+        "importance": 0.192107,
+        "label": "Diabetes mellitus"
+      },
+      {
+        "id": "tg",
+        "importance": 0.102786,
+        "label": "Triglycerides"
+      },
+      {
+        "id": "hb",
+        "importance": 0.102202,
+        "label": "Hemoglobin"
+      },
+      {
+        "id": "lymph",
+        "importance": 0.09985,
+        "label": "Lymphocytes"
+      },
+      {
+        "id": "dyspnea",
+        "importance": 0.098977,
+        "label": "Dyspnea"
+      },
+      {
+        "id": "neut",
+        "importance": 0.089463,
+        "label": "Neutrophils"
+      },
+      {
+        "id": "esr",
+        "importance": 0.086628,
+        "label": "ESR"
+      },
+      {
+        "id": "bmi",
+        "importance": 0.085701,
+        "label": "BMI"
+      },
+      {
+        "id": "weight",
+        "importance": 0.081918,
+        "label": "Weight"
+      },
+      {
+        "id": "pr",
+        "importance": 0.07957,
+        "label": "Pulse rate"
+      },
+      {
+        "id": "na",
+        "importance": 0.075587,
+        "label": "Sodium"
+      },
+      {
+        "id": "hdl",
+        "importance": 0.062318,
+        "label": "HDL cholesterol"
+      },
+      {
+        "id": "wbc",
+        "importance": 0.055641,
+        "label": "White blood cells"
+      },
+      {
+        "id": "ef_tte",
+        "importance": 0.053318,
+        "label": "Ejection fraction (TTE)"
+      },
+      {
+        "id": "k",
+        "importance": 0.047309,
+        "label": "Potassium"
+      },
+      {
+        "id": "ldl",
+        "importance": 0.045041,
+        "label": "LDL cholesterol"
+      },
+      {
+        "id": "function_class",
+        "importance": 0.04211,
+        "label": "Functional class"
+      },
+      {
+        "id": "plt",
+        "importance": 0.039942,
+        "label": "Platelets"
+      },
+      {
+        "id": "sex",
+        "importance": 0.038961,
+        "label": "Sex"
+      },
+      {
+        "id": "cr",
+        "importance": 0.03436,
+        "label": "Creatinine"
+      },
+      {
+        "id": "vhd",
+        "importance": 0.034324,
+        "label": "Valvular heart disease"
+      },
+      {
+        "id": "fbs",
+        "importance": 0.028344,
+        "label": "Fasting blood sugar"
+      },
+      {
+        "id": "bp",
+        "importance": 0.024967,
+        "label": "Systolic blood pressure"
+      },
+      {
+        "id": "height",
+        "importance": 0.024679,
+        "label": "Height"
+      },
+      {
+        "id": "st_depression",
+        "importance": 0.024049,
+        "label": "ST depression"
+      },
+      {
+        "id": "bun",
+        "importance": 0.023668,
+        "label": "Blood urea nitrogen"
+      },
+      {
+        "id": "region_rwma",
+        "importance": 0.019762,
+        "label": "Regions with wall-motion abnormality"
+      },
+      {
+        "id": "t_inversion",
+        "importance": 0.015093,
+        "label": "T inversion"
+      },
+      {
+        "id": "htn",
+        "importance": 0.014557,
+        "label": "Hypertension"
+      },
+      {
+        "id": "fh",
+        "importance": 0.005285,
+        "label": "Family history of CAD"
+      },
+      {
+        "id": "smoking",
+        "importance": 0.005062,
+        "label": "Smoking status"
+      },
+      {
+        "id": "dlp",
+        "importance": 0.002697,
+        "label": "Dyslipidemia"
+      },
+      {
+        "id": "obesity",
+        "importance": 0.002427,
+        "label": "Obesity"
+      },
+      {
+        "id": "airway_disease",
+        "importance": 0.0,
+        "label": "Airway disease"
+      },
+      {
+        "id": "bbb",
+        "importance": 0.0,
+        "label": "Bundle branch block"
+      },
+      {
+        "id": "chf",
+        "importance": 0.0,
+        "label": "Congestive heart failure"
+      },
+      {
+        "id": "crf",
+        "importance": 0.0,
+        "label": "Chronic renal failure"
+      },
+      {
+        "id": "cva",
+        "importance": 0.0,
+        "label": "Prior stroke (CVA)"
+      },
+      {
+        "id": "diastolic_murmur",
+        "importance": 0.0,
+        "label": "Diastolic murmur"
+      },
+      {
+        "id": "edema",
+        "importance": 0.0,
+        "label": "Edema"
+      },
+      {
+        "id": "lowth_ang",
+        "importance": 0.0,
+        "label": "Low-threshold angina"
+      },
+      {
+        "id": "lung_rales",
+        "importance": 0.0,
+        "label": "Lung rales"
+      },
+      {
+        "id": "lvh",
+        "importance": 0.0,
+        "label": "LV hypertrophy"
+      },
+      {
+        "id": "poor_r_progression",
+        "importance": 0.0,
+        "label": "Poor R-wave progression"
+      },
+      {
+        "id": "q_wave",
+        "importance": 0.0,
+        "label": "Q wave"
+      },
+      {
+        "id": "st_elevation",
+        "importance": 0.0,
+        "label": "ST elevation"
+      },
+      {
+        "id": "systolic_murmur",
+        "importance": 0.0,
+        "label": "Systolic murmur"
+      },
+      {
+        "id": "thyroid_disease",
+        "importance": 0.0,
+        "label": "Thyroid disease"
+      },
+      {
+        "id": "weak_peripheral_pulse",
+        "importance": 0.0,
+        "label": "Weak peripheral pulse"
+      }
+    ]
+  },
+  "split": {
+    "n_test": 61,
+    "n_train": 242,
+    "seed": 42,
+    "stratify_on": [
+      "LAD",
+      "LCX",
+      "RCA"
+    ],
+    "test_size": 0.2
+  },
+  "targets": {
+    "CAD": {
+      "calibration_bins": [
+        {
+          "fraction_positive": 0.08,
+          "mean_predicted": 0.061888,
+          "n": 25
+        },
+        {
+          "fraction_positive": 0.12,
+          "mean_predicted": 0.194602,
+          "n": 25
+        },
+        {
+          "fraction_positive": 0.458333,
+          "mean_predicted": 0.46755,
+          "n": 24
+        },
+        {
+          "fraction_positive": 0.833333,
+          "mean_predicted": 0.739446,
+          "n": 24
+        },
+        {
+          "fraction_positive": 0.791667,
+          "mean_predicted": 0.889084,
+          "n": 24
+        },
+        {
+          "fraction_positive": 0.958333,
+          "mean_predicted": 0.939169,
+          "n": 24
+        },
+        {
+          "fraction_positive": 1.0,
+          "mean_predicted": 0.9624,
+          "n": 24
+        },
+        {
+          "fraction_positive": 0.958333,
+          "mean_predicted": 0.976119,
+          "n": 24
+        },
+        {
+          "fraction_positive": 1.0,
+          "mean_predicted": 0.98601,
+          "n": 24
+        },
+        {
+          "fraction_positive": 0.958333,
+          "mean_predicted": 0.994887,
+          "n": 24
+        }
+      ],
+      "confusion_test": {
+        "fn": 10,
+        "fp": 6,
+        "tn": 11,
+        "tp": 34
+      },
+      "cv": {
+        "accuracy": {
+          "mean": 0.898214,
+          "std": 0.036451
+        },
+        "brier": {
+          "mean": 0.085264,
+          "std": 0.016299
+        },
+        "f1": {
+          "mean": 0.928935,
+          "std": 0.026656
+        },
+        "precision": {
+          "mean": 0.917609,
+          "std": 0.02385
+        },
+        "recall": {
+          "mean": 0.942297,
+          "std": 0.050658
+        },
+        "roc_auc": {
+          "mean": 0.932149,
+          "std": 0.029722
+        }
+      },
+      "label": "Overall CAD",
+      "prevalence": {
+        "test": 0.721311,
+        "train": 0.710744
+      },
+      "roc_test": {
+        "fpr": [
+          0.0,
+          0.0,
+          0.0,
+          0.058824,
+          0.058824,
+          0.117647,
+          0.117647,
+          0.294118,
+          0.294118,
+          0.352941,
+          0.352941,
+          0.411765,
+          0.411765,
+          0.470588,
+          0.470588,
+          0.529412,
+          0.529412,
+          0.705882,
+          0.705882,
+          0.823529,
+          0.823529,
+          0.882353,
+          0.882353,
+          1.0
+        ],
+        "tpr": [
+          0.0,
+          0.022727,
+          0.363636,
+          0.363636,
+          0.545455,
+          0.545455,
+          0.75,
+          0.75,
+          0.772727,
+          0.772727,
+          0.795455,
+          0.795455,
+          0.840909,
+          0.840909,
+          0.863636,
+          0.863636,
+          0.909091,
+          0.909091,
+          0.931818,
+          0.931818,
+          0.977273,
+          0.977273,
+          1.0,
+          1.0
+        ]
+      },
+      "role": "overall",
+      "test": {
+        "accuracy": 0.737705,
+        "brier": 0.174115,
+        "f1": 0.809524,
+        "precision": 0.85,
+        "recall": 0.772727,
+        "roc_auc": 0.823529
+      }
+    },
+    "LAD": {
+      "calibration_bins": [
+        {
+          "fraction_positive": 0.08,
+          "mean_predicted": 0.107196,
+          "n": 25
+        },
+        {
+          "fraction_positive": 0.2,
+          "mean_predicted": 0.211812,
+          "n": 25
+        },
+        {
+          "fraction_positive": 0.25,
+          "mean_predicted": 0.372925,
+          "n": 24
+        },
+        {
+          "fraction_positive": 0.666667,
+          "mean_predicted": 0.507721,
+          "n": 24
+        },
+        {
+          "fraction_positive": 0.5,
+          "mean_predicted": 0.594773,
+          "n": 24
+        },
+        {
+          "fraction_positive": 0.875,
+          "mean_predicted": 0.690058,
+          "n": 24
+        },
+        {
+          "fraction_positive": 0.791667,
+          "mean_predicted": 0.77693,
+          "n": 24
+        },
+        {
+          "fraction_positive": 0.791667,
+          "mean_predicted": 0.838456,
+          "n": 24
+        },
+        {
+          "fraction_positive": 0.916667,
+          "mean_predicted": 0.901871,
+          "n": 24
+        },
+        {
+          "fraction_positive": 0.875,
+          "mean_predicted": 0.938413,
+          "n": 24
+        }
+      ],
+      "confusion_test": {
+        "fn": 4,
+        "fp": 11,
+        "tn": 16,
+        "tp": 30
+      },
+      "cv": {
+        "accuracy": {
+          "mean": 0.778118,
+          "std": 0.037027
+        },
+        "brier": {
+          "mean": 0.161236,
+          "std": 0.02229
+        },
+        "f1": {
+          "mean": 0.819773,
+          "std": 0.03763
+        },
+        "precision": {
+          "mean": 0.786906,
+          "std": 0.038617
+        },
+        "recall": {
+          "mean": 0.862233,
+          "std": 0.085989
+        },
+        "roc_auc": {
+          "mean": 0.835234,
+          "std": 0.053601
+        }
+      },
+      "label": "LAD stenosis",
+      "prevalence": {
+        "test": 0.557377,
+        "train": 0.590909
+      },
+      "roc_test": {
+        "fpr": [
+          0.0,
+          0.0,
+          0.0,
+          0.148148,
+          0.148148,
+          0.185185,
+          0.185185,
+          0.259259,
+          0.259259,
+          0.296296,
+          0.296296,
+          0.333333,
+          0.333333,
+          0.407407,
+          0.407407,
+          0.518519,
+          0.518519,
+          0.592593,
+          0.592593,
+          0.814815,
+          0.814815,
+          0.851852,
+          0.851852,
+          1.0
+        ],
+        "tpr": [
+          0.0,
+          0.029412,
+          0.441176,
+          0.441176,
+          0.558824,
+          0.558824,
+          0.588235,
+          0.588235,
+          0.676471,
+          0.676471,
+          0.735294,
+          0.735294,
+          0.852941,
+          0.852941,
+          0.882353,
+          0.882353,
+          0.911765,
+          0.911765,
+          0.941176,
+          0.941176,
+          0.970588,
+          0.970588,
+          1.0,
+          1.0
+        ]
+      },
+      "role": "vessel",
+      "test": {
+        "accuracy": 0.754098,
+        "brier": 0.182951,
+        "f1": 0.8,
+        "precision": 0.731707,
+        "recall": 0.882353,
+        "roc_auc": 0.803922
+      }
+    },
+    "LCX": {
+      "calibration_bins": [
+        {
+          "fraction_positive": 0.04,
+          "mean_predicted": 0.134926,
+          "n": 25
+        },
+        {
+          "fraction_positive": 0.12,
+          "mean_predicted": 0.208729,
+          "n": 25
+        },
+        {
+          "fraction_positive": 0.25,
+          "mean_predicted": 0.252435,
+          "n": 24
+        },
+        {
+          "fraction_positive": 0.333333,
+          "mean_predicted": 0.309916,
+          "n": 24
+        },
+        {
+          "fraction_positive": 0.291667,
+          "mean_predicted": 0.362397,
+          "n": 24
+        },
+        {
+          "fraction_positive": 0.5,
+          "mean_predicted": 0.405873,
+          "n": 24
+        },
+        {
+          "fraction_positive": 0.458333,
+          "mean_predicted": 0.448535,
+          "n": 24
+        },
+        {
+          "fraction_positive": 0.541667,
+          "mean_predicted": 0.493266,
+          "n": 24
+        },
+        {
+          "fraction_positive": 0.625,
+          "mean_predicted": 0.559554,
+          "n": 24
+        },
+        {
+          "fraction_positive": 0.666667,
+          "mean_predicted": 0.66429,
+          "n": 24
+        }
+      ],
+      "confusion_test": {
+        "fn": 15,
+        "fp": 7,
+        "tn": 27,
+        "tp": 12
+      },
+      "cv": {
+        "accuracy": {
+          "mean": 0.679138,
+          "std": 0.048659
+        },
+        "brier": {
+          "mean": 0.203152,
+          "std": 0.022465
+        },
+        "f1": {
+          "mean": 0.478553,
+          "std": 0.080415
+        },
+        "precision": {
+          "mean": 0.655494,
+          "std": 0.137064
+        },
+        "recall": {
+          "mean": 0.395517,
+          "std": 0.103894
+        },
+        "roc_auc": {
+          "mean": 0.729142,
+          "std": 0.080139
+        }
+      },
+      "label": "LCX stenosis",
+      "prevalence": {
+        "test": 0.442623,
+        "train": 0.380165
+      },
+      "roc_test": {
+        "fpr": [
+          0.0,
+          0.0,
+          0.0,
+          0.029412,
+          0.029412,
+          0.117647,
+          0.117647,
+          0.147059,
+          0.147059,
+          0.205882,
+          0.205882,
+          0.294118,
+          0.294118,
+          0.323529,
+          0.323529,
+          0.352941,
+          0.352941,
+          0.5,
+          0.5,
+          0.529412,
+          0.529412,
+          1.0
+        ],
+        "tpr": [
+          0.0,
+          0.037037,
+          0.074074,
+          0.074074,
+          0.296296,
+          0.296296,
+          0.333333,
+          0.333333,
+          0.444444,
+          0.444444,
+          0.62963,
+          0.62963,
+          0.666667,
+          0.666667,
+          0.703704,
+          0.703704,
+          0.851852,
+          0.851852,
+          0.925926,
+          0.925926,
+          1.0,
+          1.0
+        ]
+      },
+      "role": "vessel",
+      "test": {
+        "accuracy": 0.639344,
+        "brier": 0.203633,
+        "f1": 0.521739,
+        "precision": 0.631579,
+        "recall": 0.444444,
+        "roc_auc": 0.783224
+      }
+    },
+    "RCA": {
+      "calibration_bins": [
+        {
+          "fraction_positive": 0.16,
+          "mean_predicted": 0.181099,
+          "n": 25
+        },
+        {
+          "fraction_positive": 0.16,
+          "mean_predicted": 0.240096,
+          "n": 25
+        },
+        {
+          "fraction_positive": 0.208333,
+          "mean_predicted": 0.280756,
+          "n": 24
+        },
+        {
+          "fraction_positive": 0.416667,
+          "mean_predicted": 0.320344,
+          "n": 24
+        },
+        {
+          "fraction_positive": 0.208333,
+          "mean_predicted": 0.362232,
+          "n": 24
+        },
+        {
+          "fraction_positive": 0.333333,
+          "mean_predicted": 0.401234,
+          "n": 24
+        },
+        {
+          "fraction_positive": 0.416667,
+          "mean_predicted": 0.439121,
+          "n": 24
+        },
+        {
+          "fraction_positive": 0.75,
+          "mean_predicted": 0.477981,
+          "n": 24
+        },
+        {
+          "fraction_positive": 0.583333,
+          "mean_predicted": 0.520846,
+          "n": 24
+        },
+        {
+          "fraction_positive": 0.583333,
+          "mean_predicted": 0.644055,
+          "n": 24
+        }
+      ],
+      "confusion_test": {
+        "fn": 15,
+        "fp": 6,
+        "tn": 33,
+        "tp": 7
+      },
+      "cv": {
+        "accuracy": {
+          "mean": 0.659807,
+          "std": 0.036174
+        },
+        "brier": {
+          "mean": 0.216089,
+          "std": 0.01105
+        },
+        "f1": {
+          "mean": 0.374587,
+          "std": 0.195657
+        },
+        "precision": {
+          "mean": 0.559977,
+          "std": 0.25969
+        },
+        "recall": {
+          "mean": 0.311696,
+          "std": 0.183429
+        },
+        "roc_auc": {
+          "mean": 0.698057,
+          "std": 0.058362
+        }
+      },
+      "label": "RCA stenosis",
+      "prevalence": {
+        "test": 0.360656,
+        "train": 0.380165
+      },
+      "roc_test": {
+        "fpr": [
+          0.0,
+          0.0,
+          0.0,
+          0.076923,
+          0.076923,
+          0.102564,
+          0.102564,
+          0.153846,
+          0.153846,
+          0.205128,
+          0.205128,
+          0.307692,
+          0.307692,
+          0.333333,
+          0.333333,
+          0.461538,
+          0.461538,
+          0.538462,
+          0.538462,
+          0.589744,
+          0.589744,
+          0.769231,
+          0.769231,
+          0.923077,
+          0.923077,
+          0.974359,
+          0.974359,
+          1.0
+        ],
+        "tpr": [
+          0.0,
+          0.045455,
+          0.181818,
+          0.181818,
+          0.272727,
+          0.272727,
+          0.318182,
+          0.318182,
+          0.5,
+          0.5,
+          0.590909,
+          0.590909,
+          0.636364,
+          0.636364,
+          0.681818,
+          0.681818,
+          0.727273,
+          0.727273,
+          0.818182,
+          0.818182,
+          0.863636,
+          0.863636,
+          0.909091,
+          0.909091,
+          0.954545,
+          0.954545,
+          1.0,
+          1.0
+        ]
+      },
+      "role": "vessel",
+      "test": {
+        "accuracy": 0.655738,
+        "brier": 0.204515,
+        "f1": 0.4,
+        "precision": 0.538462,
+        "recall": 0.318182,
+        "roc_auc": 0.694639
+      }
+    }
+  },
+  "threshold": 0.5
+}

@@ -172,18 +172,22 @@ class FeatureSchema(_Strict):
     @property
     def model_columns(self) -> list[str]:
         """Fixed-order model matrix columns: yaml order, with multi-column inputs expanded."""
-        cols: list[str] = []
-        for f in self.features:
-            if isinstance(f, CategoryFeature):
-                enc = f.encoding
-                cols.extend(
-                    enc.model_columns if isinstance(enc, OneHotEncoding) else [enc.model_column]
-                )
-            elif isinstance(f, CompositeFeature):
-                cols.extend(_composite_columns(f))
-            else:
-                cols.append(f.id)
-        return cols
+        return [c for f in self.features for c in feature_model_columns(f)]
+
+    @property
+    def column_to_input(self) -> dict[str, str]:
+        """Model column -> the input id it came from (for aggregating contributions)."""
+        return {c: f.id for f in self.features for c in feature_model_columns(f)}
+
+
+def feature_model_columns(f: Feature) -> list[str]:
+    """Model matrix columns one input expands to."""
+    if isinstance(f, CategoryFeature):
+        enc = f.encoding
+        return enc.model_columns if isinstance(enc, OneHotEncoding) else [enc.model_column]
+    if isinstance(f, CompositeFeature):
+        return _composite_columns(f)
+    return [f.id]
 
 
 def _composite_columns(f: CompositeFeature) -> list[str]:

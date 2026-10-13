@@ -1,0 +1,19 @@
+{
+  "model": "xgb",
+  "params": {
+    "colsample_bytree": 0.8,
+    "eval_metric": "logloss",
+    "learning_rate": 0.05,
+    "max_depth": 3,
+    "min_child_weight": 2,
+    "n_estimators": 300,
+    "reg_lambda": 1.0,
+    "subsample": 0.8
+  },
+  "scale_pos_weight": {
+    "CAD": 0.406977,
+    "LAD": 0.692308,
+    "LCX": 1.630435,
+    "RCA": 1.630435
+  }
+}

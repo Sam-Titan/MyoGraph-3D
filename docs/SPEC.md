@@ -55,12 +55,12 @@ Always with a visible disclaimer: *decision support / educational only — not a
       def fit(self, X, y) -> None
       def predict_proba(self, X) -> np.ndarray          # calibrated P(positive)
       def explain(self, X) -> Explanation               # per-column contributions in calibrated log-odds + base value
-      def save(self, path) / load(cls, path)
+      def save(self, path) / load(cls, path, calibration)   # calibration (a, b) lives in calibration.json
   ```
   Adding TabPFN / LightGBM later = a new file implementing this, plus a registry entry. No other changes.
 - Starting hyper-parameters (a quick baseline already gave the numbers in 4.4):
   `n_estimators=300, max_depth=3, learning_rate=0.05, subsample=0.8, colsample_bytree=0.8, min_child_weight=2, reg_lambda=1.0, scale_pos_weight=neg/pos (per target), eval_metric="logloss"`.
-- Optional, time-boxed: a 20-iteration randomized search on train CV (ROC-AUC). Persist the chosen params in `artifacts/params.json`.
+- Optional, time-boxed (skipped in Phase 2; baseline params used): a 20-iteration randomized search on train CV (ROC-AUC). Persist the chosen params in `artifacts/params.json`.
 
 ### 4.3 Calibration and explanations (exact, cheap)
 - Get **out-of-fold raw margins** on train (5-fold), fit a 1-D logistic regression `logit_cal = a·margin + b` (Platt scaling). Then refit XGBoost on the full train set.
