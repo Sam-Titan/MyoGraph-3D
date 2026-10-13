@@ -115,7 +115,7 @@ Pydantic models are the source of truth. `make types` dumps the schema offline (
 | `GET /api/features` | Form schema: `targets[{id, label, role, node}]` (`role` = `overall | vessel` from `features.yaml`; node from `anatomy.yaml`), groups, and per-input `{id, label, group, kind, unit, input{min,max,step}, options[], reference{low,high}, observed{min,max}, default, help}`. Built from `features.yaml` + `anatomy.yaml` + `feature_stats.json`. |
 | `GET /api/presets` | `[{id, label, description, values{input_id: value}, truth{CAD,LAD,LCX,RCA: bool}}]` |
 | `POST /api/predict` | Body `{values: {input_id: value}}` (all 49 inputs; derived fields are ignored if sent) → response below |
-| `GET /api/metrics` | Contents of `metrics.json` (typed) |
+| `GET /api/metrics` | Contents of `metrics.json` (typed) plus `stability` (contents of `stability.json`: per-target median/IQR/min/max and the seed-42 percentile) |
 
 `POST /api/predict` response:
 ```jsonc
@@ -133,7 +133,8 @@ Pydantic models are the source of truth. `make types` dumps the schema offline (
     }, "LAD": { ... }, "LCX": { ... }, "RCA": { ... }
   },
   "breakdown": [
-    { "id": "ldl", "label": "LDL cholesterol", "value": 162, "unit": "mg/dL",
+    { "id": "ldl", "label": "LDL cholesterol", "group": "labs", "kind": "number",  // kind: number | derived | binary
+      "value": 162, "unit": "mg/dL",
       "reference": { "low": 0, "high": 129 }, "status": "high",           // low | normal | high | null
       "outside_training_range": false,
       "contribution": { "CAD": 0.21, "LAD": 0.15, "LCX": 0.02, "RCA": -0.01 } }
@@ -141,7 +142,8 @@ Pydantic models are the source of truth. `make types` dumps the schema offline (
   "warnings": ["Age 95 is outside the training data range (30–86)"]
 }
 ```
-- Validation: Pydantic rejects out-of-`input` bounds (422) with field-level messages. Values outside the *observed* training range are allowed but produce a warning.
+- `positive` is `probability >= threshold`, where `threshold` is the target's tuned (Youden, train OOF) threshold from `calibration.json`. `breakdown` lists numeric inputs, derived BMI/obesity and binaries (categories only appear in `explanations`).
+- Validation: out-of-`input` bounds, non-finite numbers (NaN/±Infinity), missing inputs and unknown options are rejected (422) with field-level messages. Values outside the *observed* training range are allowed but produce a warning.
 - Latency target: < 50 ms per predict on CPU (4 models + contributions for 1 row).
 - CORS: allow `http://localhost:5173` in dev. In Docker, nginx proxies `/api`, so it's same-origin.
 

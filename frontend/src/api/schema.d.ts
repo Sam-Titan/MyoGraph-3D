@@ -21,16 +21,445 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/features": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Features */
+        get: operations["features_api_features_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/presets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Presets */
+        get: operations["presets_api_presets_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/predict": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Predict */
+        post: operations["predict_api_predict_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/metrics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Metrics */
+        get: operations["metrics_api_metrics_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** BreakdownRow */
+        BreakdownRow: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /** Group */
+            group: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "number" | "derived" | "binary";
+            /** Value */
+            value: number;
+            /** Unit */
+            unit?: string | null;
+            reference?: components["schemas"]["RangeInfo"] | null;
+            /** Status */
+            status?: ("low" | "normal" | "high") | null;
+            /** Outside Training Range */
+            outside_training_range: boolean;
+            /** Contribution */
+            contribution: {
+                [key: string]: number;
+            };
+        };
+        /** CalibrationBin */
+        CalibrationBin: {
+            /** Fraction Positive */
+            fraction_positive: number;
+            /** Mean Predicted */
+            mean_predicted: number;
+            /** N */
+            n: number;
+        };
+        /** Confusion */
+        Confusion: {
+            /** Tp */
+            tp: number;
+            /** Fp */
+            fp: number;
+            /** Tn */
+            tn: number;
+            /** Fn */
+            fn: number;
+        };
+        /** ConfusionPair */
+        ConfusionPair: {
+            default: components["schemas"]["Confusion"];
+            tuned: components["schemas"]["Confusion"];
+        };
+        /** Contribution */
+        Contribution: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /** Display Value */
+            display_value: string;
+            /** Logit */
+            logit: number;
+        };
+        /** CvMetrics */
+        CvMetrics: {
+            /** Default */
+            default: {
+                [key: string]: components["schemas"]["MetricStat"];
+            };
+            /** Tuned */
+            tuned: {
+                [key: string]: components["schemas"]["MetricStat"];
+            };
+        };
+        /** FeatureInfo */
+        FeatureInfo: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /** Group */
+            group: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "number" | "binary" | "category" | "composite" | "derived";
+            /** Unit */
+            unit?: string | null;
+            input?: components["schemas"]["InputBoundsInfo"] | null;
+            /**
+             * Options
+             * @default []
+             */
+            options: components["schemas"]["OptionInfo"][];
+            reference?: components["schemas"]["RangeInfo"] | null;
+            observed?: components["schemas"]["ObservedInfo"] | null;
+            /** Default */
+            default?: number | string | null;
+        };
+        /** FeaturesResponse */
+        FeaturesResponse: {
+            /** Targets */
+            targets: components["schemas"]["TargetInfo"][];
+            /** Groups */
+            groups: components["schemas"]["GroupInfo"][];
+            /** Features */
+            features: components["schemas"]["FeatureInfo"][];
+        };
+        /** GroupInfo */
+        GroupInfo: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+        };
+        /** HTTPValidationError */
+        HTTPValidationError: {
+            /** Detail */
+            detail?: components["schemas"]["ValidationError"][];
+        };
         /** HealthResponse */
         HealthResponse: {
             /** Status */
             status: string;
             /** Model Version */
             model_version: string;
+        };
+        /** ImportanceRow */
+        ImportanceRow: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /** Importance */
+            importance: number;
+        };
+        /** InputBoundsInfo */
+        InputBoundsInfo: {
+            /** Min */
+            min: number;
+            /** Max */
+            max: number;
+            /** Step */
+            step: number;
+        };
+        /** MetricStat */
+        MetricStat: {
+            /** Mean */
+            mean: number;
+            /** Std */
+            std: number;
+        };
+        /** MetricsResponse */
+        MetricsResponse: {
+            /** Cv */
+            cv: {
+                [key: string]: unknown;
+            };
+            /** Split */
+            split: {
+                [key: string]: unknown;
+            };
+            /** Targets */
+            targets: {
+                [key: string]: components["schemas"]["TargetMetrics"];
+            };
+            /** Feature Importance */
+            feature_importance: {
+                [key: string]: components["schemas"]["ImportanceRow"][];
+            };
+            stability: components["schemas"]["Stability"];
+        };
+        /** ObservedInfo */
+        ObservedInfo: {
+            /** Min */
+            min: number;
+            /** Max */
+            max: number;
+        };
+        /** OptionInfo */
+        OptionInfo: {
+            /** Value */
+            value: string;
+            /** Label */
+            label: string;
+        };
+        /** PredictRequest */
+        PredictRequest: {
+            /** Values */
+            values: {
+                [key: string]: number | string;
+            };
+        };
+        /** PredictResponse */
+        PredictResponse: {
+            /** Model Version */
+            model_version: string;
+            /** Targets */
+            targets: {
+                [key: string]: components["schemas"]["TargetPrediction"];
+            };
+            /** Explanations */
+            explanations: {
+                [key: string]: components["schemas"]["TargetExplanation"];
+            };
+            /** Breakdown */
+            breakdown: components["schemas"]["BreakdownRow"][];
+            /** Warnings */
+            warnings: string[];
+        };
+        /** Preset */
+        Preset: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /** Description */
+            description: string;
+            /** Values */
+            values: {
+                [key: string]: number | string;
+            };
+            /** Truth */
+            truth: {
+                [key: string]: boolean;
+            };
+        };
+        /** Prevalence */
+        Prevalence: {
+            /** Train */
+            train: number;
+            /** Test */
+            test: number;
+        };
+        /** RangeInfo */
+        RangeInfo: {
+            /** Low */
+            low: number;
+            /** High */
+            high: number;
+        };
+        /** RocCurve */
+        RocCurve: {
+            /** Fpr */
+            fpr: number[];
+            /** Tpr */
+            tpr: number[];
+        };
+        /** Stability */
+        Stability: {
+            /** Official Seed */
+            official_seed: number;
+            /** Seeds */
+            seeds: number[];
+            /** Targets */
+            targets: {
+                [key: string]: {
+                    [key: string]: components["schemas"]["StabilityStat"];
+                };
+            };
+        };
+        /** StabilityStat */
+        StabilityStat: {
+            /** Median */
+            median: number;
+            /** Iqr */
+            iqr: number;
+            /** Q25 */
+            q25: number;
+            /** Q75 */
+            q75: number;
+            /** Min */
+            min: number;
+            /** Max */
+            max: number;
+            /** Official */
+            official: number;
+            /** Official Percentile */
+            official_percentile: number;
+            /** Values */
+            values: number[];
+        };
+        /** TargetExplanation */
+        TargetExplanation: {
+            /** Base Probability */
+            base_probability: number;
+            /** Base Logit */
+            base_logit: number;
+            /** Contributions */
+            contributions: components["schemas"]["Contribution"][];
+        };
+        /** TargetInfo */
+        TargetInfo: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "overall" | "vessel";
+            /** Node */
+            node: string;
+        };
+        /** TargetMetrics */
+        TargetMetrics: {
+            /** Label */
+            label: string;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "overall" | "vessel";
+            prevalence: components["schemas"]["Prevalence"];
+            cv: components["schemas"]["CvMetrics"];
+            test: components["schemas"]["TestMetrics"];
+            threshold: components["schemas"]["ThresholdInfo"];
+            roc_test: components["schemas"]["RocCurve"];
+            confusion_test: components["schemas"]["ConfusionPair"];
+            /** Calibration Bins */
+            calibration_bins: components["schemas"]["CalibrationBin"][];
+        };
+        /** TargetPrediction */
+        TargetPrediction: {
+            /** Probability */
+            probability: number;
+            /** Positive */
+            positive: boolean;
+            /** Threshold */
+            threshold: number;
+        };
+        /** TestMetrics */
+        TestMetrics: {
+            /** Default */
+            default: {
+                [key: string]: number;
+            };
+            /** Tuned */
+            tuned: {
+                [key: string]: number;
+            };
+        };
+        /** ThresholdInfo */
+        ThresholdInfo: {
+            /** Cv Mean */
+            cv_mean: number;
+            /** Cv Std */
+            cv_std: number;
+            /** Default */
+            default: number;
+            /** Tuned */
+            tuned: number;
+        };
+        /** ValidationError */
+        ValidationError: {
+            /** Location */
+            loc: (string | number)[];
+            /** Message */
+            msg: string;
+            /** Error Type */
+            type: string;
+            /** Input */
+            input?: unknown;
+            /** Context */
+            ctx?: Record<string, never>;
         };
     };
     responses: never;
@@ -57,6 +486,99 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HealthResponse"];
+                };
+            };
+        };
+    };
+    features_api_features_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeaturesResponse"];
+                };
+            };
+        };
+    };
+    presets_api_presets_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Preset"][];
+                };
+            };
+        };
+    };
+    predict_api_predict_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PredictRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PredictResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    metrics_api_metrics_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MetricsResponse"];
                 };
             };
         };

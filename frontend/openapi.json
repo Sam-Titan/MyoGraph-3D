@@ -22,10 +22,477 @@
           }
         }
       }
+    },
+    "/api/features": {
+      "get": {
+        "summary": "Features",
+        "operationId": "features_api_features_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeaturesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/presets": {
+      "get": {
+        "summary": "Presets",
+        "operationId": "presets_api_presets_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Preset"
+                  },
+                  "type": "array",
+                  "title": "Response Presets Api Presets Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/predict": {
+      "post": {
+        "summary": "Predict",
+        "operationId": "predict_api_predict_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PredictRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PredictResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/metrics": {
+      "get": {
+        "summary": "Metrics",
+        "operationId": "metrics_api_metrics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "BreakdownRow": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "group": {
+            "type": "string",
+            "title": "Group"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "number",
+              "derived",
+              "binary"
+            ],
+            "title": "Kind"
+          },
+          "value": {
+            "type": "number",
+            "title": "Value"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          },
+          "reference": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RangeInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "low",
+                  "normal",
+                  "high"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "outside_training_range": {
+            "type": "boolean",
+            "title": "Outside Training Range"
+          },
+          "contribution": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Contribution"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "group",
+          "kind",
+          "value",
+          "outside_training_range",
+          "contribution"
+        ],
+        "title": "BreakdownRow"
+      },
+      "CalibrationBin": {
+        "properties": {
+          "fraction_positive": {
+            "type": "number",
+            "title": "Fraction Positive"
+          },
+          "mean_predicted": {
+            "type": "number",
+            "title": "Mean Predicted"
+          },
+          "n": {
+            "type": "integer",
+            "title": "N"
+          }
+        },
+        "type": "object",
+        "required": [
+          "fraction_positive",
+          "mean_predicted",
+          "n"
+        ],
+        "title": "CalibrationBin"
+      },
+      "Confusion": {
+        "properties": {
+          "tp": {
+            "type": "integer",
+            "title": "Tp"
+          },
+          "fp": {
+            "type": "integer",
+            "title": "Fp"
+          },
+          "tn": {
+            "type": "integer",
+            "title": "Tn"
+          },
+          "fn": {
+            "type": "integer",
+            "title": "Fn"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tp",
+          "fp",
+          "tn",
+          "fn"
+        ],
+        "title": "Confusion"
+      },
+      "ConfusionPair": {
+        "properties": {
+          "default": {
+            "$ref": "#/components/schemas/Confusion"
+          },
+          "tuned": {
+            "$ref": "#/components/schemas/Confusion"
+          }
+        },
+        "type": "object",
+        "required": [
+          "default",
+          "tuned"
+        ],
+        "title": "ConfusionPair"
+      },
+      "Contribution": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "display_value": {
+            "type": "string",
+            "title": "Display Value"
+          },
+          "logit": {
+            "type": "number",
+            "title": "Logit"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "display_value",
+          "logit"
+        ],
+        "title": "Contribution"
+      },
+      "CvMetrics": {
+        "properties": {
+          "default": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/MetricStat"
+            },
+            "type": "object",
+            "title": "Default"
+          },
+          "tuned": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/MetricStat"
+            },
+            "type": "object",
+            "title": "Tuned"
+          }
+        },
+        "type": "object",
+        "required": [
+          "default",
+          "tuned"
+        ],
+        "title": "CvMetrics"
+      },
+      "FeatureInfo": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "group": {
+            "type": "string",
+            "title": "Group"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "number",
+              "binary",
+              "category",
+              "composite",
+              "derived"
+            ],
+            "title": "Kind"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          },
+          "input": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InputBoundsInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/OptionInfo"
+            },
+            "type": "array",
+            "title": "Options",
+            "default": []
+          },
+          "reference": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RangeInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "observed": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ObservedInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "default": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "group",
+          "kind"
+        ],
+        "title": "FeatureInfo"
+      },
+      "FeaturesResponse": {
+        "properties": {
+          "targets": {
+            "items": {
+              "$ref": "#/components/schemas/TargetInfo"
+            },
+            "type": "array",
+            "title": "Targets"
+          },
+          "groups": {
+            "items": {
+              "$ref": "#/components/schemas/GroupInfo"
+            },
+            "type": "array",
+            "title": "Groups"
+          },
+          "features": {
+            "items": {
+              "$ref": "#/components/schemas/FeatureInfo"
+            },
+            "type": "array",
+            "title": "Features"
+          }
+        },
+        "type": "object",
+        "required": [
+          "targets",
+          "groups",
+          "features"
+        ],
+        "title": "FeaturesResponse"
+      },
+      "GroupInfo": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "label"
+        ],
+        "title": "GroupInfo"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
       "HealthResponse": {
         "properties": {
           "status": {
@@ -43,6 +510,644 @@
           "model_version"
         ],
         "title": "HealthResponse"
+      },
+      "ImportanceRow": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "importance": {
+            "type": "number",
+            "title": "Importance"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "importance"
+        ],
+        "title": "ImportanceRow"
+      },
+      "InputBoundsInfo": {
+        "properties": {
+          "min": {
+            "type": "number",
+            "title": "Min"
+          },
+          "max": {
+            "type": "number",
+            "title": "Max"
+          },
+          "step": {
+            "type": "number",
+            "title": "Step"
+          }
+        },
+        "type": "object",
+        "required": [
+          "min",
+          "max",
+          "step"
+        ],
+        "title": "InputBoundsInfo"
+      },
+      "MetricStat": {
+        "properties": {
+          "mean": {
+            "type": "number",
+            "title": "Mean"
+          },
+          "std": {
+            "type": "number",
+            "title": "Std"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mean",
+          "std"
+        ],
+        "title": "MetricStat"
+      },
+      "MetricsResponse": {
+        "properties": {
+          "cv": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Cv"
+          },
+          "split": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Split"
+          },
+          "targets": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/TargetMetrics"
+            },
+            "type": "object",
+            "title": "Targets"
+          },
+          "feature_importance": {
+            "additionalProperties": {
+              "items": {
+                "$ref": "#/components/schemas/ImportanceRow"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Feature Importance"
+          },
+          "stability": {
+            "$ref": "#/components/schemas/Stability"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cv",
+          "split",
+          "targets",
+          "feature_importance",
+          "stability"
+        ],
+        "title": "MetricsResponse"
+      },
+      "ObservedInfo": {
+        "properties": {
+          "min": {
+            "type": "number",
+            "title": "Min"
+          },
+          "max": {
+            "type": "number",
+            "title": "Max"
+          }
+        },
+        "type": "object",
+        "required": [
+          "min",
+          "max"
+        ],
+        "title": "ObservedInfo"
+      },
+      "OptionInfo": {
+        "properties": {
+          "value": {
+            "type": "string",
+            "title": "Value"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          }
+        },
+        "type": "object",
+        "required": [
+          "value",
+          "label"
+        ],
+        "title": "OptionInfo"
+      },
+      "PredictRequest": {
+        "properties": {
+          "values": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Values"
+          }
+        },
+        "type": "object",
+        "required": [
+          "values"
+        ],
+        "title": "PredictRequest"
+      },
+      "PredictResponse": {
+        "properties": {
+          "model_version": {
+            "type": "string",
+            "title": "Model Version"
+          },
+          "targets": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/TargetPrediction"
+            },
+            "type": "object",
+            "title": "Targets"
+          },
+          "explanations": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/TargetExplanation"
+            },
+            "type": "object",
+            "title": "Explanations"
+          },
+          "breakdown": {
+            "items": {
+              "$ref": "#/components/schemas/BreakdownRow"
+            },
+            "type": "array",
+            "title": "Breakdown"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "model_version",
+          "targets",
+          "explanations",
+          "breakdown",
+          "warnings"
+        ],
+        "title": "PredictResponse"
+      },
+      "Preset": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "values": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Values"
+          },
+          "truth": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object",
+            "title": "Truth"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "description",
+          "values",
+          "truth"
+        ],
+        "title": "Preset"
+      },
+      "Prevalence": {
+        "properties": {
+          "train": {
+            "type": "number",
+            "title": "Train"
+          },
+          "test": {
+            "type": "number",
+            "title": "Test"
+          }
+        },
+        "type": "object",
+        "required": [
+          "train",
+          "test"
+        ],
+        "title": "Prevalence"
+      },
+      "RangeInfo": {
+        "properties": {
+          "low": {
+            "type": "number",
+            "title": "Low"
+          },
+          "high": {
+            "type": "number",
+            "title": "High"
+          }
+        },
+        "type": "object",
+        "required": [
+          "low",
+          "high"
+        ],
+        "title": "RangeInfo"
+      },
+      "RocCurve": {
+        "properties": {
+          "fpr": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Fpr"
+          },
+          "tpr": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Tpr"
+          }
+        },
+        "type": "object",
+        "required": [
+          "fpr",
+          "tpr"
+        ],
+        "title": "RocCurve"
+      },
+      "Stability": {
+        "properties": {
+          "official_seed": {
+            "type": "integer",
+            "title": "Official Seed"
+          },
+          "seeds": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Seeds"
+          },
+          "targets": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "$ref": "#/components/schemas/StabilityStat"
+              },
+              "type": "object"
+            },
+            "type": "object",
+            "title": "Targets"
+          }
+        },
+        "type": "object",
+        "required": [
+          "official_seed",
+          "seeds",
+          "targets"
+        ],
+        "title": "Stability"
+      },
+      "StabilityStat": {
+        "properties": {
+          "median": {
+            "type": "number",
+            "title": "Median"
+          },
+          "iqr": {
+            "type": "number",
+            "title": "Iqr"
+          },
+          "q25": {
+            "type": "number",
+            "title": "Q25"
+          },
+          "q75": {
+            "type": "number",
+            "title": "Q75"
+          },
+          "min": {
+            "type": "number",
+            "title": "Min"
+          },
+          "max": {
+            "type": "number",
+            "title": "Max"
+          },
+          "official": {
+            "type": "number",
+            "title": "Official"
+          },
+          "official_percentile": {
+            "type": "number",
+            "title": "Official Percentile"
+          },
+          "values": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Values"
+          }
+        },
+        "type": "object",
+        "required": [
+          "median",
+          "iqr",
+          "q25",
+          "q75",
+          "min",
+          "max",
+          "official",
+          "official_percentile",
+          "values"
+        ],
+        "title": "StabilityStat"
+      },
+      "TargetExplanation": {
+        "properties": {
+          "base_probability": {
+            "type": "number",
+            "title": "Base Probability"
+          },
+          "base_logit": {
+            "type": "number",
+            "title": "Base Logit"
+          },
+          "contributions": {
+            "items": {
+              "$ref": "#/components/schemas/Contribution"
+            },
+            "type": "array",
+            "title": "Contributions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "base_probability",
+          "base_logit",
+          "contributions"
+        ],
+        "title": "TargetExplanation"
+      },
+      "TargetInfo": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "overall",
+              "vessel"
+            ],
+            "title": "Role"
+          },
+          "node": {
+            "type": "string",
+            "title": "Node"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "role",
+          "node"
+        ],
+        "title": "TargetInfo"
+      },
+      "TargetMetrics": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "overall",
+              "vessel"
+            ],
+            "title": "Role"
+          },
+          "prevalence": {
+            "$ref": "#/components/schemas/Prevalence"
+          },
+          "cv": {
+            "$ref": "#/components/schemas/CvMetrics"
+          },
+          "test": {
+            "$ref": "#/components/schemas/TestMetrics"
+          },
+          "threshold": {
+            "$ref": "#/components/schemas/ThresholdInfo"
+          },
+          "roc_test": {
+            "$ref": "#/components/schemas/RocCurve"
+          },
+          "confusion_test": {
+            "$ref": "#/components/schemas/ConfusionPair"
+          },
+          "calibration_bins": {
+            "items": {
+              "$ref": "#/components/schemas/CalibrationBin"
+            },
+            "type": "array",
+            "title": "Calibration Bins"
+          }
+        },
+        "type": "object",
+        "required": [
+          "label",
+          "role",
+          "prevalence",
+          "cv",
+          "test",
+          "threshold",
+          "roc_test",
+          "confusion_test",
+          "calibration_bins"
+        ],
+        "title": "TargetMetrics"
+      },
+      "TargetPrediction": {
+        "properties": {
+          "probability": {
+            "type": "number",
+            "title": "Probability"
+          },
+          "positive": {
+            "type": "boolean",
+            "title": "Positive"
+          },
+          "threshold": {
+            "type": "number",
+            "title": "Threshold"
+          }
+        },
+        "type": "object",
+        "required": [
+          "probability",
+          "positive",
+          "threshold"
+        ],
+        "title": "TargetPrediction"
+      },
+      "TestMetrics": {
+        "properties": {
+          "default": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Default"
+          },
+          "tuned": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Tuned"
+          }
+        },
+        "type": "object",
+        "required": [
+          "default",
+          "tuned"
+        ],
+        "title": "TestMetrics"
+      },
+      "ThresholdInfo": {
+        "properties": {
+          "cv_mean": {
+            "type": "number",
+            "title": "Cv Mean"
+          },
+          "cv_std": {
+            "type": "number",
+            "title": "Cv Std"
+          },
+          "default": {
+            "type": "number",
+            "title": "Default"
+          },
+          "tuned": {
+            "type": "number",
+            "title": "Tuned"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cv_mean",
+          "cv_std",
+          "default",
+          "tuned"
+        ],
+        "title": "ThresholdInfo"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
       }
     }
   }
