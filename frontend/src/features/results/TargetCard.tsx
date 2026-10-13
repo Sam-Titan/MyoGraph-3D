@@ -18,26 +18,28 @@ interface Props {
   onSelect: () => void
 }
 
-/** One target: model estimate, tuned-threshold verdict and (for presets) the actual finding. */
+/**
+ * One full-width row per target: line 1 id · label + swatch and %, line 2 verdict · threshold,
+ * line 3 (unedited preset only) the actual finding and whether the estimate agrees.
+ */
 export function TargetCard({ target, prediction, actual, selected, prominent, onSelect }: Props) {
-  const likely = prediction?.positive
   const agrees = actual !== undefined && prediction ? actual === prediction.positive : undefined
   return (
     <button
       type="button"
       aria-pressed={selected}
       onClick={onSelect}
-      className={cn(
-        'w-full rounded-lg border bg-card px-3 py-2.5 text-left transition-colors hover:bg-muted aria-pressed:border-primary aria-pressed:bg-accent',
-        prominent && 'py-3',
-      )}
+      className="block w-full min-w-0 rounded-lg border bg-card px-3 py-2 text-left transition-colors hover:bg-muted aria-pressed:border-primary aria-pressed:bg-accent"
     >
-      <span className="flex items-baseline justify-between gap-2">
-        <span className="min-w-0">
-          <span className="label-caps block">{target.id}</span>
-          <span className="block truncate text-sm">{target.label}</span>
+      <span className="flex items-center justify-between gap-3">
+        <span className="min-w-0 text-sm">
+          <span className="num font-semibold">{target.id}</span>
+          <span aria-hidden className="text-muted-foreground">
+            {' · '}
+          </span>
+          <span className="text-muted-foreground">{target.label}</span>
         </span>
-        <span className="flex items-center gap-1.5">
+        <span className="flex shrink-0 items-center gap-2">
           <span
             aria-hidden
             className="size-2.5 rounded-full border border-black/10"
@@ -45,27 +47,32 @@ export function TargetCard({ target, prediction, actual, selected, prominent, on
           />
           <TweenedPercent
             value={prediction?.probability}
-            className={cn('num font-semibold', prominent ? 'text-3xl' : 'text-xl')}
+            className={cn('num font-semibold', prominent ? 'text-2xl' : 'text-lg')}
           />
         </span>
       </span>
       {prediction && (
-        <span className="mt-1 flex items-center justify-between gap-2 text-xs">
-          <span className="font-medium">{likely ? 'Likely' : 'Unlikely'}</span>
-          <span className="num text-muted-foreground">threshold {pct(prediction.threshold)}</span>
+        <span className="mt-0.5 block text-xs">
+          <span className="font-medium">{prediction.positive ? 'Likely' : 'Unlikely'}</span>
+          <span className="num text-muted-foreground">
+            {' '}
+            · threshold {pct(prediction.threshold)}
+          </span>
         </span>
       )}
       {actual !== undefined && (
-        <span className="mt-1.5 flex items-center justify-between gap-2 border-t pt-1.5 text-xs">
-          <span className="text-muted-foreground">
-            Actual (catheterisation):{' '}
-            <span className="font-medium text-foreground">{actual ? 'Stenotic' : 'Normal'}</span>
+        <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs">
+          <span>
+            <abbr title="catheterisation finding" className="text-muted-foreground no-underline">
+              Actual (cath):
+            </abbr>{' '}
+            <span className="font-medium">{actual ? 'Stenotic' : 'Normal'}</span>
           </span>
           {agrees !== undefined && (
             <span
               className={cn(
-                'inline-flex shrink-0 items-center gap-1 font-medium',
-                agrees ? 'text-foreground' : 'text-destructive',
+                'inline-flex items-center gap-1 font-medium',
+                !agrees && 'text-destructive',
               )}
             >
               {agrees ? (

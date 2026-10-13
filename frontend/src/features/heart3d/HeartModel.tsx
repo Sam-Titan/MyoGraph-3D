@@ -14,6 +14,8 @@ const XRAY_OPACITY = 0.25
 const SELECT_BOOST = 0.35
 const HEART_COLOR = '#b58b93' // muted, desaturated rose: not on the risk scale
 const CONTEXT_COLOR = '#aeb6c2'
+/** Optional context nodes hidden by default (veins): neutral blue-grey, never on the risk scale. */
+const OPTIONAL_COLOR = '#7f93ad'
 const reducedMotion = (): boolean => window.matchMedia('(prefers-reduced-motion: reduce)').matches
 type PointerEvent3D = ThreeEvent<PointerEvent>
 const easeOut = (t: number): number => 1 - (1 - t) ** 3
@@ -36,7 +38,15 @@ interface Rig {
 function makeRig(b: NodeBinding): Rig {
   const kind =
     b.target?.role === 'vessel' ? 'risk' : b.target?.role === 'overall' ? 'heart' : 'context'
-  const base = kind === 'heart' ? HEART_COLOR : kind === 'risk' ? '#8a97ad' : CONTEXT_COLOR
+  const optional = kind === 'context' && b.optional && !b.defaultVisible
+  const base =
+    kind === 'heart'
+      ? HEART_COLOR
+      : kind === 'risk'
+        ? '#8a97ad'
+        : optional
+          ? OPTIONAL_COLOR
+          : CONTEXT_COLOR
   const material = new MeshStandardMaterial({
     color: base,
     emissive: base,
@@ -77,15 +87,21 @@ export function HeartModel({ bindings, probabilities, isClick }: Props) {
   const gl = useThree((s) => s.gl)
   const selected = useAppStore((s) => s.selectedTarget)
   const xray = useViewState((s) => s.xray)
+  const shownNodes = useViewState((s) => s.shownNodes)
   const rigs = useMemo(() => bindings.map(makeRig), [bindings])
 
   useLayoutEffect(() => {
     for (const r of rigs) {
-      r.b.object.visible = r.b.defaultVisible
       for (const m of r.b.meshes) m.material = r.material
       r.b.object.renderOrder = r.kind === 'heart' ? 0 : 1
     }
   }, [rigs])
+
+  // Visibility: the node's defaultVisible extra, overridden by the toolbar toggle for optional nodes.
+  useLayoutEffect(() => {
+    for (const r of rigs) r.b.object.visible = shownNodes[r.b.name] ?? r.b.defaultVisible
+    invalidate()
+  }, [rigs, shownNodes, invalidate])
 
   // New probabilities -> start a tween from wherever the colour currently is.
   useEffect(() => {

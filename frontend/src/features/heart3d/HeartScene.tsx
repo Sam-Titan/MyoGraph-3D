@@ -15,7 +15,7 @@ import { Toolbar } from './Toolbar'
 import { useClickGuard } from './useClickGuard'
 import { useHeartModel } from './useHeartModel'
 import { type Probabilities, useProbabilities, useThresholds } from './useProbabilities'
-import { focusTarget } from './useViewState'
+import { focusTarget, useViewState } from './useViewState'
 
 function ModelProgress() {
   const { active, progress } = useProgress()
@@ -41,6 +41,14 @@ interface SceneProps {
 
 function Scene({ targets, probabilities, isClick, effects, onDecline, onIncline }: SceneProps) {
   const { bindings, missing } = useHeartModel(targets)
+
+  // Hidden-by-default context nodes (read from the GLB extras) become toolbar toggles.
+  useEffect(() => {
+    const names = bindings
+      .filter((b) => !b.target && b.optional && !b.defaultVisible)
+      .map((b) => b.name)
+    useViewState.getState().setToggleableNodes(names)
+  }, [bindings])
 
   useEffect(() => {
     for (const t of missing) {

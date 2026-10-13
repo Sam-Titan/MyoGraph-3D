@@ -45,7 +45,7 @@ export function AppShell() {
               </TabsTrigger>
             ))}
           </TabsList>
-          <div className="ml-auto">
+          <div className="ml-auto min-w-0 max-w-full">
             <HealthStatus />
           </div>
         </header>

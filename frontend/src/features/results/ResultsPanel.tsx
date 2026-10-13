@@ -39,7 +39,7 @@ export function ResultsPanel() {
           <div className="space-y-4">
             <div className={cn('space-y-2 transition-opacity', stale && 'opacity-60')}>
               {overall && card(overall, true)}
-              <div className="grid grid-cols-3 gap-2">{vessels.map((t) => card(t))}</div>
+              {vessels.map((t) => card(t))}
               {presetEdited && (
                 <p className="text-xs text-muted-foreground">
                   Patient edited since the preset loaded, so its actual findings no longer apply.

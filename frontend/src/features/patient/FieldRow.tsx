@@ -26,6 +26,7 @@ export function FieldRow({ feature: f, derived }: Props) {
   const invalid = Boolean(error)
 
   let control_: React.ReactNode
+  let rangeBadge: React.ReactNode = null
   if (f.kind === 'derived') {
     control_ = <DerivedField feature={f} state={derived} />
   } else if (f.kind === 'number') {
@@ -34,6 +35,8 @@ export function FieldRow({ feature: f, derived }: Props) {
       f.reference && typeof current === 'number' && Number.isFinite(current)
         ? rangeStatus(current, f.reference)
         : null
+    // Badge sits under the label so the input + unit columns never shift when it appears.
+    rangeBadge = <RangeBadge status={status} />
     control_ = (
       <div className="flex items-center gap-2">
         <Input
@@ -48,8 +51,13 @@ export function FieldRow({ feature: f, derived }: Props) {
           className="num h-8 w-28"
           {...register(f.id, { valueAsNumber: true })}
         />
-        {f.unit && <span className="text-xs text-muted-foreground">{f.unit}</span>}
-        <RangeBadge status={status} />
+        {/* Fixed-width unit column so every number input lines up regardless of unit length. */}
+        <span
+          className="w-14 shrink-0 truncate text-xs text-muted-foreground"
+          title={f.unit ?? undefined}
+        >
+          {f.unit}
+        </span>
       </div>
     )
   } else if (f.kind === 'binary') {
@@ -96,9 +104,12 @@ export function FieldRow({ feature: f, derived }: Props) {
 
   return (
     <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 py-1.5">
-      <Label htmlFor={id} className="text-sm font-normal">
-        {f.label}
-      </Label>
+      <div className="min-w-0 space-y-1">
+        <Label htmlFor={id} className="text-sm font-normal">
+          {f.label}
+        </Label>
+        {rangeBadge && <div>{rangeBadge}</div>}
+      </div>
       <div className="justify-self-end">{control_}</div>
       {error && (
         <p id={`${id}-err`} role="alert" className="col-span-2 text-xs text-destructive">

@@ -21,8 +21,17 @@
 # Some FMA IDs are COMPOSITES (no .obj of their own; their children carry the geometry). The build script
 # must log found/missing per node and FAIL LOUDLY if a target vessel ends up with zero geometry (then use
 # the procedural-tube fallback below).
-# Each built node also carries glTF extras `anchor` [x,y,z]: a point on its surface for <Html> labels
-# (farthest-outward vertex if the centroid is inside the heart, else the vertex nearest the centroid).
+# Each built node also carries glTF extras `anchor` [x,y,z]: a vertex on its surface for <Html> labels.
+# Rule: the vertex maximising dot(v - heart_centroid, side_dir), side_dir from the node's `expect_side`
+# (anterior +Z, posterior -Z, left +X, right -X); among near-ties (5 % of the extent) prefer vertices that
+# face the default camera and are not occluded by the heart. `anchorHidden` is set when none is visible
+# (e.g. LCX sits behind the heart from the front); the label is then drawn dashed. Nodes without
+# `expect_side` use the direction from the heart centroid to their own centroid. Deterministic.
+# Selecting a node rotates the camera to its `viewDir` extra (target -> camera) and fits its bounding box.
+# Optional per-node `view_dir: [x, y, z]` sets it; otherwise it derives from `expect_side` as an
+# azimuth from the anterior axis at the default elevation: anterior 0 deg, right -45 deg (front-right),
+# left +110 deg (left-lateral, slightly posterior), posterior 180 deg. Nodes with neither keep the
+# default anterior view. The frontend never names a vessel: it reads the extra.
 # The API exposes `nodes[].name` + `target` (via GET /api/features -> targets[].node), so the frontend
 # never hard-codes vessel names. A pytest checks every target in features.yaml has exactly one node here.
 

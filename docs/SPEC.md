@@ -182,7 +182,7 @@ Pydantic models are the source of truth. `make types` dumps the schema offline (
 - **Live updates**: on any valid change, debounce 300 ms → `POST /api/predict` via TanStack Query v5 (query key = debounced values, `placeholderData: keepPreviousData`, pass the `signal` to fetch so stale requests abort). Invalid form (zod) → no request, field errors shown. A small "live" indicator pulses while fetching.
 - **Selection** (Zustand `selectedTarget: 'CAD'|'LAD'|'LCX'|'RCA'`, default `CAD`) is shared by the 3D scene, vessel cards and the WHY panel. Click a card ⇄ click a vessel do the same thing.
 - **Disagreement note**: shown when the tuned verdicts conflict: overall CAD is Unlikely but any vessel is Likely, or overall CAD is Likely but no vessel is (each vs its own tuned threshold, i.e. the `positive` flags the cards show). Text: *"Overall CAD and each vessel are predicted by separate models and can disagree. In the training data, almost every patient with a stenotic vessel was labelled CAD."*
-- **WHY panel**: horizontal diverging bars (red = increases risk, teal = decreases; contribution colours are distinct from the risk scale). Top 10 inputs + an aggregated "N other features" bar. Bar labels are "<label>: <display value>" on a fixed-width (~45 %) Y axis, truncated with an ellipsis; the tooltip has the full label, value and signed log-odds. Header: `Average patient (model baseline) 71% → this patient 78%` (the base is the model's mean prediction over training patients, not the prevalence). Axis label: "contribution (log-odds)".
+- **WHY panel**: horizontal diverging bars (red = increases risk, teal = decreases; contribution colours are distinct from the risk scale). Top 10 inputs + an aggregated "N other features" bar. Rendered as HTML rows (not a chart): left "<label>: <display value>" wrapping to at most 2 lines, right a diverging bar centred at 0 with the signed log-odds number; the row tooltip repeats label, value and logit. Header: `Average patient (model baseline) 71% → this patient 78%` (the base is the model's mean prediction over training patients, not the prevalence). Axis label: "contribution (log-odds)".
 - **Physiological breakdown**: table of numeric measurements and key binaries.
   - Columns: value + unit, reference range, status chip (low / normal / high), contribution to the *selected* target as a signed mini-bar.
   - Sortable by |contribution|.
@@ -193,13 +193,13 @@ Pydantic models are the source of truth. `make types` dumps the schema offline (
 - **Fallback**: if a vessel mesh is missing, render a `TubeGeometry` along a `CatmullRomCurve3` from `vessels.fallback.json`. Capture the points with a dev-only point picker (`?picker=1`: click heart surface → log coordinates).
 - **Colour mapping** (`src/lib/riskColor.ts`): continuous probability → colour, interpolated in OKLCH. Stops: 0.0 green `#22c55e` → 0.5 amber `#f59e0b` → 1.0 red `#ef4444`. Emissive intensity grows with risk.
   - Colours animate (~400 ms) on change.
-  - Never rely on colour alone: labels always show the %, and a legend bar is shown. Probabilities are shown as integer % everywhere; the legend marks each target's tuned decision threshold with a tick labelled by target id.
+  - Never rely on colour alone: labels always show the %, and a legend bar is shown. Probabilities are shown as integer % everywhere; the legend marks each target's tuned decision threshold with a tick (faint, id + value in the tooltip) and labels only the selected target's ("CAD threshold 48%").
 - **Heart muscle**: muted desaturated rose, slightly rough material. "X-ray" toggle makes it 25% opaque so posterior vessels (PDA) are visible.
-  - LM and aorta: neutral. Veins: hidden by default.
+  - LM and aorta: neutral. Veins: hidden by default, shown by a toolbar toggle (neutral blue-grey, not clickable). The toggle appears for any optional, default-hidden node in the GLB extras.
 - **Interaction**:
   - drei `CameraControls`: rotate / zoom / pan, with min/max distance clamped.
   - Hover → pointer cursor + `<Html>` tooltip (name, %).
-  - Click a vessel → select + outline (postprocessing `Outline` / `Selection`) + camera fit to that vessel.
+  - Click a vessel → select + outline (postprocessing `Outline` / `Selection`) + the camera orbits to that node's view direction (`viewDir` extra: optional `view_dir`, else derived from `expect_side`: anterior front, right front-right ~45°, left left-lateral ~110°) and fits its bounding box.
   - Click heart body → select CAD.
   - Click empty space / Reset → default view.
   - Optional auto-spin.

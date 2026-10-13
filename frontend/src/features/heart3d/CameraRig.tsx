@@ -9,11 +9,36 @@ import { useViewState } from './useViewState'
 /** Anterior view: patient faces the viewer (+Z toward camera), slightly elevated. */
 const VIEW_DIR = new Vector3(0, 0.35, 1).normalize()
 const UP = new Vector3(0, 1, 0)
-const FIT_PADDING = 0.25
 /** Default view: the heart fills this share of the viewport height, capped by width. */
 const FILL_HEIGHT = 0.7
 const FILL_WIDTH = 0.9
 const SPIN_RAD_PER_S = 0.35
+
+/**
+ * Aspect-aware fit of `box` seen from direction `dir` (target -> camera): project the box corners
+ * onto the view's right/up axes, then size the distance so it fills FILL_HEIGHT of the height
+ * without exceeding FILL_WIDTH of the width.
+ */
+function fitView(box: Box3, dir: Vector3, camera: PerspectiveCamera) {
+  const centre = box.getCenter(new Vector3())
+  const right = new Vector3().crossVectors(UP, dir).normalize()
+  const up = new Vector3().crossVectors(dir, right).normalize()
+  let halfW = 0
+  let halfH = 0
+  let halfD = 0
+  for (const x of [box.min.x, box.max.x])
+    for (const y of [box.min.y, box.max.y])
+      for (const z of [box.min.z, box.max.z]) {
+        const d = new Vector3(x, y, z).sub(centre)
+        halfW = Math.max(halfW, Math.abs(d.dot(right)))
+        halfH = Math.max(halfH, Math.abs(d.dot(up)))
+        halfD = Math.max(halfD, Math.abs(d.dot(dir)))
+      }
+  const tanV = Math.tan(MathUtils.degToRad(camera.fov) / 2)
+  const tanH = tanV * camera.aspect
+  const dist = Math.max(halfH / (tanV * FILL_HEIGHT), halfW / (tanH * FILL_WIDTH)) + halfD
+  return { eye: centre.clone().addScaledVector(dir, dist), centre }
+}
 
 interface Props {
   bindings: NodeBinding[]
@@ -50,38 +75,13 @@ export function CameraRig({ bindings }: Props) {
     (id: string | null, animate: boolean) => {
       const c = controls.current
       if (!c) return
+      // A vessel orbits to its configured view direction (anatomy.yaml `expect_side`/`view_dir`,
+      // via the GLB extras) and fits its own box; everything else gets the default anterior view.
       const vessel = bindings.find((b) => b.target?.id === id && b.target.role === 'vessel')
-      if (vessel) {
-        const box = new Box3().setFromObject(vessel.object)
-        void c.fitToBox(box, animate, {
-          paddingLeft: FIT_PADDING,
-          paddingRight: FIT_PADDING,
-          paddingTop: FIT_PADDING,
-          paddingBottom: FIT_PADDING,
-        })
-        return
-      }
-      // Aspect-aware: project the box onto the view's right/up axes, then size the distance so
-      // the heart fills FILL_HEIGHT of the height without exceeding FILL_WIDTH of the width.
-      const center = defaultBox.getCenter(new Vector3())
-      const right = new Vector3().crossVectors(UP, VIEW_DIR).normalize()
-      const up = new Vector3().crossVectors(VIEW_DIR, right).normalize()
-      let halfW = 0
-      let halfH = 0
-      let halfD = 0
-      for (const x of [defaultBox.min.x, defaultBox.max.x])
-        for (const y of [defaultBox.min.y, defaultBox.max.y])
-          for (const z of [defaultBox.min.z, defaultBox.max.z]) {
-            const d = new Vector3(x, y, z).sub(center)
-            halfW = Math.max(halfW, Math.abs(d.dot(right)))
-            halfH = Math.max(halfH, Math.abs(d.dot(up)))
-            halfD = Math.max(halfD, Math.abs(d.dot(VIEW_DIR)))
-          }
-      const tanV = Math.tan(MathUtils.degToRad(camera.fov) / 2)
-      const tanH = tanV * camera.aspect
-      const dist = Math.max(halfH / (tanV * FILL_HEIGHT), halfW / (tanH * FILL_WIDTH)) + halfD
-      const eye = center.clone().addScaledVector(VIEW_DIR, dist)
-      void c.setLookAt(...eye.toArray(), ...center.toArray(), animate)
+      const box = vessel ? new Box3().setFromObject(vessel.object) : defaultBox
+      const dir = vessel?.viewDir ?? VIEW_DIR
+      const { eye, centre } = fitView(box, dir, camera)
+      void c.setLookAt(...eye.toArray(), ...centre.toArray(), animate)
     },
     [bindings, camera, defaultBox],
   )

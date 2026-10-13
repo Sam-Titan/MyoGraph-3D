@@ -11,13 +11,19 @@ export function HealthStatus() {
   }[state]
 
   return (
-    <p className="flex items-center gap-2 text-xs text-muted-foreground" aria-live="polite">
+    <p
+      className="flex min-w-0 max-w-full items-center gap-2 text-xs text-muted-foreground"
+      aria-live="polite"
+    >
       <span aria-hidden className={`size-1.5 rounded-full ${dot}`} />
       {state === 'checking' && 'API: checking…'}
       {state === 'unreachable' && 'API: unreachable'}
       {state === 'ok' && (
-        <span>
-          API ok · model <span className="num">{data?.model_version}</span>
+        <span className="flex min-w-0 gap-1">
+          <span className="shrink-0">API ok · model</span>
+          <span className="num min-w-0 truncate" title={data?.model_version}>
+            {data?.model_version}
+          </span>
         </span>
       )}
     </p>

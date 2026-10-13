@@ -1,4 +1,4 @@
-import { Eye, EyeOff, Orbit, ScanSearch, Tags } from 'lucide-react'
+import { Eye, EyeOff, Orbit, ScanSearch, Spline, Tags } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { focusTarget, useViewState } from './useViewState'
@@ -28,6 +28,9 @@ function Tool({
 /** Reset, Labels, X-ray, Spin. `overallId` is the target Reset returns the selection to. */
 export function Toolbar({ overallId }: { overallId: string | null }) {
   const { labels, xray, spin, toggleLabels, toggleXray, setSpin, reframe } = useViewState()
+  const toggleableNodes = useViewState((s) => s.toggleableNodes)
+  const shownNodes = useViewState((s) => s.shownNodes)
+  const toggleNode = useViewState((s) => s.toggleNode)
   return (
     <div role="toolbar" aria-label="3D view controls" className="flex flex-wrap gap-1.5">
       <Tool
@@ -48,6 +51,16 @@ export function Toolbar({ overallId }: { overallId: string | null }) {
       <Tool label="Spin" pressed={spin} onClick={() => setSpin(!spin)}>
         <Orbit />
       </Tool>
+      {toggleableNodes.map((name) => (
+        <Tool
+          key={name}
+          label={name.charAt(0).toUpperCase() + name.slice(1)}
+          pressed={Boolean(shownNodes[name])}
+          onClick={() => toggleNode(name)}
+        >
+          <Spline />
+        </Tool>
+      ))}
     </div>
   )
 }

@@ -22,16 +22,27 @@ from pathlib import Path
 import numpy as np
 import trimesh
 import yaml
+from heart_views import (
+    SIDE_AXIS,
+    ViewFrame,
+    surface_anchor,
+    surface_centroid,
+    view_report,
+)
+from heart_views import (
+    view_direction as view_dir,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 ANATOMY = ROOT / "config" / "anatomy.yaml"
 BP3D_DIR = ROOT / "data" / "raw" / "bp3d"
 ZIP_NAME = "isa_BP3D_4.0_obj_99.zip"
 PARTS_NAME = "isa_parts_list_e.txt"
-HEART_NODE_TARGET_HEIGHT = 2.0  # scene units (Y extent of the node that carries target CAD)
+HEART_NODE_TARGET_HEIGHT = (
+    2.0  # scene units (Y extent of the node that carries target CAD)
+)
 TOTAL_TRIANGLE_LIMIT = 80_000
 GLB_SIZE_LIMIT = 3_000_000
-SIDE_AXIS = {"anterior": (2, +1), "posterior": (2, -1), "left": (0, +1), "right": (0, -1)}
 # LPS (x left, y posterior, z superior) -> Y-up with anterior +Z, left +X. Proper rotation (det +1).
 LPS_TO_YUP = np.array([[1, 0, 0], [0, 0, 1], [0, -1, 0]], dtype=float)
 
@@ -58,7 +69,9 @@ def read_parts_list(path: Path) -> dict[str, tuple[str, str]]:
 
 
 def resolve_node(
-    node: dict, parts: dict[str, tuple[str, str]], index: dict[str, list[tuple[str, str]]]
+    node: dict,
+    parts: dict[str, tuple[str, str]],
+    index: dict[str, list[tuple[str, str]]],
 ) -> tuple[list[tuple[str, str]], list[str]]:
     """Unique (FJ id, member) files for a node, plus human-readable log rows."""
     files: dict[str, str] = {}
@@ -83,34 +96,12 @@ def resolve_node(
 
 def load_node_mesh(z: zipfile.ZipFile, files: list[tuple[str, str]]) -> trimesh.Trimesh:
     meshes = [
-        trimesh.load(io.BytesIO(z.read(member)), file_type="obj", force="mesh", process=True)
+        trimesh.load(
+            io.BytesIO(z.read(member)), file_type="obj", force="mesh", process=True
+        )
         for _, member in files
     ]
     return trimesh.util.concatenate(meshes)
-
-
-def surface_centroid(mesh: trimesh.Trimesh) -> np.ndarray:
-    """Area-weighted surface centroid (independent of tessellation density)."""
-    area = mesh.area_faces
-    return mesh.triangles_center.T @ area / area.sum()
-
-
-def surface_anchor(vessel: trimesh.Trimesh, heart: trimesh.Trimesh) -> np.ndarray:
-    """A point ON the vessel surface for its label.
-
-    A vessel's centroid can lie inside the heart (RCA's does), which would hide the label. If the
-    centroid is inside the heart's convex hull, take the vertex farthest outward along the vessel's
-    mean direction from the heart centroid; otherwise the vertex nearest the centroid. Always a real
-    vertex, and argmax/argmin pick the first hit, so the result is deterministic.
-    """
-    c, hc = surface_centroid(vessel), surface_centroid(heart)
-    verts = np.asarray(vessel.vertices)
-    hull = heart.convex_hull  # convex, so "inside" = behind every face plane (no rtree needed)
-    if np.all(np.einsum("ij,ij->i", hull.face_normals, c - hull.triangles_center) <= 0):
-        d = c - hc
-        d = d / np.linalg.norm(d)
-        return verts[int(np.argmax((verts - hc) @ d))]
-    return verts[int(np.argmin(np.linalg.norm(verts - c, axis=1)))]
 
 
 def decimate(mesh: trimesh.Trimesh, budget: int) -> trimesh.Trimesh:
@@ -149,7 +140,9 @@ def main() -> int:
     zip_path, parts_path = BP3D_DIR / ZIP_NAME, BP3D_DIR / PARTS_NAME
     for p in (zip_path, parts_path):
         if not p.exists():
-            print(f"FAIL: missing {p.relative_to(ROOT)} (see config/anatomy.yaml header)")
+            print(
+                f"FAIL: missing {p.relative_to(ROOT)} (see config/anatomy.yaml header)"
+            )
             return 1
 
     parts = read_parts_list(parts_path)
@@ -167,10 +160,14 @@ def main() -> int:
             print("\n".join(rows))
             for fj, _ in files:
                 if fj in owner and owner[fj] != node["name"]:
-                    failures.append(f"{fj} assigned to both {owner[fj]} and {node['name']}")
+                    failures.append(
+                        f"{fj} assigned to both {owner[fj]} and {node['name']}"
+                    )
                 owner[fj] = node["name"]
             if not files and not node.get("optional"):
-                failures.append(f"node {node['name']} has no geometry (use the tube fallback)")
+                failures.append(
+                    f"node {node['name']} has no geometry (use the tube fallback)"
+                )
             resolved[node["name"]] = files
         if failures:
             print("\nFAIL:\n  " + "\n  ".join(failures))
@@ -199,16 +196,35 @@ def main() -> int:
 
     scene = trimesh.Scene()
     extras: dict[str, dict] = {}
+    anchor_how: dict[str, str] = {}
+    visible_nodes = [
+        final[n["name"]]
+        for n in nodes
+        if n["name"] in final and n.get("default_visible", True)
+    ]
+    frame = ViewFrame(visible_nodes)
     for node in nodes:
         name = node["name"]
         if name in final:
             scene.add_geometry(final[name], node_name=name, geom_name=name)
+            anchor_pt, anchor_how[name] = surface_anchor(
+                final[name], final[heart], frame, node.get("expect_side")
+            )
             extras[name] = {
                 "target": node.get("target"),
                 "optional": bool(node.get("optional", False)),
                 "defaultVisible": bool(node.get("default_visible", True)),
                 # Label anchor: a point on the node's surface (see surface_anchor).
-                "anchor": [round(float(v), 4) for v in surface_anchor(final[name], final[heart])],
+                "anchor": [round(float(v), 4) for v in anchor_pt],
+                # True when no near-tie vertex is visible from the default view (heart is in front).
+                "anchorHidden": anchor_how[name].endswith("-hidden"),
+                # Camera direction (target -> camera) when this node is selected; from `view_dir`
+                # or `expect_side` in anatomy.yaml. Null: the frontend keeps the default view.
+                "viewDir": (
+                    [round(float(v), 4) for v in view_dir(node)]
+                    if view_dir(node) is not None
+                    else None
+                ),
             }
     glb = inject_extras(scene.export(file_type="glb"), extras)
     out = ROOT / cfg["output"]
@@ -222,7 +238,9 @@ def main() -> int:
     for name, b, a in table:
         print(f"{name:8}{b:9d}{a:9d}{budget[name]:9d}")
     total_before, total = sum(t[1] for t in table), sum(t[2] for t in table)
-    print(f"{'TOTAL':8}{total_before:9d}{total:9d}{TOTAL_TRIANGLE_LIMIT:9d} (limit, strict <)")
+    print(
+        f"{'TOTAL':8}{total_before:9d}{total:9d}{TOTAL_TRIANGLE_LIMIT:9d} (limit, strict <)"
+    )
     print(
         f"\nGLB: {out.relative_to(ROOT)}  {len(glb) / 1e6:.2f} MB "
         f"(limit {GLB_SIZE_LIMIT / 1e6:.0f} MB)"
@@ -265,10 +283,35 @@ def main() -> int:
         c = surface_centroid(final[name])
         print(
             f"{name:7} anchor ({a[0]:+.3f}, {a[1]:+.3f}, {a[2]:+.3f})  "
-            f"{np.linalg.norm(a - c):.3f} from centroid, {dist:.4f} from nearest vertex"
+            f"{np.linalg.norm(a - c):.3f} from centroid, {dist:.4f} from nearest vertex, "
+            f"rule: {anchor_how[name]}"
         )
         if dist > 1e-3:
             checks.append(f"{name} anchor is not on its mesh")
+    target_nodes = [
+        n["name"]
+        for n in nodes
+        if n.get("target") and n["name"] in final and n["name"] != heart
+    ]
+    print(
+        "\n== label placement per view (CameraRig framing; label boxes assume 72x22 px) =="
+    )
+    views = {"default": frame}
+    for n in nodes:
+        d = view_dir(n)
+        if n["name"] in target_nodes and d is not None:
+            views[n["name"]] = ViewFrame([final[n["name"]]], d)
+    print(
+        "\n".join(
+            view_report(
+                {n: np.array(extras[n]["anchor"]) for n in target_nodes},
+                {n: bool(extras[n]["anchorHidden"]) for n in target_nodes},
+                {n: final[n] for n in target_nodes},
+                final[heart],
+                views,
+            )
+        )
+    )
     if total >= TOTAL_TRIANGLE_LIMIT:
         checks.append(f"total triangles {total} >= {TOTAL_TRIANGLE_LIMIT}")
     if len(glb) >= GLB_SIZE_LIMIT:

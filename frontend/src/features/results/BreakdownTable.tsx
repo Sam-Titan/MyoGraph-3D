@@ -38,7 +38,7 @@ function MiniBar({ value, max }: { value: number; max: number }) {
   const half = max > 0 ? Math.min(50, (Math.abs(value) / max) * 50) : 0
   return (
     <span className="flex items-center gap-1.5">
-      <span aria-hidden className="relative h-2 w-14 shrink-0 rounded-sm bg-muted">
+      <span aria-hidden className="relative h-2 w-10 shrink-0 rounded-sm bg-muted">
         <span className="absolute inset-y-0 left-1/2 w-px bg-border" />
         <span
           className={cn(
@@ -50,7 +50,7 @@ function MiniBar({ value, max }: { value: number; max: number }) {
           }
         />
       </span>
-      <span className="num w-10 text-right text-[11px]">{signed(value)}</span>
+      <span className="num w-9 text-right text-[11px]">{signed(value)}</span>
     </span>
   )
 }
@@ -96,18 +96,20 @@ export function BreakdownTable({ rows, groups, target }: Props) {
           />
         </label>
       </div>
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[22rem] border-collapse text-xs">
+      <div>
+        <table className="w-full table-fixed border-collapse text-xs">
+          <colgroup>
+            <col />
+            <col className="w-[5.5rem]" />
+            <col className="w-[6.25rem]" />
+          </colgroup>
           <thead>
             <tr className="border-b text-left text-muted-foreground">
               <th scope="col" className="py-1.5 pr-2 font-medium">
                 Measure
               </th>
               <th scope="col" className="px-2 py-1.5 font-medium">
-                Reference
-              </th>
-              <th scope="col" className="px-2 py-1.5 font-medium">
-                Status
+                Reference · status
               </th>
               <th
                 scope="col"
@@ -135,7 +137,7 @@ export function BreakdownTable({ rows, groups, target }: Props) {
               <tr>
                 <th
                   scope="colgroup"
-                  colSpan={4}
+                  colSpan={3}
                   className="label-caps bg-muted/50 px-2 py-1 text-left"
                 >
                   {s.group.label}
@@ -143,18 +145,21 @@ export function BreakdownTable({ rows, groups, target }: Props) {
               </tr>
               {s.rows.map((r) => (
                 <tr key={r.id} className="border-b last:border-b-0">
-                  <th scope="row" className="py-1.5 pr-2 text-left font-normal">
+                  <th
+                    scope="row"
+                    className="min-w-0 break-words py-1.5 pr-2 text-left align-top font-normal"
+                  >
                     <span className="block">{r.label}</span>
                     <span className="num text-muted-foreground">
                       {formatValue(r)}
                       {r.outside_training_range && ' · outside training range'}
                     </span>
                   </th>
-                  <td className="num px-2 py-1.5 text-muted-foreground">{formatReference(r)}</td>
-                  <td className="px-2 py-1.5">
+                  <td className="px-2 py-1.5 align-top">
+                    <span className="num block text-muted-foreground">{formatReference(r)}</span>
                     <StatusChip status={r.status} />
                   </td>
-                  <td className="py-1.5 pl-2">
+                  <td className="py-1.5 pl-2 align-top">
                     <MiniBar value={contributionOf(r, target.id)} max={max} />
                   </td>
                 </tr>

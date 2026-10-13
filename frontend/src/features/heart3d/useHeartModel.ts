@@ -9,6 +9,11 @@ export const HEART_URL = '/models/heart.glb'
 interface Extras {
   anchor?: [number, number, number]
   defaultVisible?: boolean
+  optional?: boolean
+  /** The anchor is behind the heart in the default view (no visible near-tie vertex). */
+  anchorHidden?: boolean
+  /** Camera direction (target -> camera) when this node is selected; from anatomy.yaml. */
+  viewDir?: [number, number, number] | null
 }
 
 export interface NodeBinding {
@@ -20,6 +25,11 @@ export interface NodeBinding {
   /** World-space point on the node's surface for its label. */
   anchor: Vector3 | null
   defaultVisible: boolean
+  /** Context node that may be absent / is user-toggleable (e.g. veins). */
+  optional: boolean
+  anchorHidden: boolean
+  /** Unit direction the camera orbits to on selection; null keeps the default anterior view. */
+  viewDir: Vector3 | null
 }
 
 function readExtras(obj: Object3D): Extras {
@@ -43,6 +53,9 @@ function bind(obj: Object3D, target: TargetInfo | null): NodeBinding {
     meshes,
     anchor: extras.anchor ? obj.localToWorld(new Vector3(...extras.anchor)) : null,
     defaultVisible: extras.defaultVisible ?? true,
+    optional: extras.optional ?? false,
+    anchorHidden: extras.anchorHidden ?? false,
+    viewDir: extras.viewDir ? new Vector3(...extras.viewDir).normalize() : null,
   }
 }
 

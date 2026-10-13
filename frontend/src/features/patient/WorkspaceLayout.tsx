@@ -6,7 +6,7 @@ import { ResultsPanel } from '@/features/results/ResultsPanel'
 /** SPEC 6.1 three-column workspace; stacks below 1280px. Columns scroll independently. */
 export function WorkspaceLayout() {
   return (
-    <div className="grid h-full grid-cols-1 gap-(--panel-gap) overflow-y-auto p-(--gutter) xl:grid-cols-[var(--col-left)_minmax(0,1fr)_var(--col-right)] xl:overflow-hidden">
+    <div className="grid h-full min-w-0 grid-cols-1 auto-rows-min gap-(--panel-gap) overflow-y-auto overflow-x-hidden p-(--gutter) xl:auto-rows-auto xl:grid-cols-[var(--col-left)_minmax(0,1fr)_var(--col-right)] xl:overflow-hidden">
       <Panel title="Patient" className="min-h-96">
         <PatientPanel />
       </Panel>
