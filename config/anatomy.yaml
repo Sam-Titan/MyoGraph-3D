@@ -1,18 +1,26 @@
 # 3D anatomy map — the ONE place that links model targets to geometry.
-# Source meshes: BodyParts3D 3.0 (DBCLS), Wavefront OBJ named <FMA_ID>.obj. Free, no account needed.
-#   Download BodyParts3D_3.0_obj_99.zip (~127 MB) from
-#   https://dbarchive.biosciencedbc.jp/en/bodyparts3d/download.html  (or ftp://ftp.biosciencedbc.jp/archive/bodyparts3d/)
-#   and place it, still zipped, at data/raw/bp3d/BodyParts3D_3.0_obj_99.zip (gitignored; the script reads it in place).
-#   It contains .obj 3D meshes, not images. Only the built frontend/public/models/heart.glb is committed.
-# License: CC BY-SA 2.1 Japan. Required credit:
-#   "BodyParts3D, Copyright© The Database Center for Life Science licensed by CC Attribution-Share Alike 2.1 Japan"
+# Source meshes: BodyParts3D 4.0 (DBCLS), Wavefront OBJ. Free, no account needed.
+#   Download isa_BP3D_4.0_obj_99.zip (~143 MB) and isa_parts_list_e.txt from
+#   https://dbarchive.biosciencedbc.jp/en/bodyparts3d/download.html
+#   and place them at data/raw/bp3d/ (gitignored; the script reads the zip in place, still zipped).
+#   Only the built frontend/public/models/heart.glb is committed.
+# File naming (4.0): the zip holds FJ<n>.obj files, NOT FMA-named ones. The link is
+#     isa_parts_list_e.txt:  FMA concept id -> BP representation id
+#     each .obj header:      "# File ID : FJ<n>" / "# Representation ID : BP<m>"
+#   so the build script indexes the zip by reading each member's header and joins on the BP id.
+#   One BP id may resolve to several FJ files (all are merged; each FJ file is merged once per node,
+#   and may belong to only ONE node — the script fails if two nodes claim the same file).
+# License: the BodyParts3D site states CC BY 4.0; the OBJ headers still embed CC BY-SA 2.1 Japan.
+#   heart.glb is a derivative of BodyParts3D and is released under CC BY-SA 4.0, which satisfies both.
+#   Repo code remains MIT. See frontend/public/models/LICENSE-ASSETS.md. Credit text (use verbatim):
+#   "BodyParts3D, © The Database Center for Life Science licensed under CC Attribution 4.0 International"
 #
 # `fma` entries:
-#   - a plain ID            -> include it if its .obj exists
-#   - a list of IDs [A, B]  -> ALTERNATIVES: use the first one whose .obj exists, ignore the rest
-#                              (avoids double geometry, e.g. a part and its "nsn" variant, or heart vs wall-of-heart)
-# Some FMA IDs are COMPOSITES (no .obj of their own). The build script must log found/missing per node and
-# FAIL LOUDLY if a target vessel ends up with zero geometry (then use the procedural-tube fallback below).
+#   - a plain ID            -> include it if it resolves to at least one .obj
+#   - a list of IDs [A, B]  -> ALTERNATIVES: use the first one that resolves to a file, ignore the rest
+# Some FMA IDs are COMPOSITES (no .obj of their own; their children carry the geometry). The build script
+# must log found/missing per node and FAIL LOUDLY if a target vessel ends up with zero geometry (then use
+# the procedural-tube fallback below).
 # The API exposes `nodes[].name` + `target` (via GET /api/features -> targets[].node), so the frontend
 # never hard-codes vessel names. A pytest checks every target in features.yaml has exactly one node here.
 
@@ -23,31 +31,40 @@ nodes:
   # --- target vessels: node names MUST equal target ids (LAD/LCX/RCA). Colour is driven by predictions. ---
   - name: LAD
     target: LAD
-    fma: [[FMA3862, FMA3862nsn], FMA71670]   # anterior interventricular branch (+ septal branches of LCA, which arise from the LAD)
+    # FMA3862 (anterior interventricular branch) is absent in 4.0; its trunk is FMA74912. Then diagonal,
+    # conus, right anterior (first/second/third) and septal branches. FMA3870/13914/13921 are composites.
+    fma: [FMA74912, FMA3860, FMA3868, FMA3872, FMA3874, FMA3876, FMA3892]
+    expect_side: anterior                     # build-time sanity check vs heart centroid (anterior|posterior|left|right)
     max_triangles: 8000
   - name: LCX
     target: LCX
     fma: [FMA3895]                            # circumflex branch of left coronary artery
+    expect_side: left
     max_triangles: 8000
   - name: RCA
     target: RCA
-    fma: [FMA3802, FMA3818, [FMA3840, FMA3840nsn], FMA76994, FMA71669]  # trunk, marginal, posterior descending, posterolateral, septal
+    # trunk, marginal, posterior interventricular, first anterior / first posterior ventricular branches
+    # (FMA3813/FMA3835 are composites of those first branches)
+    fma: [FMA3802, FMA3818, FMA3840, FMA3815, FMA3837]
+    expect_side: right                        # patient's right
     max_triangles: 10000
 
   # --- context anatomy: neutral colours, not prediction-driven ---
   - name: LM
-    fma: [FMA4685]                            # left main stem — rendered neutral (not a dataset target)
+    fma: [FMA3855]                            # trunk of left coronary artery (left main stem)
     max_triangles: 2000
   - name: heart
     target: CAD                               # clicking the heart body selects overall CAD
-    fma: [[FMA7274, FMA9462, FMA7088]]        # wall of heart, else myocardium, else heart — exactly one
+    # 4.0 has no whole-heart / wall-of-heart mesh: wall of ventricle + walls of right and left atrium
+    # (FMA13883 "wall of atrium" is a composite of the two atrial walls).
+    fma: [FMA13884, FMA9457, FMA9531]
     max_triangles: 40000
   - name: aorta
-    fma: [FMA3736, FMA3768]                   # ascending aorta + arch (trim to keep the scene compact)
+    fma: [FMA3736]                            # ascending aorta
     max_triangles: 6000
     optional: true
   - name: veins
-    fma: [FMA4706, FMA4707, FMA4713, FMA4714] # coronary sinus + cardiac veins
+    fma: [FMA4706, FMA4707, FMA4713, FMA4714] # coronary sinus + great / middle / small cardiac veins
     max_triangles: 6000
     optional: true
     default_visible: false

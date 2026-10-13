@@ -23,7 +23,7 @@ stability:
 	cd backend && uv run python -m ml.stability
 
 assets:
-	@echo "make assets: not implemented yet (phase 5)" && exit 1
+	cd backend && uv run python ../scripts/build_heart_glb.py
 
 types:
 	cd backend && uv run python -m app.export_openapi > ../frontend/openapi.json

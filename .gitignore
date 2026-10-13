@@ -22,7 +22,7 @@ pnpm-debug.log*
 yarn-error.log*
 
 # ===================== Data =====================
-# BodyParts3D archive (127 MB) — never committed; only the built heart.glb is.
+# BodyParts3D archive (143 MB, v4.0) — never committed; only the built heart.glb is.
 data/raw/bp3d/
 # Any scratch / intermediate data
 data/interim/
@@ -55,7 +55,7 @@ desktop.ini
 # Deliberately NOT ignored (these MUST be committed):
 #   data/raw/z_alizadeh_sani_ext.csv        dataset (CC BY 4.0, cited)
 #   backend/artifacts/                      trained model weights + metrics + presets
-#   frontend/public/models/heart.glb        built 3D asset (CC BY-SA 2.1 JP)
+#   frontend/public/models/heart.glb        built 3D asset (CC BY-SA 4.0 derivative of BodyParts3D)
 #   frontend/openapi.json, frontend/src/api/schema.d.ts   generated API types (Docker needs them)
 #   backend/uv.lock, frontend/package-lock.json           reproducible installs
 # ----------------------------------------------------------------------
