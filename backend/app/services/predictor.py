@@ -83,7 +83,11 @@ class Predictor:
         nodes = anatomy_nodes()
         self.nodes = {t: nodes[t] for t in self.schema.targets}
         self.presets = [Preset(**p) for p in _read("presets.json")]
-        self.metrics = MetricsResponse(**_read("metrics.json"), stability=_read("stability.json"))
+        self.metrics = MetricsResponse(
+            **_read("metrics.json"),
+            stability=_read("stability.json"),
+            excluded_inputs=list(self.schema.excluded_from_inputs),
+        )
         self.features = self._build_features()
         self._by_id = {f.id: f for f in self.schema.features}
 

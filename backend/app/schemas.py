@@ -1,6 +1,6 @@
 """API contract (Pydantic is the source of truth; TS types are generated from it)."""
 
-from typing import Any, Literal
+from typing import Literal
 
 from pydantic import BaseModel
 
@@ -208,9 +208,24 @@ class Stability(BaseModel):
     targets: dict[str, dict[str, StabilityStat]]
 
 
+class CvInfo(BaseModel):
+    n_splits: int
+    n_repeats: int
+    seed: int
+
+
+class SplitInfo(BaseModel):
+    n_train: int
+    n_test: int
+    test_size: float
+    seed: int
+    stratify_on: list[str]
+
+
 class MetricsResponse(BaseModel):
-    cv: dict[str, Any]
-    split: dict[str, Any]
+    cv: CvInfo
+    split: SplitInfo
     targets: dict[str, TargetMetrics]
     feature_importance: dict[str, list[ImportanceRow]]
     stability: Stability
+    excluded_inputs: list[str]

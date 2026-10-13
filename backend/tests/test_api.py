@@ -126,6 +126,13 @@ def test_metrics_includes_stability(client: TestClient) -> None:
             assert {"median", "iqr", "min", "max", "official_percentile"} <= set(stat)
 
 
+def test_metrics_excluded_inputs(client: TestClient) -> None:
+    body = client.get("/api/metrics").json()
+    assert body["excluded_inputs"] == SCHEMA.excluded_from_inputs
+    inputs = {f.id for f in SCHEMA.features}
+    assert not set(body["excluded_inputs"]) & inputs
+
+
 def test_health_reports_model_version(client: TestClient) -> None:
     body = client.get("/api/health").json()
     assert body["model_version"] == model_version() != "untrained"

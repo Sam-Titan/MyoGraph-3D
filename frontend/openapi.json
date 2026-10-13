@@ -305,6 +305,29 @@
         ],
         "title": "Contribution"
       },
+      "CvInfo": {
+        "properties": {
+          "n_splits": {
+            "type": "integer",
+            "title": "N Splits"
+          },
+          "n_repeats": {
+            "type": "integer",
+            "title": "N Repeats"
+          },
+          "seed": {
+            "type": "integer",
+            "title": "Seed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "n_splits",
+          "n_repeats",
+          "seed"
+        ],
+        "title": "CvInfo"
+      },
       "CvMetrics": {
         "properties": {
           "default": {
@@ -578,14 +601,10 @@
       "MetricsResponse": {
         "properties": {
           "cv": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Cv"
+            "$ref": "#/components/schemas/CvInfo"
           },
           "split": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Split"
+            "$ref": "#/components/schemas/SplitInfo"
           },
           "targets": {
             "additionalProperties": {
@@ -606,6 +625,13 @@
           },
           "stability": {
             "$ref": "#/components/schemas/Stability"
+          },
+          "excluded_inputs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Excluded Inputs"
           }
         },
         "type": "object",
@@ -614,7 +640,8 @@
           "split",
           "targets",
           "feature_importance",
-          "stability"
+          "stability",
+          "excluded_inputs"
         ],
         "title": "MetricsResponse"
       },
@@ -833,6 +860,42 @@
           "tpr"
         ],
         "title": "RocCurve"
+      },
+      "SplitInfo": {
+        "properties": {
+          "n_train": {
+            "type": "integer",
+            "title": "N Train"
+          },
+          "n_test": {
+            "type": "integer",
+            "title": "N Test"
+          },
+          "test_size": {
+            "type": "number",
+            "title": "Test Size"
+          },
+          "seed": {
+            "type": "integer",
+            "title": "Seed"
+          },
+          "stratify_on": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Stratify On"
+          }
+        },
+        "type": "object",
+        "required": [
+          "n_train",
+          "n_test",
+          "test_size",
+          "seed",
+          "stratify_on"
+        ],
+        "title": "SplitInfo"
       },
       "Stability": {
         "properties": {

@@ -1,27 +1,33 @@
 import { useMetrics } from '@/api/queries'
 import { QueryBoundary } from '@/features/layout/QueryBoundary'
+import { CalibrationChart } from './CalibrationChart'
+import { ConfusionTiles } from './ConfusionTiles'
+import { HeadlineStrip } from './HeadlineStrip'
+import { ImportanceChart } from './ImportanceChart'
+import { MetricTable } from './MetricTable'
+import { ProtocolBox } from './ProtocolBox'
+import { RocChart } from './RocChart'
+import { StabilityPlot } from './StabilityPlot'
 
-const pct = (x: number) => `${(x * 100).toFixed(0)}%`
-
-/** Placeholder: proves the metrics data layer. Charts land in a later phase. */
+/** SPEC 6.4: everything here is derived from /api/metrics. */
 export function PerformancePanel() {
   const metrics = useMetrics()
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4 p-(--gutter)">
+    <div className="mx-auto min-w-0 max-w-6xl space-y-4 p-(--gutter)">
       <h2 className="text-xl font-semibold tracking-tight">Model performance</h2>
       <QueryBoundary query={metrics} what="metrics">
-        {(data) => (
-          <ul className="divide-y rounded-lg border bg-card text-sm">
-            {Object.entries(data.targets).map(([id, t]) => (
-              <li key={id} className="flex items-center justify-between px-3 py-2">
-                <span>{t.label}</span>
-                <span className="num text-xs text-muted-foreground">
-                  prevalence {pct(t.prevalence.train)} train · {pct(t.prevalence.test)} hold-out
-                </span>
-              </li>
-            ))}
-          </ul>
+        {(m) => (
+          <>
+            <HeadlineStrip metrics={m} />
+            <ProtocolBox metrics={m} />
+            <MetricTable metrics={m} />
+            <StabilityPlot metrics={m} />
+            <RocChart metrics={m} />
+            <CalibrationChart metrics={m} />
+            <ConfusionTiles metrics={m} />
+            <ImportanceChart metrics={m} />
+          </>
         )}
       </QueryBoundary>
     </div>

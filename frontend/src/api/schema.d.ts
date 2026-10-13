@@ -156,6 +156,15 @@ export interface components {
             /** Logit */
             logit: number;
         };
+        /** CvInfo */
+        CvInfo: {
+            /** N Splits */
+            n_splits: number;
+            /** N Repeats */
+            n_repeats: number;
+            /** Seed */
+            seed: number;
+        };
         /** CvMetrics */
         CvMetrics: {
             /** Default */
@@ -248,14 +257,8 @@ export interface components {
         };
         /** MetricsResponse */
         MetricsResponse: {
-            /** Cv */
-            cv: {
-                [key: string]: unknown;
-            };
-            /** Split */
-            split: {
-                [key: string]: unknown;
-            };
+            cv: components["schemas"]["CvInfo"];
+            split: components["schemas"]["SplitInfo"];
             /** Targets */
             targets: {
                 [key: string]: components["schemas"]["TargetMetrics"];
@@ -265,6 +268,8 @@ export interface components {
                 [key: string]: components["schemas"]["ImportanceRow"][];
             };
             stability: components["schemas"]["Stability"];
+            /** Excluded Inputs */
+            excluded_inputs: string[];
         };
         /** ObservedInfo */
         ObservedInfo: {
@@ -341,6 +346,19 @@ export interface components {
             fpr: number[];
             /** Tpr */
             tpr: number[];
+        };
+        /** SplitInfo */
+        SplitInfo: {
+            /** N Train */
+            n_train: number;
+            /** N Test */
+            n_test: number;
+            /** Test Size */
+            test_size: number;
+            /** Seed */
+            seed: number;
+            /** Stratify On */
+            stratify_on: string[];
         };
         /** Stability */
         Stability: {

@@ -115,7 +115,7 @@ Pydantic models are the source of truth. `make types` dumps the schema offline (
 | `GET /api/features` | Form schema: `targets[{id, label, role, node}]` (`role` = `overall | vessel` from `features.yaml`; node from `anatomy.yaml`), groups, and per-input `{id, label, group, kind, unit, input{min,max,step}, options[], reference{low,high}, observed{min,max}, default, help}`. Built from `features.yaml` + `anatomy.yaml` + `feature_stats.json`. |
 | `GET /api/presets` | `[{id, label, description, values{input_id: value}, truth{CAD,LAD,LCX,RCA: bool}}]` |
 | `POST /api/predict` | Body `{values: {input_id: value}}` (all 49 inputs; derived fields are ignored if sent) → response below |
-| `GET /api/metrics` | Contents of `metrics.json` (typed) plus `stability` (contents of `stability.json`: per-target median/IQR/min/max and the seed-42 percentile) |
+| `GET /api/metrics` | Contents of `metrics.json` (typed) plus `stability` (contents of `stability.json`: per-target median/IQR/min/max and the seed-42 percentile) and `excluded_inputs` (from `features.yaml`) |
 
 `POST /api/predict` response:
 ```jsonc
