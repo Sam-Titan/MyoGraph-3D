@@ -1,8 +1,9 @@
 import { Html } from '@react-three/drei'
+import { pct } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/store/app'
 import type { NodeBinding } from './useHeartModel'
-import { type Probabilities, pctLabel } from './useProbabilities'
+import type { Probabilities } from './useProbabilities'
 import { useViewState } from './useViewState'
 
 interface Props {
@@ -37,7 +38,7 @@ export function Labels({ bindings, probabilities }: Props) {
                   : 'border-white/20 bg-slate-950/60 text-slate-100',
               )}
             >
-              {id} {pctLabel(probabilities[id])}
+              {id} {pct(probabilities[id])}
             </span>
           </Html>
         )

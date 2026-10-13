@@ -1,5 +1,6 @@
 import type { TargetInfo } from '@/api/client'
-import { type Probabilities, pctLabel } from './useProbabilities'
+import { pct } from '@/lib/format'
+import type { Probabilities } from './useProbabilities'
 import { useViewState } from './useViewState'
 
 /** Name + % next to the pointer. Plain DOM (no <Html>) so it costs nothing per frame. */
@@ -20,7 +21,7 @@ export function HoverTooltip({
       style={{ left: hover.x + 14, top: hover.y + 14 }}
     >
       <span>{target.label}</span>{' '}
-      <span className="num font-semibold">{pctLabel(probabilities[target.id])}</span>
+      <span className="num font-semibold">{pct(probabilities[target.id])}</span>
     </div>
   )
 }

@@ -181,8 +181,8 @@ Pydantic models are the source of truth. `make types` dumps the schema offline (
 - **Presets** dropdown (from `/api/presets`). Loading one resets the form. The results panel then shows "Actual (catheterisation)" vs "Predicted" per target. This is the honesty feature for the demo.
 - **Live updates**: on any valid change, debounce 300 ms → `POST /api/predict` via TanStack Query v5 (query key = debounced values, `placeholderData: keepPreviousData`, pass the `signal` to fetch so stale requests abort). Invalid form (zod) → no request, field errors shown. A small "live" indicator pulses while fetching.
 - **Selection** (Zustand `selectedTarget: 'CAD'|'LAD'|'LCX'|'RCA'`, default `CAD`) is shared by the 3D scene, vessel cards and the WHY panel. Click a card ⇄ click a vessel do the same thing.
-- **Disagreement note**: shown when CAD < 0.5 but any vessel ≥ 0.5, or CAD ≥ 0.5 but all vessels < 0.5. Text: *"Overall CAD and each vessel are predicted by separate models and can disagree. In the training data, almost every patient with a stenotic vessel was labelled CAD."*
-- **WHY panel**: horizontal diverging bars (red = increases risk, blue/teal = decreases). Top 10 inputs + an aggregated "N other features" bar. Header: `Population base rate 71% → this patient 78%`. Axis label: "contribution (log-odds)". Tooltip shows the input's value.
+- **Disagreement note**: shown when the tuned verdicts conflict: overall CAD is Unlikely but any vessel is Likely, or overall CAD is Likely but no vessel is (each vs its own tuned threshold, i.e. the `positive` flags the cards show). Text: *"Overall CAD and each vessel are predicted by separate models and can disagree. In the training data, almost every patient with a stenotic vessel was labelled CAD."*
+- **WHY panel**: horizontal diverging bars (red = increases risk, teal = decreases; contribution colours are distinct from the risk scale). Top 10 inputs + an aggregated "N other features" bar. Bar labels are "<label>: <display value>" on a fixed-width (~45 %) Y axis, truncated with an ellipsis; the tooltip has the full label, value and signed log-odds. Header: `Average patient (model baseline) 71% → this patient 78%` (the base is the model's mean prediction over training patients, not the prevalence). Axis label: "contribution (log-odds)".
 - **Physiological breakdown**: table of numeric measurements and key binaries.
   - Columns: value + unit, reference range, status chip (low / normal / high), contribution to the *selected* target as a signed mini-bar.
   - Sortable by |contribution|.
@@ -193,7 +193,7 @@ Pydantic models are the source of truth. `make types` dumps the schema offline (
 - **Fallback**: if a vessel mesh is missing, render a `TubeGeometry` along a `CatmullRomCurve3` from `vessels.fallback.json`. Capture the points with a dev-only point picker (`?picker=1`: click heart surface → log coordinates).
 - **Colour mapping** (`src/lib/riskColor.ts`): continuous probability → colour, interpolated in OKLCH. Stops: 0.0 green `#22c55e` → 0.5 amber `#f59e0b` → 1.0 red `#ef4444`. Emissive intensity grows with risk.
   - Colours animate (~400 ms) on change.
-  - Never rely on colour alone: labels always show the %, and a legend bar is shown.
+  - Never rely on colour alone: labels always show the %, and a legend bar is shown. Probabilities are shown as integer % everywhere; the legend marks each target's tuned decision threshold with a tick labelled by target id.
 - **Heart muscle**: muted desaturated rose, slightly rough material. "X-ray" toggle makes it 25% opaque so posterior vessels (PDA) are visible.
   - LM and aorta: neutral. Veins: hidden by default.
 - **Interaction**:

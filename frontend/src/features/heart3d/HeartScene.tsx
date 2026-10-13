@@ -14,7 +14,7 @@ import { Legend } from './Legend'
 import { Toolbar } from './Toolbar'
 import { useClickGuard } from './useClickGuard'
 import { useHeartModel } from './useHeartModel'
-import { type Probabilities, useProbabilities } from './useProbabilities'
+import { type Probabilities, useProbabilities, useThresholds } from './useProbabilities'
 import { focusTarget } from './useViewState'
 
 function ModelProgress() {
@@ -83,6 +83,7 @@ export default function HeartScene({ targets }: { targets: TargetInfo[] }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const isClick = useClickGuard(containerRef)
   const probabilities = useProbabilities()
+  const thresholds = useThresholds()
   const overall = overallTarget(targets)
   const [effects, setEffects] = useState(true)
   const [maxDpr, setMaxDpr] = useState(1.5)
@@ -128,7 +129,7 @@ export default function HeartScene({ targets }: { targets: TargetInfo[] }) {
           <Toolbar overallId={overall?.id ?? null} />
         </div>
         <div className="pointer-events-auto">
-          <Legend targets={targets} probabilities={probabilities} />
+          <Legend targets={targets} probabilities={probabilities} thresholds={thresholds} />
         </div>
       </div>
       <ModelProgress />

@@ -15,5 +15,13 @@ export function useProbabilities(): Probabilities {
   }, [data])
 }
 
-export const pctLabel = (p: number | undefined): string =>
-  p === undefined ? '—' : `${Math.round(p * 100)}%`
+/** Tuned decision threshold per target id from the same shared predict query. */
+export function useThresholds(): Probabilities {
+  const values = useAppStore((s) => s.predictValues)
+  const { data } = usePredict(values)
+  return useMemo(() => {
+    const out: Record<string, number> = {}
+    for (const [id, t] of Object.entries(data?.targets ?? {})) out[id] = t.threshold
+    return out
+  }, [data])
+}

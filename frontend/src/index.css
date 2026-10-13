@@ -44,6 +44,10 @@
   --color-risk-low: var(--risk-low);
   --color-risk-mid: var(--risk-mid);
   --color-risk-high: var(--risk-high);
+  --color-contrib-up: var(--contrib-up);
+  --color-contrib-down: var(--contrib-down);
+  --color-status-low: var(--status-low);
+  --color-status-high: var(--status-high);
   --color-notice: var(--notice);
   --color-notice-foreground: var(--notice-foreground);
   --color-notice-border: var(--notice-border);
@@ -99,6 +103,14 @@
   --risk-mid: #f59e0b;
   --risk-high: #ef4444;
 
+  /* Explanation (SHAP) contributions: deliberately NOT the risk scale. Sign is also shown by
+     bar direction and a signed number. */
+  --contrib-up: oklch(0.52 0.17 5);
+  --contrib-down: oklch(0.58 0.1 195);
+  /* Measurement status chips (low / high vs reference range). */
+  --status-low: oklch(0.5 0.1 255);
+  --status-high: oklch(0.5 0.1 60);
+
   /* Disclaimer notice: muted, deliberately distinct from --risk-mid. */
   --notice: oklch(0.955 0.03 90);
   --notice-foreground: oklch(0.36 0.05 70);
@@ -116,6 +128,7 @@
 
   /* Layout scale (4px base): chrome heights, gutters, column widths. */
   --gutter: 1rem;
+  --viewport-min-h: 30rem;
   --panel-gap: 1rem;
   --banner-h: 2.5rem;
   --header-h: 3.5rem;

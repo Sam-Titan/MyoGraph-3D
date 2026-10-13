@@ -12,7 +12,7 @@ export function WorkspaceLayout() {
       </Panel>
       <section
         aria-label="3D heart"
-        className="viewport-surface relative min-h-96 overflow-hidden rounded-xl border border-white/10"
+        className="viewport-surface relative min-h-(--viewport-min-h) overflow-hidden xl:min-h-0 rounded-xl border border-white/10"
       >
         <HeartViewport />
       </section>
