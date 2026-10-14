@@ -16,6 +16,8 @@ the Z-Alizadeh Sani dataset (303 patients).
 
 ## Live demo
 
+**<https://myograph-3d.netlify.app/>**
+
 The app is hosted for free: the frontend on Netlify, the API on Render (free tier). The API sleeps when
 idle, so the first load can take about a minute while it wakes up. If the first prediction fails, wait a
 few seconds and refresh. Deploy config lives in `render.yaml` and `netlify.toml`.

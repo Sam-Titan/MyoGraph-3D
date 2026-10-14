@@ -7,10 +7,9 @@
 [build.environment]
   NODE_VERSION = "22"
 
-# TODO: replace RENDER_SERVICE_URL with the host of the Render service (e.g. myograph-api.onrender.com), no scheme.
 [[redirects]]
   from = "/api/*"
-  to = "https://RENDER_SERVICE_URL/api/:splat"
+  to = "https://myograph-api.onrender.com/api/:splat"
   status = 200
   force = true
 
