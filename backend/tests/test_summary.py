@@ -1,0 +1,115 @@
+import logging
+from collections.abc import Iterator
+from typing import Any
+
+import httpx
+import pytest
+from fastapi.testclient import TestClient
+
+from app.core.config import DEFAULT_GROQ_MODEL, GroqSettings
+from app.main import app
+from app.services import summary as S
+
+KEY = "gsk_test_secret_key_123"
+
+
+@pytest.fixture(scope="module")
+def client() -> Iterator[TestClient]:
+    with TestClient(app) as c:
+        yield c
+
+
+@pytest.fixture
+def values(client: TestClient) -> dict[str, Any]:
+    return client.get("/api/presets").json()[0]["values"]
+
+
+@pytest.fixture(autouse=True)
+def no_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
+    monkeypatch.delenv("GROQ_MODEL", raising=False)
+
+
+def _facts(client: TestClient, values: dict[str, Any]) -> dict[str, Any]:
+    p = client.app.state.predictor  # type: ignore[attr-defined]
+    return S.build_facts(p.predict(values), p.features.targets)
+
+
+def test_template_is_deterministic(client: TestClient, values: dict[str, Any]) -> None:
+    a = client.post("/api/summary", json={"values": values}).json()
+    b = client.post("/api/summary", json={"values": values}).json()
+    assert a == b
+    assert a["source"] == "template" and a["model"] is None
+    assert a["text"].endswith(S.DISCLAIMER)
+    assert "diagnos" not in a["text"].lower()
+    assert 4 <= a["text"].count(". ") + 1 <= 7
+
+
+def test_invalid_values_422(client: TestClient, values: dict[str, Any]) -> None:
+    res = client.post("/api/summary", json={"values": {**values, "age": 500}})
+    assert res.status_code == 422
+
+
+def test_server_recomputes_numbers(client: TestClient, values: dict[str, Any]) -> None:
+    # Extra client-sent "numbers" are ignored: only `values` is accepted and re-predicted.
+    res = client.post("/api/summary", json={"values": values, "probability": 0.01})
+    assert res.status_code == 200
+    facts = _facts(client, values)
+    assert f"{facts['targets'][0]['probability_percent']}%" in res.json()["text"]
+
+
+def test_groq_valid_output_used(
+    client: TestClient, values: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("GROQ_API_KEY", KEY)
+    facts = _facts(client, values)
+    pct = facts["targets"][0]["probability_percent"]
+    good = f"The model estimates a {pct}% probability overall. {S.DISCLAIMER}"
+    sent: dict[str, Any] = {}
+
+    def fake(f: dict[str, Any], s: GroqSettings) -> str:
+        sent.update(facts=f, model=s.model)
+        return good
+
+    monkeypatch.setattr(S, "_request_groq", fake)
+    res = client.post("/api/summary", json={"values": values}).json()
+    assert res == {"text": good, "source": "groq", "model": DEFAULT_GROQ_MODEL}
+    assert sent["facts"] == facts  # only the facts object is sent
+    assert KEY not in str(res)
+
+
+@pytest.mark.parametrize(
+    "bad",
+    [
+        "The model estimates a 12345% probability. " + S.DISCLAIMER,  # invented number
+        "You have a high chance of disease. " + S.DISCLAIMER,
+        "The model estimates risk; consider medication. " + S.DISCLAIMER,
+        "The model estimates a lot.",  # missing disclaimer
+    ],
+)
+def test_groq_invalid_output_falls_back(
+    client: TestClient, values: dict[str, Any], monkeypatch: pytest.MonkeyPatch, bad: str
+) -> None:
+    monkeypatch.setenv("GROQ_API_KEY", KEY)
+    monkeypatch.setattr(S, "_request_groq", lambda f, s: bad)
+    res = client.post("/api/summary", json={"values": values}).json()
+    assert res["source"] == "template"
+
+
+def test_groq_timeout_falls_back_and_key_not_logged(
+    client: TestClient,
+    values: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    monkeypatch.setenv("GROQ_API_KEY", KEY)
+
+    def boom(*a: Any, **k: Any) -> httpx.Response:
+        raise httpx.ReadTimeout(f"timed out with {KEY}")
+
+    monkeypatch.setattr(httpx, "post", boom)
+    with caplog.at_level(logging.DEBUG):
+        res = client.post("/api/summary", json={"values": values}).json()
+    assert res["source"] == "template"
+    assert KEY not in caplog.text
+    assert KEY not in repr(GroqSettings(KEY, "m"))

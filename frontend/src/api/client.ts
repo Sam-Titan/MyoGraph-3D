@@ -11,6 +11,7 @@ export type Preset = Schemas['Preset']
 export type BreakdownRow = Schemas['BreakdownRow']
 export type PredictRequest = Schemas['PredictRequest']
 export type PredictResponse = Schemas['PredictResponse']
+export type SummaryResponse = Schemas['SummaryResponse']
 export type MetricsResponse = Schemas['MetricsResponse']
 
 export class ApiError extends Error {
@@ -43,6 +44,14 @@ export const getMetrics = (signal?: AbortSignal) =>
 
 export const postPredict = (body: PredictRequest, signal?: AbortSignal) =>
   apiFetch<PredictResponse>('/predict', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    signal,
+  })
+
+export const postSummary = (body: PredictRequest, signal?: AbortSignal) =>
+  apiFetch<SummaryResponse>('/summary', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),

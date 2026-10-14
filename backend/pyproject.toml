@@ -12,13 +12,15 @@ dependencies = [
     "pandas",
     "numpy",
     "pyyaml",
+    "httpx>=0.28.1",
+    "python-dotenv>=1.2.4",
 ]
 
 [project.optional-dependencies]
 assets = ["trimesh", "fast-simplification"]
 
 [dependency-groups]
-dev = ["pytest", "httpx", "ruff"]
+dev = ["pytest", "ruff"]
 
 [tool.ruff]
 line-length = 100

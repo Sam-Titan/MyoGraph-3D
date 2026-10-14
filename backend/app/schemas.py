@@ -229,3 +229,10 @@ class MetricsResponse(BaseModel):
     feature_importance: dict[str, list[ImportanceRow]]
     stability: Stability
     excluded_inputs: list[str]
+
+
+# --- /api/summary -----------------------------------------------------------------------------
+class SummaryResponse(BaseModel):
+    text: str
+    source: Literal["groq", "template"]
+    model: str | None = None

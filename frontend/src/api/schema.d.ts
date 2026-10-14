@@ -72,6 +72,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Summary
+         * @description Re-runs predict server-side (client numbers are never trusted), then words it.
+         */
+        post: operations["summary_api_summary_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/metrics": {
         parameters: {
             query?: never;
@@ -394,6 +414,18 @@ export interface components {
             /** Values */
             values: number[];
         };
+        /** SummaryResponse */
+        SummaryResponse: {
+            /** Text */
+            text: string;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "groq" | "template";
+            /** Model */
+            model?: string | null;
+        };
         /** TargetExplanation */
         TargetExplanation: {
             /** Base Probability */
@@ -568,6 +600,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PredictResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    summary_api_summary_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PredictRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SummaryResponse"];
                 };
             };
             /** @description Validation Error */

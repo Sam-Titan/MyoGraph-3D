@@ -115,6 +115,7 @@ Pydantic models are the source of truth. `make types` dumps the schema offline (
 | `GET /api/features` | Form schema: `targets[{id, label, role, node}]` (`role` = `overall | vessel` from `features.yaml`; node from `anatomy.yaml`), groups, and per-input `{id, label, group, kind, unit, input{min,max,step}, options[], reference{low,high}, observed{min,max}, default, help}`. Built from `features.yaml` + `anatomy.yaml` + `feature_stats.json`. |
 | `GET /api/presets` | `[{id, label, description, values{input_id: value}, truth{CAD,LAD,LCX,RCA: bool}}]` |
 | `POST /api/predict` | Body `{values: {input_id: value}}` (all 49 inputs; derived fields are ignored if sent) → response below |
+| `POST /api/summary` | Body = same as `/api/predict`. Re-runs predict server-side (client numbers are never trusted), builds a `facts` object (per target: probability %, threshold %, Likely/Unlikely, top 3 increasing and top 3 decreasing `label: value`; out-of-reference measurements; out-of-training-range warnings) and returns `{text, source: "groq" \| "template", model?}`. See §5.1. |
 | `GET /api/metrics` | Contents of `metrics.json` (typed) plus `stability` (contents of `stability.json`: per-target median/IQR/min/max and the seed-42 percentile) and `excluded_inputs` (from `features.yaml`) |
 
 `POST /api/predict` response:
@@ -146,6 +147,11 @@ Pydantic models are the source of truth. `make types` dumps the schema offline (
 - Validation: out-of-`input` bounds, non-finite numbers (NaN/±Infinity), missing inputs and unknown options are rejected (422) with field-level messages. Values outside the *observed* training range are allowed but produce a warning.
 - Latency target: < 50 ms per predict on CPU (4 models + contributions for 1 row).
 - CORS: allow `http://localhost:5173` in dev. In Docker, nginx proxies `/api`, so it's same-origin.
+
+### 5.1 Summary endpoint
+- **Template** (always available, deterministic): 4–6 short sentences built from the facts, then the disclaimer sentence ("These are model estimates for education and decision support, not a substitute for imaging or clinical judgement.").
+- **Groq** (only if `GROQ_API_KEY` is set): ONLY the facts JSON is sent (never raw inputs) to Groq's OpenAI-compatible `POST https://api.groq.com/openai/v1/chat/completions` via `httpx`; strict system prompt (≤120 words, only the given numbers, no diagnosis/treatment/medication advice, "the model estimates", ends with the disclaimer); `temperature` 0.2, timeout 8 s. `GROQ_MODEL` is configurable (default `openai/gpt-oss-20b`; `llama-3.1-8b-instant` is not available to every account).
+- **Validation**: output is rejected (→ template) if it lacks the disclaimer, exceeds ~120 words, contains a number not present in the facts, or matches `you have|you should|diagnos|treat|medicat|should take|prescrib|your doctor`. Errors and timeouts also fall back to the template. The key is never logged or returned.
 
 ## 6. Frontend
 
@@ -181,6 +187,7 @@ Pydantic models are the source of truth. `make types` dumps the schema offline (
 - **Presets** dropdown (from `/api/presets`). Loading one resets the form. The results panel then shows "Actual (catheterisation)" vs "Predicted" per target. This is the honesty feature for the demo.
 - **Live updates**: on any valid change, debounce 300 ms → `POST /api/predict` via TanStack Query v5 (query key = debounced values, `placeholderData: keepPreviousData`, pass the `signal` to fetch so stale requests abort). Invalid form (zod) → no request, field errors shown. A small "live" indicator pulses while fetching.
 - **Selection** (Zustand `selectedTarget: 'CAD'|'LAD'|'LCX'|'RCA'`, default `CAD`) is shared by the 3D scene, vessel cards and the WHY panel. Click a card ⇄ click a vessel do the same thing.
+- **Summary**: a "Summarise" button in the predictions panel (never automatic; disabled while the form is invalid) calls `POST /api/summary`. The text is cached per prediction values and shown with a badge "AI-generated wording" (`groq`) or "Template summary", plus "Inputs are sent to Groq to word this summary." when the source is `groq`.
 - **Disagreement note**: shown when the tuned verdicts conflict: overall CAD is Unlikely but any vessel is Likely, or overall CAD is Likely but no vessel is (each vs its own tuned threshold, i.e. the `positive` flags the cards show). Text: *"Overall CAD and each vessel are predicted by separate models and can disagree. In the training data, almost every patient with a stenotic vessel was labelled CAD."*
 - **WHY panel**: horizontal diverging bars (red = increases risk, teal = decreases; contribution colours are distinct from the risk scale). Top 10 inputs + an aggregated "N other features" bar. Rendered as HTML rows (not a chart): left "<label>: <display value>" wrapping to at most 2 lines, right a diverging bar centred at 0 with the signed log-odds number; the row tooltip repeats label, value and logit. Header: `Average patient (model baseline) 71% → this patient 78%` (the base is the model's mean prediction over training patients, not the prevalence). Axis label: "contribution (log-odds)".
 - **Physiological breakdown**: table of numeric measurements and key binaries.
@@ -287,8 +294,8 @@ Nothing else hard-codes feature or vessel lists.
 ## 8. Tooling & reproducibility
 
 - **Python 3.14.4 + uv**. `backend/.python-version` = `3.14.4`; `pyproject.toml` `requires-python = ">=3.14,<3.15"`; Ruff `target-version = "py314"`. All dependencies have Linux wheels for 3.14 (checked: numpy, pandas, scikit-learn, scipy, pydantic-core, pyyaml, fast-simplification ship cp314 wheels; xgboost and ruff wheels are Python-version-independent; the rest are pure Python). If `uv sync` ever tries to *compile* a package from source, stop and report it rather than installing build toolchains. Dependencies:
-  - runtime: fastapi, uvicorn, pydantic v2, xgboost, scikit-learn, pandas, numpy, pyyaml
-  - dev: pytest, httpx, ruff
+  - runtime: fastapi, uvicorn, pydantic v2, xgboost, scikit-learn, pandas, numpy, pyyaml, httpx, python-dotenv
+  - dev: pytest, ruff
   - optional `assets` group: trimesh, fast-simplification
 - **Node LTS via nvm**. Lockfile committed.
 - **Makefile**: `setup, dev, dev-api, dev-web, train, assets, types, lint, fmt, test, check (lint+test+typecheck), docker`.
@@ -297,6 +304,7 @@ Nothing else hard-codes feature or vessel lists.
   - `web`: multi-stage node build → nginx, proxies `/api` to `api:8000`.
   - No training inside Docker.
   - **Build context is the repo root** for both images (the API needs `config/`; the web build needs `openapi.json`/`schema.d.ts`). Add a root `.dockerignore` (exclude `data/raw/bp3d`, `node_modules`, `.venv`).
+- **Environment** (root `.env`, git-ignored; `.env.example` is committed): `GROQ_API_KEY` (optional; enables Groq wording of the summary) and `GROQ_MODEL` (optional). Real environment variables win over `.env`. The app works fully without either. `docker compose` passes `.env` via `env_file` with `required: false`.
 - **Seeds** fixed everywhere (42). `model_card.json` records a data file hash + git sha.
 
 ## 9. Out of scope (for now)

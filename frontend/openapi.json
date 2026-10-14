@@ -101,6 +101,45 @@
         }
       }
     },
+    "/api/summary": {
+      "post": {
+        "summary": "Summary",
+        "description": "Re-runs predict server-side (client numbers are never trusted), then words it.",
+        "operationId": "summary_api_summary_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PredictRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SummaryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/metrics": {
       "get": {
         "summary": "Metrics",
@@ -984,6 +1023,39 @@
           "values"
         ],
         "title": "StabilityStat"
+      },
+      "SummaryResponse": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "groq",
+              "template"
+            ],
+            "title": "Source"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text",
+          "source"
+        ],
+        "title": "SummaryResponse"
       },
       "TargetExplanation": {
         "properties": {

@@ -2,6 +2,7 @@ import { QueryBoundary } from '@/features/layout/QueryBoundary'
 import { cn } from '@/lib/utils'
 import { BreakdownTable } from './BreakdownTable'
 import { DisagreementNote, targetsDisagree } from './DisagreementNote'
+import { SummaryPanel } from './SummaryPanel'
 import { TargetCard } from './TargetCard'
 import { useResults } from './useResults'
 import { WhyPanel } from './WhyPanel'
@@ -47,6 +48,7 @@ export function ResultsPanel() {
               )}
             </div>
             {disagree && <DisagreementNote />}
+            <SummaryPanel />
             {predict.isError && (
               <p role="alert" className="text-xs text-destructive">
                 Couldn’t get a prediction for these values.

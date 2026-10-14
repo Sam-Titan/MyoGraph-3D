@@ -7,6 +7,7 @@ import {
   getPresets,
   type PredictRequest,
   postPredict,
+  postSummary,
 } from '@/api/client'
 
 export const queryKeys = {
@@ -14,6 +15,7 @@ export const queryKeys = {
   features: ['features'] as const,
   presets: ['presets'] as const,
   metrics: ['metrics'] as const,
+  summary: (values: PredictRequest['values']) => ['summary', values] as const,
   predict: (values: PredictRequest['values']) => ['predict', values] as const,
 }
 
@@ -58,5 +60,19 @@ export function usePredict(values: PredictRequest['values'] | null) {
     // A 4xx is a deterministic rejection (e.g. 422 field errors): surface it, don't retry.
     retry: (count, err) => !(err instanceof ApiError && err.status < 500) && count < 2,
     placeholderData: keepPreviousData,
+  })
+}
+
+/**
+ * Plain-language summary: never fetched automatically. `refetch()` is the button; the result is
+ * cached per prediction values, so it shows again for identical inputs and is gone once they change.
+ */
+export function useSummary(values: PredictRequest['values'] | null) {
+  return useQuery({
+    queryKey: queryKeys.summary(values ?? {}),
+    queryFn: ({ signal }) => postSummary({ values: values ?? {} }, signal),
+    enabled: false,
+    staleTime: Number.POSITIVE_INFINITY,
+    retry: false,
   })
 }

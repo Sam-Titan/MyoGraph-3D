@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
-from app.core.config import model_version
+from app.core.config import groq_settings, model_version
 from app.schemas import (
     FeaturesResponse,
     HealthResponse,
@@ -10,8 +10,10 @@ from app.schemas import (
     PredictRequest,
     PredictResponse,
     Preset,
+    SummaryResponse,
 )
 from app.services.predictor import Predictor
+from app.services.summary import build_facts, summarise
 from app.services.validation import validate_values
 
 router = APIRouter(prefix="/api")
@@ -48,6 +50,16 @@ def predict(body: PredictRequest, predictor: Pred) -> PredictResponse:
     if errors:
         raise HTTPException(status_code=422, detail=errors)
     return predictor.predict(body.values)
+
+
+@router.post("/summary", response_model=SummaryResponse)
+def summary(body: PredictRequest, predictor: Pred) -> SummaryResponse:
+    """Re-runs predict server-side (client numbers are never trusted), then words it."""
+    errors = validate_values(body.values, predictor.schema)
+    if errors:
+        raise HTTPException(status_code=422, detail=errors)
+    facts = build_facts(predictor.predict(body.values), predictor.features.targets)
+    return summarise(facts, groq_settings())
 
 
 @router.get("/metrics", response_model=MetricsResponse)
