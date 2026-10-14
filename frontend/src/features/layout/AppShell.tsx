@@ -35,7 +35,7 @@ export function AppShell() {
         <DisclaimerBanner />
         <header className="flex flex-wrap items-center gap-x-8 gap-y-2 border-b bg-card px-(--gutter) py-2">
           <div className="flex items-baseline gap-2">
-            <h1 className="text-lg font-semibold tracking-tight">CardioLens</h1>
+            <h1 className="text-lg font-semibold tracking-tight">MyoGraph</h1>
             <span className="num text-xs text-muted-foreground">3D</span>
           </div>
           <TabsList variant="line" aria-label="Sections">

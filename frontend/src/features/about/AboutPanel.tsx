@@ -17,7 +17,7 @@ export function AboutPanel() {
       <section className="space-y-2">
         <h3 className={H3}>What it does</h3>
         <p>
-          CardioLens takes routine clinical measurements and returns a calibrated model estimate of
+          MyoGraph takes routine clinical measurements and returns a calibrated model estimate of
           the probability of coronary artery disease overall and of stenosis in each main vessel.
           The estimates are mapped onto an interactive 3D heart, with a breakdown of which inputs
           pushed each estimate up or down.

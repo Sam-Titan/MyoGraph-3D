@@ -1,12 +1,13 @@
-# CardioLens 3D
+# MyoGraph 3D
 
-CardioLens 3D turns routine clinical data into an interactive 3D view of coronary artery disease (CAD)
-risk. From about 50 clinical inputs (demographics, history, symptoms, ECG, labs, echo) it estimates the probability of
-overall CAD and of significant stenosis in the LAD, LCX and RCA, then maps each probability onto the
-matching vessel of a 3D heart, with a per-feature explanation of why. It is a hackathon research
-prototype built on the Extension of the Z-Alizadeh Sani dataset (303 patients).
+MyoGraph 3D turns routine clinical data into an interactive 3D view of coronary artery disease (CAD)
+risk. From 49 clinical inputs (demographics, history, symptoms, ECG, labs, echo; BMI and obesity are
+derived, giving 55 model columns) it estimates the probability of overall CAD and of significant
+stenosis in the LAD, LCX and RCA, then maps each probability onto the matching vessel of a 3D heart,
+with a per-feature explanation of why. It is a hackathon research prototype built on the Extension of
+the Z-Alizadeh Sani dataset (303 patients).
 
-> **Disclaimer:** CardioLens 3D is a research demo, not a medical device. Outputs are model estimates
+> **Disclaimer:** MyoGraph 3D is a research demo, not a medical device. Outputs are model estimates
 > of probability learned from a small public dataset and must not be used for clinical decisions.
 
 ![Workspace with the 3-vessel preset](docs/img/workspace-3vessel.png)
@@ -34,6 +35,8 @@ docker compose up --build      # or: make docker
 ```
 
 Open <http://localhost:8080>. No other setup is needed; the trained models are committed.
+
+The first `docker compose up --build` downloads base images and can take about 10 minutes; later starts take under a minute.
 
 Optional: to have the summary reworded by an LLM, `cp .env.example .env`, set `GROQ_API_KEY`, and
 restart. Without a key the app uses the built-in template summary.

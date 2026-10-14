@@ -1,4 +1,4 @@
-# CardioLens 3D — Specification
+# MyoGraph 3D — Specification
 
 > Working title. Track A, Multimodal AI Hackathon 2026: *Cardiovascular Risk Visualization & Prediction*.
 > Solo build, 2-day deadline. This file is the contract; `docs/PLAN.md` is the order of work.
@@ -165,7 +165,7 @@ Pydantic models are the source of truth. `make types` dumps the schema offline (
 │ ⚠ Decision support / educational only — not a substitute for diagnostic    │  ← sticky, never dismissible
 │   imaging or clinical judgement.                                            │
 ├────────────────────────────────────────────────────────────────────────────┤
-│ CardioLens 3D        [Patient Workspace] [Model Performance] [About & Method]│
+│ MyoGraph 3D        [Patient Workspace] [Model Performance] [About & Method]│
 ├──────────────┬────────────────────────────────┬────────────────────────────┤
 │ PATIENT      │  3D HEART                       │ PREDICTIONS                │
 │ Preset ▾     │  LAD/LCX/RCA coloured by risk   │ Overall CAD 78% ● Likely   │
@@ -260,7 +260,7 @@ Calm clinical:
 ## 7. Architecture & repo layout
 
 ```
-cardiolens-3d/
+myograph-3d/
 ├─ README.md  LICENSE (MIT, code)  Makefile  docker-compose.yml  .gitattributes  .gitignore
 ├─ config/              features.yaml  anatomy.yaml
 ├─ data/raw/            z_alizadeh_sani_ext.csv (committed, cited) · bp3d/ (gitignored)

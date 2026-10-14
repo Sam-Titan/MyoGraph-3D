@@ -21,8 +21,8 @@ COPY backend/ml ./ml
 COPY backend/artifacts ./artifacts
 COPY config /app/config
 
-RUN useradd --system --no-create-home cardiolens
-USER cardiolens
+RUN useradd --system --no-create-home myograph
+USER myograph
 
 EXPOSE 8000
 HEALTHCHECK --interval=10s --timeout=3s --start-period=15s --retries=5 \

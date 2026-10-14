@@ -1,3 +1,5 @@
+name: myograph-3d
+
 services:
   api:
     build:
