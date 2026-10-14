@@ -35,7 +35,7 @@ Three ideas shape the design. First, honest validation: a fixed hold-out, repeat
 
 ## 3. Model and validation
 
-**Model.** One `XGBClassifier` per target behind a common `RiskModel` interface: <!--v:cfe725fb-->300<!--/v--> trees, depth <!--v:a96d79f5-->3<!--/v-->, learning rate <!--v:7f74c2e7-->0.05<!--/v-->, subsample <!--v:5ffef6f7-->0.8<!--/v-->, column sample <!--v:ef252d87-->0.8<!--/v-->, `min_child_weight` <!--v:c5798654-->2<!--/v-->, L2 <!--v:56a66a64-->1.0<!--/v-->, and `scale_pos_weight` set per target to negatives/positives. The parameters are fixed baseline values; no hyper-parameter search was run.
+**Model.** One `XGBClassifier` per target behind a common `RiskModel` interface: <!--v:cfe725fb-->300<!--/v--> trees, depth <!--v:a96d79f5-->3<!--/v-->, learning rate <!--v:7f74c2e7-->0.05<!--/v-->, subsample <!--v:5ffef6f7-->0.8<!--/v-->, column sample <!--v:ef252d87-->0.8<!--/v-->, `min_child_weight` <!--v:c5798654-->2<!--/v-->, L2 <!--v:56a66a64-->1.0<!--/v-->, and `scale_pos_weight` set per target to negatives/positives. No hyper-parameter search was run.
 
 **Protocol.**
 1. Stratified <!--v:62e1df95-->20<!--/v-->% hold-out (seed <!--v:d48b9ef9-->42<!--/v-->), stratified on the number of stenotic vessels (0–<!--v:b8365ee1-->3<!--/v-->) so all four targets stay balanced: <!--v:20b77c54-->242<!--/v--> train, <!--v:8e1d23bb-->61<!--/v--> test.
@@ -95,7 +95,7 @@ The headline hold-out CAD AUC (<!--v:6f80ea39-->0.824<!--/v-->) is therefore a p
 
 ## 4. Interpretability
 
-**TreeSHAP in calibrated log-odds.** At serve time the app uses XGBoost's native `pred_contribs`, which gives exact TreeSHAP contributions in margin space. They are scaled by the calibration slope `a`, and the bias becomes `a·bias + b`. Contributions plus base value therefore sum exactly to the calibrated logit, which `test_explain_additivity.py` verifies. Contributions of multi-column inputs (chest-pain type, smoking, bundle-branch block) are summed back to their input by additivity.
+**TreeSHAP in calibrated log-odds.** At serve time the app uses XGBoost's native `pred_contribs`, which gives exact TreeSHAP contributions in margin space. They are scaled by the calibration slope `a`, and the bias becomes `a·bias + b`. Contributions plus base value therefore sum exactly to the calibrated logit, which `test_explain_additivity.py` verifies.
 
 **WHY panel.** For the selected target, the top 10 inputs are shown as diverging bars (red raises the estimate, teal lowers it) in log-odds, with the header "average patient (model baseline) → this patient". Global importance on the training set:
 
@@ -111,7 +111,7 @@ The headline hold-out CAD AUC (<!--v:6f80ea39-->0.824<!--/v-->) is therefore a p
 <!--/v-->
 **Physiological breakdown.** A table of numeric measurements, derived BMI/obesity and key binaries: value and unit, typical adult reference range (display only), status (low/normal/high), and signed contribution to the selected target. Values outside the training range raise a warning but are still scored.
 
-**Plain-language summary.** On request, `POST /api/summary` re-runs the prediction server-side and builds a facts object (percentages, verdicts, top factors, range warnings). A deterministic template always works. If `GROQ_API_KEY` is set, only that facts object is sent to Groq to reword it (temperature 0, 8 s timeout, one retry on rate-limit). The output is validated: it must carry the disclaimer, stay near 120 words, contain no number absent from the facts, state every target's percentage, mention only factors from the selected target's list, and avoid advice or diagnostic phrasing. Any failure falls back to the template; the UI labels which source produced the text.
+**Plain-language summary.** On request, `POST /api/summary` re-runs the prediction server-side and builds a facts object (percentages, verdicts, top factors, range warnings). A deterministic template always works. If `GROQ_API_KEY` is set, only that facts object is sent to Groq to reword it (temperature 0, 8 s timeout, one retry on rate-limit). The output is validated (disclaimer present, about 120 words, no number absent from the facts, every percentage stated, only listed factors, no advice or diagnostic phrasing); any failure falls back to the template, and the UI labels the source.
 
 ## 5. 3D pipeline
 
@@ -136,7 +136,7 @@ The headline hold-out CAD AUC (<!--v:6f80ea39-->0.824<!--/v-->) is therefore a p
 <!--/v-->
 Total <!--v:7213ed6f-->67,618<!--/v--> triangles (<!--v:bb07251b-->61,618<!--/v--> with the default-hidden veins off), against a build limit of <!--v:f4c9be98-->80,000<!--/v-->; the file is <!--v:c081700f-->1.27<!--/v--> MB against a <!--v:08a1bdcd-->3<!--/v--> MB limit. The build script enforces both.
 
-**Correspondence and colour.** Each target in `features.yaml` maps to exactly one node in `anatomy.yaml` (tested); the frontend receives the node names from `/api/features` and never names a vessel. Colour is the calibrated probability on a green–amber–red scale interpolated in OKLCH; the number is always shown beside it, and the legend marks each target's tuned threshold. Selecting a card or vessel rotates the camera to that node's view direction and fits its bounding box. Overall CAD is bound to the heart body.
+**Correspondence and colour.** Each target in `features.yaml` maps to exactly one node in `anatomy.yaml` (tested); the frontend receives the node names from `/api/features` and never names a vessel. Colour is the calibrated probability on a green–amber–red scale interpolated in OKLCH; the number is always shown beside it, and the legend marks each target's tuned threshold. Selecting a vessel row or the vessel itself rotates the camera to that node's view direction and fits its bounding box. Overall CAD is bound to the heart body. A label for a vessel behind the heart is dashed and sits beside the silhouette; its tooltip says so.
 
 **No-GPU design.** `frameloop="demand"`, device pixel ratio at most 1.5, no shadows, no Draco decoder, selection by emissive boost, and the post-processing outline dropped when a frame-budget monitor reports slow frames.
 
@@ -148,16 +148,16 @@ Total <!--v:7213ed6f-->67,618<!--/v--> triangles (<!--v:bb07251b-->61,618<!--/v-
 
 **Extensibility.** A new clinical feature is a `features.yaml` entry plus `make train`. A new model is a class implementing `RiskModel` plus a registry entry. A new anatomical structure or target is an `anatomy.yaml` entry plus `make assets`.
 
-**Operations and reproducibility.** `make setup | dev | train | assets | types | check | docker`. `make docker` serves the app at http://localhost:8080 (nginx proxying to the API container). Seeds are fixed at <!--v:d48b9ef9-->42<!--/v-->; training is deterministic, and `model_card.json` records the data hash (<code><!--v:995b6bef-->b60472ecebdd<!--/v-->…</code>) and git SHA. The backend test suite collects <!--v:d3846c3f-->63<!--/v--> tests across <!--v:d268c932-->9<!--/v--> files (<!--v:a332e092-->anatomy, api, explain_additivity, health, leakage, preprocess, presets, split, summary<!--/v-->); the main gates are leakage, SHAP additivity, split stratification and anatomy mapping.
+**Operations and reproducibility.** `make setup | dev | train | assets | types | check | docker`. `make docker` serves the app at http://localhost:8080 (nginx proxying to the API container). Single-request latency through that stack: median 38–45 ms, p95 51–61 ms (50 sequential calls, three runs). Seeds are fixed at <!--v:d48b9ef9-->42<!--/v-->; training is deterministic, and `model_card.json` records the data hash (<code><!--v:995b6bef-->b60472ecebdd<!--/v-->…</code>) and git SHA. The backend test suite collects <!--v:d3846c3f-->63<!--/v--> tests across <!--v:d268c932-->9<!--/v--> files (<!--v:a332e092-->anatomy, api, explain_additivity, health, leakage, preprocess, presets, split, summary<!--/v-->); the main gates are leakage, SHAP additivity, split stratification and anatomy mapping.
 
 ## 7. Usage
 
 1. Run `make docker` and open http://localhost:8080 (or `make setup && make dev` for the development servers on :5173 and :8000).
-2. Load a preset from the dropdown. The presets are <!--v:5e6bc949-->6<!--/v--> patients taken only from the hold-out set (<!--v:f8e72321-->no-cad, lad-only, lcx-rca-only, 2-vessel, 3-vessel, hard-case<!--/v-->), so the model never saw them in training; each shows the actual catheterisation result next to the model estimate.
-3. Read the right panel top-down: overall CAD estimate, then the vessel cards, then the WHY bars for the selected target. Click a card or a vessel in the 3D view to change the selection. Edit any field and the estimates update live.
+2. The 3-vessel patient loads first. The presets are <!--v:5e6bc949-->6<!--/v--> patients taken only from the hold-out set (<!--v:f8e72321-->no-cad, lad-only, lcx-rca-only, 2-vessel, 3-vessel, hard-case<!--/v-->), so the model never saw them in training; each shows the actual catheterisation result next to the model estimate. Accordion headers count out-of-range and edited values.
+3. Read the right panel top-down: the headline estimate (a button that selects overall CAD), then the vessel table, then the WHY bars for the selected target. The table gives each vessel's plain-language name, estimate, model verdict and, for a preset, the cath result (agrees/misses). Click a row or a vessel in the 3D view to change the selection; hovering a row or a vessel highlights the other. Edit any field and the estimates update live.
 4. The Model performance tab shows CV and hold-out metrics, ROC curves, confusion matrices, calibration and importance. The About tab holds the method and credits.
 
-Colour is never the only signal: each percentage is printed, and "Likely/Unlikely" compares the estimate with that target's tuned threshold. The disclaimer banner is fixed on every tab.
+Colour is never the only signal: each percentage is printed, with a Likely/Unlikely verdict against the tuned threshold. The disclaimer banner is fixed on every tab.
 
 ![LCX selected, camera rotated to the vessel](img/lcx-rotated.png)
 *Figure 2. Selecting a vessel rotates the heart to it; here LCX, with its label, threshold tick and WHY bars.*
@@ -169,7 +169,7 @@ Colour is never the only signal: each percentage is printed, and "Likely/Unlikel
 - **Noisy thresholds and split sensitivity.** Tuned thresholds move by ±<!--v:b92be2bd-->0.08<!--/v--> or more between folds; hold-out AUC for overall CAD ranges from <!--v:10c473ca-->0.836<!--/v--> to <!--v:5cc0e25d-->0.969<!--/v--> across split seeds.
 - **Models can disagree.** Overall CAD and each vessel are separate models; the interface notes this when verdicts conflict.
 - **Not clinically validated.** No prospective or external validation. The tool is for education and decision support, not a substitute for imaging or clinical judgement, and it gives no treatment advice. The wording throughout is "probability" or "model estimate".
-- **Groq data note.** The optional wording feature is off unless a key is configured. When on, the facts object (percentages, verdicts, and factor labels with values) is sent to Groq's API; raw input records are not. No key means no external call.
+- **Groq data note.** The optional wording feature is off unless a key is configured. When on, the facts object (percentages, verdicts, thresholds, top factors with their entered values, range warnings) is sent to Groq's API; the full input record is not. No key means no external call.
 
 ## 9. Credits and licenses
 

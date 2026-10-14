@@ -115,7 +115,7 @@ number is a conservative estimate.
 **Serving throughput** (`scripts/load_test.py`, laptop, WSL2 Docker, 500 `POST /api/predict` at 20 concurrent,
 0 errors): about **59 predictions/s** at 20 concurrent, with 0 errors. The 340 ms median / 462 ms p95 latency
 reported under that load is queueing, not per-request cost: by Little's law, 20 in flight / 59 req/s is about
-0.34 s. A single request on an otherwise idle server takes about 20–35 ms. With the 300 ms input debounce, one
+0.34 s. A single request on an otherwise idle Docker stack (50 sequential calls after warm-up, three runs) took a median of 38–45 ms and a p95 of 51–61 ms. With the 300 ms input debounce, one
 person editing the form sends at most about 3 requests/s.
 
 ## Reproducing
