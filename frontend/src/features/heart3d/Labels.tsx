@@ -147,7 +147,14 @@ export function Labels({ bindings, probabilities }: Props) {
       el.style.opacity = inView ? '' : '0'
       el.style.visibility = inView ? '' : 'hidden'
       el.dataset.hidden = moved ? 'true' : 'false'
-      el.title = moved ? `${b.target.id} is ${HIDDEN_TITLE}` : ''
+      const hiddenText = `${b.target.id} is ${HIDDEN_TITLE}`
+      el.title = moved ? hiddenText : ''
+      if (moved)
+        el.setAttribute(
+          'aria-label',
+          `${b.target.id} ${pct(probabilities[b.target.id])}, ${hiddenText}`,
+        )
+      else el.removeAttribute('aria-label')
       // Off-screen labels take no space, so they never push a visible label around.
       if (inView) placed.push(finalBox)
     }
@@ -188,7 +195,6 @@ export function Labels({ bindings, probabilities }: Props) {
               )}
             >
               {id} {pct(probabilities[id])}
-              <span className="hidden group-data-[hidden=true]:inline"> (behind)</span>
             </span>
           </Html>
         )
