@@ -29,7 +29,7 @@ export function ImportanceChart({ metrics }: { metrics: MetricsResponse }) {
         />
       }
     >
-      <ol className="space-y-1">
+      <ol className="max-w-2xl space-y-1.5">
         {rows.map((r) => (
           <li
             key={r.id}
@@ -38,7 +38,7 @@ export function ImportanceChart({ metrics }: { metrics: MetricsResponse }) {
             <span className="truncate" title={r.label}>
               {r.label}
             </span>
-            <span aria-hidden className="block h-3 min-w-0">
+            <span aria-hidden className="block h-3 min-w-0 rounded-sm bg-muted">
               <span
                 className="block h-full rounded-sm"
                 style={{

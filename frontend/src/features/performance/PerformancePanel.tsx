@@ -14,7 +14,7 @@ export function PerformancePanel() {
   const metrics = useMetrics()
 
   return (
-    <div className="mx-auto min-w-0 max-w-6xl space-y-4 p-(--gutter)">
+    <div className="mx-auto min-w-0 max-w-7xl space-y-4 p-(--gutter)">
       <h2 className="text-xl font-semibold tracking-tight">Model performance</h2>
       <QueryBoundary query={metrics} what="metrics">
         {(m) => (
@@ -23,8 +23,10 @@ export function PerformancePanel() {
             <ProtocolBox metrics={m} />
             <MetricTable metrics={m} />
             <StabilityPlot metrics={m} />
-            <RocChart metrics={m} />
-            <CalibrationChart metrics={m} />
+            <div className="grid min-w-0 grid-cols-1 gap-4 items-start xl:grid-cols-2">
+              <RocChart metrics={m} />
+              <CalibrationChart metrics={m} />
+            </div>
             <ConfusionTiles metrics={m} />
             <ImportanceChart metrics={m} />
           </>

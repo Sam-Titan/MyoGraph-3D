@@ -3,19 +3,27 @@ import { fixed } from '@/lib/format'
 import { stabilityRows, stabilitySentence } from './performanceModel'
 import { Section } from './Section'
 
-/** Percent position of v on a 0-100 track spanning [lo, hi]. */
-const at = (v: number, lo: number, hi: number): string => `${((v - lo) / (hi - lo)) * 100}%`
+const STEP = 0.05
+
+/** One scale for marks and ticks: ticks are the multiples of STEP inside [lo, hi], `at` maps to %. */
+function makeScale(values: number[]) {
+  const lo = Math.floor((Math.min(...values) - 0.02) / STEP) * STEP
+  const hi = Math.min(1, Math.ceil((Math.max(...values) + 0.02) / STEP) * STEP)
+  const span = hi - lo
+  const at = (v: number): string => `${((v - lo) / span) * 100}%`
+  const count = Math.round(span / STEP)
+  const every = count > 10 ? 2 : 1
+  const ticks = Array.from({ length: count + 1 }, (_, i) => lo + i * STEP).filter(
+    (_, i) => i % every === 0,
+  )
+  return { at, ticks }
+}
 
 export function StabilityPlot({ metrics }: { metrics: MetricsResponse }) {
   const rows = stabilityRows(metrics)
   if (rows.length === 0) return null
   const all = rows.flatMap((r) => [r.stat.min, r.stat.max, r.stat.official])
-  const lo = Math.floor((Math.min(...all) - 0.02) * 20) / 20
-  const hi = Math.min(1, Math.ceil((Math.max(...all) + 0.02) * 20) / 20)
-  const ticks = Array.from(
-    { length: Math.round((hi - lo) / 0.05) + 1 },
-    (_, i) => lo + i * 0.05,
-  ).filter((_, i) => i % 2 === 0)
+  const { at, ticks } = makeScale(all)
 
   return (
     <Section
@@ -31,25 +39,25 @@ export function StabilityPlot({ metrics }: { metrics: MetricsResponse }) {
               <span
                 className="absolute top-1/2 h-px -translate-y-1/2 bg-foreground/40"
                 style={{
-                  left: at(r.stat.min, lo, hi),
-                  width: `calc(${at(r.stat.max, lo, hi)} - ${at(r.stat.min, lo, hi)})`,
+                  left: at(r.stat.min),
+                  width: `calc(${at(r.stat.max)} - ${at(r.stat.min)})`,
                 }}
               />
               <span
                 className="absolute inset-y-1.5 rounded-sm opacity-35"
                 style={{
                   background: r.color,
-                  left: at(r.stat.q25, lo, hi),
-                  width: `calc(${at(r.stat.q75, lo, hi)} - ${at(r.stat.q25, lo, hi)})`,
+                  left: at(r.stat.q25),
+                  width: `calc(${at(r.stat.q75)} - ${at(r.stat.q25)})`,
                 }}
               />
               <span
                 className="absolute inset-y-1 w-0.5"
-                style={{ background: r.color, left: at(r.stat.median, lo, hi) }}
+                style={{ background: r.color, left: at(r.stat.median) }}
               />
               <span
                 className="absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rotate-45 border-2 border-background"
-                style={{ background: 'var(--foreground)', left: at(r.stat.official, lo, hi) }}
+                style={{ background: 'var(--foreground)', left: at(r.stat.official) }}
               />
             </div>
           </div>
@@ -58,11 +66,7 @@ export function StabilityPlot({ metrics }: { metrics: MetricsResponse }) {
           <span />
           <div className="relative h-4 text-[11px] text-muted-foreground">
             {ticks.map((t) => (
-              <span
-                key={t}
-                className="num absolute -translate-x-1/2"
-                style={{ left: at(t, lo, hi) }}
-              >
+              <span key={t} className="num absolute -translate-x-1/2" style={{ left: at(t) }}>
                 {fixed(t)}
               </span>
             ))}

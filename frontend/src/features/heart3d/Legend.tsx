@@ -30,10 +30,10 @@ export function Legend({
   return (
     <div className="space-y-2 rounded-lg border border-white/10 bg-slate-950/55 p-2.5 backdrop-blur-sm">
       <div>
-        <div className="relative h-4">
+        <div className="relative h-7">
           {active && (
             <span
-              className="num absolute bottom-0 whitespace-nowrap text-[10px] leading-none text-viewport-foreground"
+              className="num absolute top-0 whitespace-nowrap rounded border border-white/25 bg-slate-950/90 px-1.5 py-0.5 text-[11px] leading-none text-viewport-foreground"
               // Slides from left-aligned (0%) to right-aligned (100%) so it never overflows the bar.
               style={{
                 left: `${active.threshold * 100}%`,
@@ -54,7 +54,10 @@ export function Legend({
                 role="img"
                 aria-label={`${t.id} decision threshold ${pct(t.threshold)}`}
                 title={`${t.id} decision threshold ${pct(t.threshold)}`}
-                className="absolute -top-1 flex h-4 w-3 -translate-x-1/2 justify-center"
+                className={cn(
+                  'absolute flex w-3 -translate-x-1/2 justify-center',
+                  isActive ? '-top-[0.9rem] h-6' : '-top-1 h-4',
+                )}
                 style={{ left: `${t.threshold * 100}%` }}
               >
                 <span
@@ -62,7 +65,7 @@ export function Legend({
                     'h-full w-0.5 rounded-full',
                     isActive
                       ? 'bg-white shadow-[0_0_0_1px_rgb(0_0_0/0.5)]'
-                      : 'bg-white/35 shadow-[0_0_0_1px_rgb(0_0_0/0.25)]',
+                      : 'bg-white/70 shadow-[0_0_0_1px_rgb(0_0_0/0.4)]',
                   )}
                 />
               </span>

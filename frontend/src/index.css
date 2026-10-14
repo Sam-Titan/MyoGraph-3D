@@ -80,7 +80,7 @@
   --secondary: oklch(0.945 0.008 255);
   --secondary-foreground: oklch(0.3 0.03 258);
   --muted: oklch(0.945 0.008 255);
-  --muted-foreground: oklch(0.5 0.025 258);
+  --muted-foreground: oklch(0.46 0.025 258);
   --accent: oklch(0.935 0.02 235);
   --accent-foreground: oklch(0.32 0.07 235);
   --destructive: oklch(0.52 0.19 27);
@@ -134,7 +134,7 @@
     oklch(0.14 0.04 262) 100%
   );
   --viewport-foreground: oklch(0.93 0.01 250);
-  --viewport-muted: oklch(0.72 0.03 255);
+  --viewport-muted: oklch(0.8 0.03 255);
 
   /* Layout scale (4px base): chrome heights, gutters, column widths. */
   --gutter: 1rem;

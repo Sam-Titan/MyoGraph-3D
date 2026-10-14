@@ -224,13 +224,14 @@ export function Labels({ bindings, probabilities }: Props) {
                 else els.current.delete(id)
               }}
               className={cn(
-                'num block whitespace-nowrap rounded-md border px-1.5 py-0.5 text-xs font-medium shadow-sm backdrop-blur-sm data-[hidden=true]:border-dashed',
+                'group num block whitespace-nowrap rounded-md border px-1.5 py-0.5 text-xs font-medium shadow-sm backdrop-blur-sm data-[hidden=true]:border-dashed data-[hidden=true]:border-white/80 data-[hidden=true]:bg-slate-950/90',
                 id === selected
                   ? 'border-white/70 bg-slate-950/80 text-white'
                   : 'border-white/20 bg-slate-950/60 text-slate-100',
               )}
             >
               {id} {pct(probabilities[id])}
+              <span className="hidden group-data-[hidden=true]:inline"> · behind</span>
             </span>
           </Html>
         )

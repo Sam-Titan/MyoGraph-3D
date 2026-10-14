@@ -22,7 +22,7 @@ export type MetricKey = (typeof METRICS)[number]['key']
 /** Targets in API order. Colour is assigned by position so no target id is ever hard-coded. */
 export const targetIds = (m: MetricsResponse): string[] => Object.keys(m.targets)
 
-export const targetColor = (index: number): string => `var(--color-target-${(index % 4) + 1})`
+export const targetColor = (index: number): string => `var(--target-${(index % 4) + 1})`
 
 export interface MetricCell {
   key: MetricKey

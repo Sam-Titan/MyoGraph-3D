@@ -11,6 +11,8 @@ const VIEW_DIR = new Vector3(0, 0.35, 1).normalize()
 const UP = new Vector3(0, 1, 0)
 /** Default view: the heart fills this share of the viewport height, capped by width. */
 const FILL_HEIGHT = 0.7
+/** Stacked layout (<1280px): the canvas stops above the legend, so the heart may fill more of it. The corner-projected box overestimates the heart, so 1.25 gives ~280px of the 440px viewport. */
+const FILL_HEIGHT_STACKED = 1.25
 const FILL_WIDTH = 0.9
 const SPIN_RAD_PER_S = 0.35
 
@@ -36,7 +38,10 @@ function fitView(box: Box3, dir: Vector3, camera: PerspectiveCamera) {
       }
   const tanV = Math.tan(MathUtils.degToRad(camera.fov) / 2)
   const tanH = tanV * camera.aspect
-  const dist = Math.max(halfH / (tanV * FILL_HEIGHT), halfW / (tanH * FILL_WIDTH)) + halfD
+  const fillHeight = window.matchMedia('(min-width: 1280px)').matches
+    ? FILL_HEIGHT
+    : FILL_HEIGHT_STACKED
+  const dist = Math.max(halfH / (tanV * fillHeight), halfW / (tanH * FILL_WIDTH)) + halfD
   return { eye: centre.clone().addScaledVector(dir, dist), centre }
 }
 
@@ -45,8 +50,8 @@ interface Props {
 }
 
 /**
- * Orbit/zoom/pan with clamped distance. Frames the default anterior view or flies to the selected
- * vessel's bounding box whenever the selection changes (3D click or result card) or Reset is hit.
+ * Orbit/zoom/pan with clamped distance. Frames the default anterior view or orbits to the selected
+ * vessel's view direction (whole heart stays framed) whenever the selection changes (3D click or result card) or Reset is hit.
  * The workspace tab stays mounted while hidden: a zero-size canvas defers the first fit, and
  * showing it again only invalidates (it never re-frames, so the user's orbit is kept).
  */
@@ -76,11 +81,10 @@ export function CameraRig({ bindings }: Props) {
       const c = controls.current
       if (!c) return
       // A vessel orbits to its configured view direction (anatomy.yaml `expect_side`/`view_dir`,
-      // via the GLB extras) and fits its own box; everything else gets the default anterior view.
+      // via the GLB extras) but always frames the whole heart; the vessel is shown by highlight only.
       const vessel = bindings.find((b) => b.target?.id === id && b.target.role === 'vessel')
-      const box = vessel ? new Box3().setFromObject(vessel.object) : defaultBox
       const dir = vessel?.viewDir ?? VIEW_DIR
-      const { eye, centre } = fitView(box, dir, camera)
+      const { eye, centre } = fitView(defaultBox, dir, camera)
       void c.setLookAt(...eye.toArray(), ...centre.toArray(), animate)
     },
     [bindings, camera, defaultBox],

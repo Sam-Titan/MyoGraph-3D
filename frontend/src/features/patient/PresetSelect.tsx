@@ -54,7 +54,10 @@ export function PresetSelect({ features }: { features: FeatureInfo[] }) {
       </Select>
       {isError && <p className="text-xs text-destructive">Couldn’t load presets.</p>}
       {selected && (
-        <p className="text-xs text-muted-foreground">
+        <p
+          className="truncate text-xs text-muted-foreground"
+          title={presets.find((p) => p.id === selected)?.description}
+        >
           {presets.find((p) => p.id === selected)?.description}
         </p>
       )}

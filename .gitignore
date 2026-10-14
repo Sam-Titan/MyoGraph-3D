@@ -59,3 +59,4 @@ desktop.ini
 #   frontend/openapi.json, frontend/src/api/schema.d.ts   generated API types (Docker needs them)
 #   backend/uv.lock, frontend/package-lock.json           reproducible installs
 # ----------------------------------------------------------------------
+.screenshots/

@@ -1,7 +1,7 @@
 import { useProgress } from '@react-three/drei'
-import { Canvas } from '@react-three/fiber'
+import { Canvas, useFrame } from '@react-three/fiber'
 import { EffectComposer, Outline, Selection } from '@react-three/postprocessing'
-import { Suspense, useEffect, useRef, useState } from 'react'
+import { type RefObject, Suspense, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import type { TargetInfo } from '@/api/client'
 import { overallTarget } from '@/lib/features'
@@ -28,6 +28,26 @@ function ModelProgress() {
       Loading heart model… {Math.round(progress)}%
     </p>
   )
+}
+
+/**
+ * Test/screenshot hook: marks the container `data-ready` once a frame has rendered with a prediction
+ * and bumps `data-frame` per frame. Written straight to the DOM node, so frames cause no re-render.
+ */
+function ReadySignal({
+  container,
+  hasPrediction,
+}: {
+  container: RefObject<HTMLDivElement | null>
+  hasPrediction: boolean
+}) {
+  useFrame(() => {
+    const el = container.current
+    if (!el || !hasPrediction) return
+    el.dataset.ready = 'true'
+    el.dataset.frame = String(Number(el.dataset.frame ?? 0) + 1)
+  })
+  return null
 }
 
 interface SceneProps {
@@ -109,29 +129,36 @@ export default function HeartScene({ targets }: { targets: TargetInfo[] }) {
 
   return (
     <div ref={containerRef} className="absolute inset-0">
-      <Canvas
-        flat
-        frameloop="demand"
-        dpr={[1, maxDpr]}
-        shadows={false}
-        camera={{ fov: 35, near: 0.05, far: 60, position: [0, 1.4, 4.2] }}
-        gl={{ antialias: true, powerPreference: 'low-power' }}
-        // Empty space (not a drag) -> overall target + default view.
-        onPointerMissed={() => {
-          if (isClick() && overall) focusTarget(overall.id)
-        }}
-      >
-        <Suspense fallback={null}>
-          <Scene
-            targets={targets}
-            probabilities={probabilities}
-            isClick={isClick}
-            effects={effects}
-            onDecline={onDecline}
-            onIncline={onIncline}
-          />
-        </Suspense>
-      </Canvas>
+      {/* Below xl the legend sits under the canvas instead of over the heart. */}
+      <div className="absolute inset-x-0 top-0 bottom-28 xl:bottom-0">
+        <Canvas
+          flat
+          frameloop="demand"
+          dpr={[1, maxDpr]}
+          shadows={false}
+          camera={{ fov: 35, near: 0.05, far: 60, position: [0, 1.4, 4.2] }}
+          gl={{ antialias: true, powerPreference: 'low-power' }}
+          // Empty space (not a drag) -> overall target + default view.
+          onPointerMissed={() => {
+            if (isClick() && overall) focusTarget(overall.id)
+          }}
+        >
+          <Suspense fallback={null}>
+            <Scene
+              targets={targets}
+              probabilities={probabilities}
+              isClick={isClick}
+              effects={effects}
+              onDecline={onDecline}
+              onIncline={onIncline}
+            />
+            <ReadySignal
+              container={containerRef}
+              hasPrediction={Object.keys(probabilities).length > 0}
+            />
+          </Suspense>
+        </Canvas>
+      </div>
       <div className="pointer-events-none absolute inset-0 z-20 flex flex-col justify-between p-3">
         <div className="pointer-events-auto self-start">
           <Toolbar overallId={overall?.id ?? null} />

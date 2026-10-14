@@ -3,20 +3,20 @@ import { Panel } from '@/features/layout/Panel'
 import { PatientPanel } from '@/features/patient/PatientPanel'
 import { ResultsPanel } from '@/features/results/ResultsPanel'
 
-/** SPEC 6.1 three-column workspace; stacks below 1280px. Columns scroll independently. */
+/** SPEC 6.1 three-column workspace; stacks below 1280px (viewport, predictions, patient). Columns scroll independently. */
 export function WorkspaceLayout() {
   return (
     <div className="grid h-full min-w-0 grid-cols-1 auto-rows-min gap-(--panel-gap) overflow-y-auto overflow-x-hidden p-(--gutter) xl:auto-rows-auto xl:grid-cols-[var(--col-left)_minmax(0,1fr)_var(--col-right)] xl:overflow-hidden">
-      <Panel title="Patient" className="min-h-96">
+      <Panel title="Patient" className="order-3 min-h-96 xl:order-none">
         <PatientPanel />
       </Panel>
       <section
         aria-label="3D heart"
-        className="viewport-surface relative min-h-(--viewport-min-h) overflow-hidden xl:min-h-0 rounded-xl border border-white/10"
+        className="viewport-surface relative order-1 h-110 overflow-hidden rounded-xl border border-white/10 xl:order-none xl:h-auto xl:min-h-0"
       >
         <HeartViewport />
       </section>
-      <Panel title="Predictions" className="min-h-96">
+      <Panel title="Predictions" className="order-2 min-h-96 xl:order-none">
         <ResultsPanel />
       </Panel>
     </div>

@@ -9,7 +9,7 @@ export function ConfusionTiles({ metrics }: { metrics: MetricsResponse }) {
       title="Confusion matrices · hold-out, tuned threshold"
       caption="Each row shows what the model estimated for patients whose actual status was negative or positive; percentages are per row."
     >
-      <ul className="grid grid-cols-[repeat(auto-fit,minmax(13rem,1fr))] gap-4">
+      <ul className="grid grid-cols-[repeat(auto-fit,minmax(15rem,1fr))] gap-4">
         {targetIds(metrics).map((id, i) => {
           const t = metrics.targets[id]
           const tiles = confusionTiles(t.confusion_test.tuned)
@@ -26,7 +26,7 @@ export function ConfusionTiles({ metrics }: { metrics: MetricsResponse }) {
                   · threshold {fixed(t.threshold.tuned)}
                 </span>
               </p>
-              <div className="grid grid-cols-[1rem_2.5rem_minmax(0,1fr)_minmax(0,1fr)] gap-1 text-[11px] text-muted-foreground">
+              <div className="grid grid-cols-[1rem_3.5rem_minmax(0,1fr)_minmax(0,1fr)] gap-1 text-[11px] text-muted-foreground">
                 <span className="col-span-2" />
                 <span className="col-span-2 text-center">Predicted</span>
                 <span className="col-span-2" />
@@ -43,7 +43,7 @@ export function ConfusionTiles({ metrics }: { metrics: MetricsResponse }) {
                       return (
                         <div
                           key={c.predicted}
-                          className="rounded-md border px-2 py-2 text-center text-foreground"
+                          className="rounded-md border px-1 py-2 text-center text-foreground"
                           style={{
                             background: `color-mix(in oklch, var(${correct ? '--primary' : '--muted-foreground'}) ${Math.round(c.rowShare * 45)}%, transparent)`,
                           }}

@@ -1,4 +1,4 @@
-.PHONY: setup dev dev-api dev-web prepare train stability assets types lint fmt test check docker
+.PHONY: setup dev dev-api dev-web prepare train stability assets types lint fmt test check docker screenshots
 
 setup:
 	cd backend && uv sync --extra assets
@@ -28,6 +28,9 @@ assets:
 types:
 	cd backend && uv run python -m app.export_openapi > ../frontend/openapi.json
 	cd frontend && npx openapi-typescript openapi.json -o src/api/schema.d.ts
+
+screenshots:
+	cd frontend && node ../scripts/screenshots.mjs
 
 lint:
 	cd backend && uv run ruff check . && uv run ruff format --check .

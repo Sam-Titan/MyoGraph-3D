@@ -49,10 +49,18 @@ export function WhyPanel({ target, explanation, probability }: Props) {
         <span className="sr-only"> to </span>
         this patient <span className="num font-semibold">{pct(probability)}</span>
       </p>
-      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-x-3 text-[11px] text-muted-foreground">
-        <span aria-hidden />
-        <span aria-hidden className="text-center">
-          ← lowers · contribution (log-odds) · raises →
+      <div
+        aria-hidden
+        title="Contribution to the estimate, in log-odds"
+        className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-x-3 text-[11px] whitespace-nowrap text-muted-foreground"
+      >
+        <span />
+        <span className="flex min-w-0 items-center gap-1.5">
+          <span className="relative flex min-w-0 flex-1 justify-between">
+            <span>← lowers</span>
+            <span>raises →</span>
+          </span>
+          <span className="w-11 shrink-0" />
         </span>
       </div>
       <ul className="divide-y" aria-hidden>
@@ -72,7 +80,7 @@ export function WhyPanel({ target, explanation, probability }: Props) {
       </ul>
       <p className="text-xs text-muted-foreground">
         Bars show how much each factor pushed this estimate up or down relative to the average
-        patient.
+        patient. Contributions are in log-odds.
       </p>
       <ul className="sr-only">
         {rows.map((r) => (
