@@ -7,6 +7,9 @@ to the template, so the endpoint always returns something safe.
 import json
 import logging
 import re
+import threading
+import time
+from collections import OrderedDict
 from typing import Any
 
 import httpx
@@ -19,6 +22,8 @@ logger = logging.getLogger(__name__)
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 GROQ_TIMEOUT_S = 8.0
 TOP_N = 3
+RETRY_DELAY_S = 2.0
+CACHE_SIZE = 256
 DISCLAIMER = (
     "These are model estimates for education and decision support, "
     "not a substitute for imaging or clinical judgement."
@@ -36,11 +41,22 @@ SYSTEM_PROMPT = (
     "using ONLY the factors listed for that target in facts.factors, never another target's; "
     "(4) only if outside_training_range_warnings is not empty, one sentence saying some values "
     "are outside the training range; write one paragraph with no line breaks; then end with "
-    f"exactly this sentence: {DISCLAIMER}"
+    f"exactly this sentence: {DISCLAIMER}\n"
+    "Style: say 'probability of <condition>', never 'probability that X is likely'; write "
+    "percentages like 75% (no space); no meta phrases such as 'the selected target is'. "
+    "Match the tone and structure of this example, but take the target names, verdict words "
+    "(above/below, likely/unlikely) and order from the facts, never from the example:\n"
+    "EXAMPLE: The model estimates a {overall_pct} probability of coronary artery disease for this "
+    "patient, which is above its {overall_thr} decision threshold. For the individual arteries, it "
+    "estimates {lad_pct} for the LAD (likely), {lcx_pct} for the LCX (unlikely) and {rca_pct} for "
+    "the RCA (likely). For {selected_label}, the factors that raised the estimate most were "
+    "{up_factor_1} and {up_factor_2}, while {down_factor_1} lowered it. {disclaimer}"
 )
 _BANNED = re.compile(
     r"you have|you should|diagnos|treat|medicat|should take|prescrib|your doctor", re.IGNORECASE
 )
+_A_BEFORE_EIGHT = re.compile(r"\b([Aa]) (?=(?:8\d?|11|18)%)")
+_SPACE_PCT = re.compile(r"(\d) %")
 _NUMBER = re.compile(r"\d+(?:\.\d+)?")
 
 
@@ -98,6 +114,10 @@ def build_facts(
 
 
 # --- template ---------------------------------------------------------------------------------
+def _a(pct: int) -> str:
+    return "an" if str(pct).startswith("8") or pct in (11, 18) else "a"
+
+
 def _join(items: list[str]) -> str:
     if len(items) <= 2:
         return " and ".join(items)
@@ -111,8 +131,9 @@ def template_summary(facts: dict[str, Any]) -> str:
     others = [t for t in ts if t is not overall]
     chosen = next(t for t in ts if t["id"] == facts["selected_target"])
     block = next(b for b in facts["factors"] if b["target_id"] == chosen["id"])
+    overall_pct = overall["probability_percent"]
     s = [
-        f"The model estimates a {overall['probability_percent']}% probability for "
+        f"The model estimates {_a(overall_pct)} {overall_pct}% probability for "
         f"{overall['label']}, which is {overall['verdict'].lower()} against its "
         f"{overall['threshold_percent']}% decision threshold."
     ]
@@ -156,14 +177,23 @@ def _request_groq(facts: dict[str, Any], settings: GroqSettings) -> str:
     }
     if "gpt-oss" in settings.model:
         payload["reasoning_effort"] = "low"
-    res = httpx.post(
-        GROQ_URL,
-        headers={"Authorization": f"Bearer {settings.api_key}"},
-        json=payload,
-        timeout=GROQ_TIMEOUT_S,
-    )
+    # The route is a sync `def` (threadpool), so sleeping here never blocks the event loop.
+    for attempt in range(2):
+        res = httpx.post(
+            GROQ_URL,
+            headers={"Authorization": f"Bearer {settings.api_key}"},
+            json=payload,
+            timeout=GROQ_TIMEOUT_S,
+        )
+        if res.status_code == 429 and attempt == 0:
+            logger.warning("groq rate-limited (429); retrying once")
+            time.sleep(RETRY_DELAY_S)
+            continue
+        break
     res.raise_for_status()
-    return " ".join(str(res.json()["choices"][0]["message"]["content"]).split())
+    text = " ".join(str(res.json()["choices"][0]["message"]["content"]).split())
+    text = _SPACE_PCT.sub(r"\1%", text)
+    return _A_BEFORE_EIGHT.sub(r"\1n ", text)
 
 
 def validate_llm_text(
@@ -192,6 +222,22 @@ def validate_llm_text(
     return True
 
 
+# --- cache ------------------------------------------------------------------------------------
+# Keyed by the canonical facts (already derived from the inputs and the resolved selected target)
+# plus the model. Only validated Groq results are stored, never template fallbacks.
+_cache: OrderedDict[str, SummaryResponse] = OrderedDict()
+_cache_lock = threading.Lock()
+
+
+def clear_cache() -> None:
+    with _cache_lock:
+        _cache.clear()
+
+
+def _cache_key(facts: dict[str, Any], model: str) -> str:
+    return json.dumps([facts, model], sort_keys=True, ensure_ascii=False)
+
+
 def summarise(
     facts: dict[str, Any],
     settings: GroqSettings | None,
@@ -200,6 +246,12 @@ def summarise(
     template = template_summary(facts)
     if settings is None:
         return SummaryResponse(text=template, source="template")
+    key = _cache_key(facts, settings.model)
+    with _cache_lock:
+        hit = _cache.get(key)
+        if hit is not None:
+            _cache.move_to_end(key)
+            return hit
     try:
         text = _request_groq(facts, settings)
     except Exception as exc:  # timeout, HTTP error, bad JSON: all fall back
@@ -208,4 +260,9 @@ def summarise(
     if not validate_llm_text(text, facts, all_labels):
         logger.warning("groq summary rejected by validator; using template")
         return SummaryResponse(text=template, source="template")
-    return SummaryResponse(text=text, source="groq", model=settings.model)
+    result = SummaryResponse(text=text, source="groq", model=settings.model)
+    with _cache_lock:
+        _cache[key] = result
+        while len(_cache) > CACHE_SIZE:
+            _cache.popitem(last=False)
+    return result

@@ -26,6 +26,7 @@ def values(client: TestClient) -> dict[str, Any]:
 
 @pytest.fixture(autouse=True)
 def no_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    S.clear_cache()
     monkeypatch.delenv("GROQ_API_KEY", raising=False)
     monkeypatch.delenv("GROQ_MODEL", raising=False)
 
@@ -158,3 +159,82 @@ def test_validator_rejects_factor_not_in_selected_list(
     bad = f"The model estimates {pcts}, influenced by {foreign}. {S.DISCLAIMER}"
     assert S.validate_llm_text(ok, facts, labels)
     assert not S.validate_llm_text(bad, facts, labels)
+
+
+def _good_text(client: TestClient, values: dict[str, Any]) -> str:
+    facts = _facts(client, values)
+    pcts = ", ".join(f"{t['probability_percent']}%" for t in facts["targets"])
+    return f"The model estimates {pcts}. {S.DISCLAIMER}"
+
+
+def _resp(status: int, content: str = "") -> httpx.Response:
+    return httpx.Response(
+        status,
+        json={"choices": [{"message": {"content": content}}]},
+        request=httpx.Request("POST", S.GROQ_URL),
+    )
+
+
+def test_cache_hit_avoids_second_http_call(
+    client: TestClient, values: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("GROQ_API_KEY", KEY)
+    calls: list[int] = []
+
+    def post(*a: Any, **k: Any) -> httpx.Response:
+        calls.append(1)
+        return _resp(200, _good_text(client, values))
+
+    monkeypatch.setattr(httpx, "post", post)
+    a = client.post("/api/summary", json={"values": values}).json()
+    b = client.post("/api/summary", json={"values": values}).json()
+    assert a == b and a["source"] == "groq"
+    assert len(calls) == 1
+
+
+def test_429_then_success_retries_once(
+    client: TestClient, values: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("GROQ_API_KEY", KEY)
+    responses = [_resp(429), _resp(200, _good_text(client, values))]
+    sleeps: list[float] = []
+    monkeypatch.setattr(httpx, "post", lambda *a, **k: responses.pop(0))
+    monkeypatch.setattr(S.time, "sleep", sleeps.append)
+    res = client.post("/api/summary", json={"values": values}).json()
+    assert res["source"] == "groq"
+    assert sleeps == [S.RETRY_DELAY_S] and not responses
+
+
+def test_429_twice_falls_back_and_is_not_cached(
+    client: TestClient, values: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("GROQ_API_KEY", KEY)
+    calls: list[int] = []
+
+    def post(*a: Any, **k: Any) -> httpx.Response:
+        calls.append(1)
+        return _resp(429)
+
+    monkeypatch.setattr(httpx, "post", post)
+    monkeypatch.setattr(S.time, "sleep", lambda s: None)
+    res = client.post("/api/summary", json={"values": values}).json()
+    assert res["source"] == "template" and len(calls) == 2
+    client.post("/api/summary", json={"values": values})
+    assert len(calls) == 4  # a template fallback is never cached
+
+
+def test_space_before_percent_is_collapsed(
+    client: TestClient, values: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("GROQ_API_KEY", KEY)
+    spaced = _good_text(client, values).replace("%", " %")
+    monkeypatch.setattr(httpx, "post", lambda *a, **k: _resp(200, spaced))
+    res = client.post("/api/summary", json={"values": values}).json()
+    assert res["source"] == "groq" and " %" not in res["text"]
+
+
+def test_article_before_eight_and_eleven() -> None:
+    assert S._A_BEFORE_EIGHT.sub(r"\1n ", "a 85% and a 11% and a 26% and A 8%") == (
+        "an 85% and an 11% and a 26% and An 8%"
+    )
+    assert [S._a(p) for p in (85, 8, 11, 18, 26, 98)] == ["an", "an", "an", "an", "a", "a"]
