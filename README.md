@@ -112,6 +112,10 @@ Cross-validation is 5-fold repeated 3 times on the training split. Across 20 ran
 split is the hardest for overall CAD (hold-out ROC-AUC 0.824 against a median of 0.911), so the hold-out
 number is a conservative estimate.
 
+**Serving latency** (`scripts/load_test.py`, Docker stack on WSL2, 500 `POST /api/predict`, 20 concurrent, 0 errors):
+median 340 ms, p95 462 ms (about 59 requests/s). A single uncontended request is much faster; the figures
+are dominated by queueing behind the per-model lock and a single API worker.
+
 ## Reproducing
 
 ```bash
