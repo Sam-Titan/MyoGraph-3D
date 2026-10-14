@@ -142,7 +142,9 @@ class Predictor:
         v = row[f.id]
         if isinstance(f, BinaryFeature) or (isinstance(f, DerivedFeature) and v in (0.0, 1.0)):
             return "Yes" if v else "No"
-        return f"{_num(v)} {f.unit}" if f.unit else _num(v)
+        if not f.unit:
+            return _num(v)
+        return f"{_num(v)}{f.unit}" if f.unit == "%" else f"{_num(v)} {f.unit}"
 
     def predict(self, values: Mapping[str, InputValue]) -> PredictResponse:
         t0 = time.perf_counter()

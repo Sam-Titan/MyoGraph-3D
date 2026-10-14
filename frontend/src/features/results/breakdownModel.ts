@@ -44,7 +44,8 @@ const trimmed = (n: number, digits: number): string => String(Number(n.toFixed(d
 export function formatValue(row: BreakdownRow): string {
   if (row.kind === 'binary') return row.value >= 0.5 ? 'Yes' : 'No'
   const v = trimmed(row.value, 2)
-  return row.unit ? `${v} ${row.unit}` : v
+  if (!row.unit) return v
+  return row.unit === '%' ? `${v}%` : `${v} ${row.unit}`
 }
 
 export function formatReference(row: BreakdownRow): string {
