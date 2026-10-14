@@ -1,7 +1,12 @@
 # MyoGraph 3D: coronary artery disease probabilities on an interactive 3D heart
 
 *Track A, Multimodal AI Hackathon 2026: Cardiovascular Risk Visualization & Prediction.*
-*Model version `<!--v:784a6c5e-->xgb-v1-b60472ec<!--/v-->`, trained <!--v:9e5b60cb-->2026-10-13<!--/v-->. Generated values come from the committed artifacts via `scripts/report_numbers.py`.*
+
+Swayam Bansal  
+Repository: <!--v:c0de5afe-->https://github.com/Sam-Titan/MyoGraph-3D<!--/v-->  
+Demo video: &lt;VIDEO_URL&gt;
+
+*Model version <code><!--v:784a6c5e-->xgb-v1-b60472ec<!--/v--></code>, trained <!--v:9e5b60cb-->2026-10-13<!--/v-->. Generated values come from the committed artifacts via `scripts/report_numbers.py`.*
 
 ## 1. Problem and approach
 
@@ -20,7 +25,7 @@ Three ideas shape the design. First, honest validation: a fixed hold-out, repeat
 - `Sex` contains the typo `Fmale`, mapped to female.
 - Binary columns mix `Y`/`N` and `1`/`0`; each feature lists the raw values that mean yes.
 - `VHD` has a lowercase `mild`; it becomes an ordinal 0–3.
-- <!--v:41d368a5-->`Exertional CP`<!--/v--> is constant and dropped.
+- <!--v:41d368a5-->Exertional CP<!--/v--> is constant and dropped.
 - `BMI` and `Obesity` are derived from weight and height, server-side, and recomputed for training as well, so training and serving share one code path (this overrides one inconsistent `Obesity` row).
 - Composites: smoking status and chest-pain type are mutually exclusive in the data, so each is one input that expands into several dataset columns; `BBB` is one-hot encoded.
 
@@ -37,46 +42,54 @@ Three ideas shape the design. First, honest validation: a fixed hold-out, repeat
 2. Development metrics: <!--v:60f98b3a-->5<!--/v-->-fold stratified CV repeated <!--v:da9de890-->3<!--/v--> times (seed <!--v:0c04690c-->42<!--/v-->) on the training set only. The hold-out is a final sanity check; it is never used for tuning or for CV.
 3. Calibration: out-of-fold raw margins on train, then Platt scaling `logit = a·margin + b`; the final model is refit on all training rows. The served probability is `sigmoid(a·margin + b)`.
 <!--v:912b498a-->
+
 | Target | a (slope) | b (intercept) |
 |---|---|---|
 | CAD | 0.926 | 0.513 |
 | LAD | 0.656 | 0.261 |
 | LCX | 0.537 | -0.162 |
 | RCA | 0.358 | -0.271 |
+
 <!--/v-->
 4. Decision thresholds: Youden's J maximiser on the training out-of-fold calibrated probabilities (never the hold-out). Inside each CV fold the threshold comes from that fold's own training predictions, so CV stays honest.
 
 **Results.** CV is the primary figure (mean ± std over <!--v:147bfeaf-->15<!--/v--> folds); the hold-out has n = <!--v:8e1d23bb-->61<!--/v--> and is noisy.
 
 <!--v:9b207167-->
+
 | Target | Prevalence (train / test) | ROC-AUC CV | ROC-AUC hold-out | Brier CV | Brier hold-out |
 |---|---|---|---|---|---|
 | Overall CAD | 71% / 72% | 0.932 ± 0.030 | 0.824 | 0.085 ± 0.016 | 0.174 |
 | LAD stenosis | 59% / 56% | 0.835 ± 0.054 | 0.804 | 0.161 ± 0.022 | 0.183 |
 | LCX stenosis | 38% / 44% | 0.729 ± 0.080 | 0.783 | 0.203 ± 0.022 | 0.204 |
 | RCA stenosis | 38% / 36% | 0.698 ± 0.058 | 0.695 | 0.216 ± 0.011 | 0.205 |
+
 <!--/v-->
 Brier scores do not depend on the threshold. Threshold-dependent metrics at the tuned thresholds:
 
 <!--v:bb629dea-->
+
 | Target | Tuned threshold | CV spread of threshold | Recall CV | Recall hold-out | F1 CV | F1 hold-out | F1 hold-out at 0.5 |
 |---|---|---|---|---|---|---|---|
 | Overall CAD | 0.477 | 0.637 ± 0.068 | 0.904 ± 0.071 | 0.773 | 0.914 ± 0.034 | 0.810 | 0.810 |
 | LAD stenosis | 0.535 | 0.510 ± 0.078 | 0.834 ± 0.140 | 0.824 | 0.795 ± 0.072 | 0.789 | 0.800 |
 | LCX stenosis | 0.395 | 0.380 ± 0.049 | 0.690 ± 0.120 | 0.630 | 0.607 ± 0.064 | 0.654 | 0.522 |
 | RCA stenosis | 0.462 | 0.349 ± 0.044 | 0.735 ± 0.128 | 0.500 | 0.588 ± 0.060 | 0.564 | 0.400 |
+
 <!--/v-->
 Youden thresholds are noisy at this sample size: the spread across CV folds is shown above, and the tuned value can lower or raise F1 relative to 0.5 (last column). Prevalence matters for reading these numbers: a constant predictor of the majority class would reach accuracy <!--v:bff2710f-->72%<!--/v--> on overall CAD in the hold-out, so Brier and ROC-AUC are the more informative figures.
 
-**Split stability.** The hold-out ROC-AUC and Brier were recomputed over <!--v:e1978be2-->20<!--/v--> split seeds (0–<!--v:5e51baeb-->19<!--/v-->; same stratification, same model seed). Seed <!--v:de5b8f63-->42<!--/v--> is the <!--v:52c34228-->hardest<!--/v--> split for overall CAD: its AUC is the lowest of the <!--v:e1978be2-->20<!--/v-->, and its Brier score is at percentile <!--v:d293b3bc-->100<!--/v--> (the worst).
+**Split stability.** The hold-out ROC-AUC and Brier were recomputed over <!--v:e1978be2-->21<!--/v--> splits (the official seed plus seeds 0–<!--v:5e51baeb-->19<!--/v-->; same stratification, same model seed). Seed <!--v:de5b8f63-->42<!--/v--> is the <!--v:52c34228-->hardest<!--/v--> split for overall CAD: its AUC is the lowest of the <!--v:e1978be2-->21<!--/v--> splits, and its Brier score is at percentile <!--v:d293b3bc-->100<!--/v--> (the worst).
 
 <!--v:627fcdb6-->
+
 | Target | Seed-42 AUC | Median | IQR | Min – max | Seed-42 percentile |
 |---|---|---|---|---|---|
 | Overall CAD | 0.824 | 0.911 | 0.874 – 0.924 | 0.836 – 0.969 | 0 |
 | LAD stenosis | 0.804 | 0.810 | 0.794 – 0.861 | 0.756 – 0.931 | 35 |
 | LCX stenosis | 0.783 | 0.772 | 0.720 – 0.791 | 0.642 – 0.807 | 60 |
 | RCA stenosis | 0.695 | 0.681 | 0.656 – 0.729 | 0.588 – 0.773 | 65 |
+
 <!--/v-->
 The headline hold-out CAD AUC (<!--v:6f80ea39-->0.824<!--/v-->) is therefore a pessimistic draw; the median over seeds is <!--v:d9140f46-->0.911<!--/v-->. We kept seed <!--v:de5b8f63-->42<!--/v--> as the official split because it was fixed before the stability analysis, and report the spread instead of choosing a friendlier seed.
 
@@ -87,12 +100,14 @@ The headline hold-out CAD AUC (<!--v:6f80ea39-->0.824<!--/v-->) is therefore a p
 **WHY panel.** For the selected target, the top 10 inputs are shown as diverging bars (red raises the estimate, teal lowers it) in log-odds, with the header "average patient (model baseline) → this patient". Global importance on the training set:
 
 <!--v:72bb0a20-->
-| Target | Top-3 inputs by mean |SHAP| (log-odds) |
+
+| Target | Top-3 inputs by mean \|SHAP\| (log-odds) |
 |---|---|
 | CAD | Chest pain type (1.49), Age (0.70), Ejection fraction (TTE) (0.59) |
 | LAD | Chest pain type (0.68), Ejection fraction (TTE) (0.49), Age (0.44) |
 | LCX | Age (0.42), Triglycerides (0.30), Chest pain type (0.29) |
 | RCA | Chest pain type (0.21), Age (0.21), Diabetes mellitus (0.19) |
+
 <!--/v-->
 **Physiological breakdown.** A table of numeric measurements, derived BMI/obesity and key binaries: value and unit, typical adult reference range (display only), status (low/normal/high), and signed contribution to the selected target. Values outside the training range raise a warning but are still scored.
 
@@ -107,6 +122,7 @@ The headline hold-out CAD AUC (<!--v:6f80ea39-->0.824<!--/v-->) is therefore a p
 - **Extras.** Each node carries an `anchor` (a vertex on its surface for the label), a `viewDir` for rotate-to-vessel, and visibility flags.
 
 <!--v:7e71f45c-->
+
 | Node | Triangles | Budget | Note |
 |---|---|---|---|
 | LAD | 8000 | 8000 |  |
@@ -116,6 +132,7 @@ The headline hold-out CAD AUC (<!--v:6f80ea39-->0.824<!--/v-->) is therefore a p
 | heart | 40000 | 40000 |  |
 | aorta | 396 | 6000 | optional |
 | veins | 6000 | 6000 | hidden by default |
+
 <!--/v-->
 Total <!--v:7213ed6f-->67,618<!--/v--> triangles (<!--v:bb07251b-->61,618<!--/v--> with the default-hidden veins off), against a build limit of <!--v:f4c9be98-->80,000<!--/v-->; the file is <!--v:c081700f-->1.27<!--/v--> MB against a <!--v:08a1bdcd-->3<!--/v--> MB limit. The build script enforces both.
 
@@ -131,7 +148,7 @@ Total <!--v:7213ed6f-->67,618<!--/v--> triangles (<!--v:bb07251b-->61,618<!--/v-
 
 **Extensibility.** A new clinical feature is a `features.yaml` entry plus `make train`. A new model is a class implementing `RiskModel` plus a registry entry. A new anatomical structure or target is an `anatomy.yaml` entry plus `make assets`.
 
-**Operations and reproducibility.** `make setup | dev | train | assets | types | check | docker`. `make docker` serves the app at http://localhost:8080 (nginx proxying to the API container). Seeds are fixed at <!--v:d48b9ef9-->42<!--/v-->; training is deterministic, and `model_card.json` records the data hash (`<!--v:995b6bef-->b60472ecebdd<!--/v-->…`) and git SHA. The backend test suite collects <!--v:d3846c3f-->63<!--/v--> tests across <!--v:d268c932-->9<!--/v--> files (<!--v:a332e092-->anatomy, api, explain_additivity, health, leakage, preprocess, presets, split, summary<!--/v-->); the main gates are leakage, SHAP additivity, split stratification and anatomy mapping.
+**Operations and reproducibility.** `make setup | dev | train | assets | types | check | docker`. `make docker` serves the app at http://localhost:8080 (nginx proxying to the API container). Seeds are fixed at <!--v:d48b9ef9-->42<!--/v-->; training is deterministic, and `model_card.json` records the data hash (<code><!--v:995b6bef-->b60472ecebdd<!--/v-->…</code>) and git SHA. The backend test suite collects <!--v:d3846c3f-->63<!--/v--> tests across <!--v:d268c932-->9<!--/v--> files (<!--v:a332e092-->anatomy, api, explain_additivity, health, leakage, preprocess, presets, split, summary<!--/v-->); the main gates are leakage, SHAP additivity, split stratification and anatomy mapping.
 
 ## 7. Usage
 
@@ -142,10 +159,13 @@ Total <!--v:7213ed6f-->67,618<!--/v--> triangles (<!--v:bb07251b-->61,618<!--/v-
 
 Colour is never the only signal: each percentage is printed, and "Likely/Unlikely" compares the estimate with that target's tuned threshold. The disclaimer banner is fixed on every tab.
 
+![LCX selected, camera rotated to the vessel](img/lcx-rotated.png)
+*Figure 2. Selecting a vessel rotates the heart to it; here LCX, with its label, threshold tick and WHY bars.*
+
 ## 8. Limitations and ethics
 
 - **Small, single-centre data.** <!--v:02567bfe-->303<!--/v--> patients from one hospital; the hold-out has <!--v:8e1d23bb-->61<!--/v-->. Confidence intervals are wide, and results may not transfer to other populations or devices.
-- **Non-imaging inputs only.** The model never sees angiography or CT, so vessel-level estimates are population-pattern estimates, not anatomy. Localising stenosis is harder than detecting CAD: LCX and RCA hold-out ROC-AUC are <!--v:7fc7015c-->0.783<!--/v--> and <!--v:113e3ecc-->0.695<!--/v-->, and their CV Brier scores (<!--v:2d5a949f-->0.203<!--/v-->, <!--v:b3de3f9a-->0.216<!--/v-->) improve only modestly on a prevalence-only predictor (<!--v:0f7607bb-->0.236<!--/v--> and <!--v:39991097-->0.236<!--/v-->, from p(1−p) on training prevalence).
+- **Non-imaging inputs only.** The model never sees angiography or CT, so vessel-level estimates are population-pattern estimates, not anatomy. Localising stenosis is harder than detecting CAD: LCX and RCA cross-validated ROC-AUC are <!--v:7fc7015c-->0.729<!--/v--> and <!--v:113e3ecc-->0.698<!--/v-->, and their CV Brier scores (<!--v:2d5a949f-->0.203<!--/v-->, <!--v:b3de3f9a-->0.216<!--/v-->) improve only modestly on a prevalence-only predictor (<!--v:0f7607bb-->0.236<!--/v--> and <!--v:39991097-->0.236<!--/v-->, from p(1−p) on training prevalence).
 - **Noisy thresholds and split sensitivity.** Tuned thresholds move by ±<!--v:b92be2bd-->0.08<!--/v--> or more between folds; hold-out AUC for overall CAD ranges from <!--v:10c473ca-->0.836<!--/v--> to <!--v:5cc0e25d-->0.969<!--/v--> across split seeds.
 - **Models can disagree.** Overall CAD and each vessel are separate models; the interface notes this when verdicts conflict.
 - **Not clinically validated.** No prospective or external validation. The tool is for education and decision support, not a substitute for imaging or clinical judgement, and it gives no treatment advice. The wording throughout is "probability" or "model estimate".

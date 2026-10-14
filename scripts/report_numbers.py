@@ -77,24 +77,38 @@ st = table(["Target", "Seed-42 AUC", "Median", "IQR", "Min – max", "Seed-42 pe
 cal = table(["Target", "a (slope)", "b (intercept)"], [[t, f3(C[t]["a"]), f3(C[t]["b"])] for t in ids])
 tri_rows = [[k, tri[k], budget.get(k, "-"), "hidden by default" if k in hidden else ("optional" if next(n for n in AN['nodes'] if n['name']==k).get('optional') else "")] for k in tri]
 tri_t = table(["Node", "Triangles", "Budget", "Note"], tri_rows)
-imp = table(["Target", "Top-3 inputs by mean |SHAP| (log-odds)"],
+imp = table(["Target", "Top-3 inputs by mean \\|SHAP\\| (log-odds)"],
     [[t, ", ".join(f"{x['label']} ({x['importance']:.2f})" for x in M["feature_importance"][t][:3])] for t in ids])
-dropped = ", ".join(f"`{d['column']}`" for d in F["dropped"])
+dropped = ", ".join(d["column"] for d in F["dropped"])
 excl = ", ".join(f"`{c}`" for c in F["excluded_from_inputs"])
 cad, lcx, rca = T["CAD"], T["LCX"], T["RCA"]
 pre = [p["id"] for p in PR]
 worst = max(ids, key=lambda t: S["targets"][t]["brier"]["official_percentile"])
 
+def _repo() -> str:
+    url = subprocess.run(["git", "remote", "get-url", "origin"], cwd=R, capture_output=True, text=True, check=True).stdout.strip()
+    url = re.sub(r"^git@([^:]+):", r"https://\1/", url)
+    url = re.sub(r"^ssh://git@", "https://", url)
+    return re.sub(r"\.git$", "", url)
+
+REPO = _repo()
+
 def V(key: str, val) -> str:
     val = str(val)
-    body = f"\n{val}" if "\n" in val else val
+    # Blank lines around multi-line values so markdown tables are not swallowed by the HTML comment.
+    body = f"\n\n{val}\n" if "\n" in val else val
     return f"<!--v:{key}-->{body}<!--/v-->"
 
 
 md = f"""# MyoGraph 3D: coronary artery disease probabilities on an interactive 3D heart
 
 *Track A, Multimodal AI Hackathon 2026: Cardiovascular Risk Visualization & Prediction.*
-*Model version `{V('784a6c5e', MC['model_version'])}`, trained {V('9e5b60cb', MC['trained_at'][:10])}. Generated values come from the committed artifacts via `scripts/report_numbers.py`.*
+
+Swayam Bansal  
+Repository: {V('c0de5afe', REPO)}  
+Demo video: &lt;VIDEO_URL&gt;
+
+*Model version <code>{V('784a6c5e', MC['model_version'])}</code>, trained {V('9e5b60cb', MC['trained_at'][:10])}. Generated values come from the committed artifacts via `scripts/report_numbers.py`.*
 
 ## 1. Problem and approach
 
@@ -103,7 +117,7 @@ Track A asks for a system that predicts cardiovascular risk and makes it visible
 Three ideas shape the design. First, honest validation: a fixed hold-out, repeated cross-validation on the training part only, and a split-stability analysis that shows how much one lucky or unlucky split can move a score. Second, calibrated, explainable output: every probability is calibrated and decomposes exactly into per-input contributions. Third, one source of truth: the feature schema and the target-to-mesh map live in two YAML files, and the backend, API, form and 3D scene all derive from them.
 
 ![MyoGraph 3D workspace](img/workspace-3vessel.png)
-*Figure 1. Patient Workspace with a three-vessel hold-out preset (`docs/img/workspace-3vessel.png`).*
+*Figure 1. Patient workspace with a three-vessel hold-out preset (`docs/img/workspace-3vessel.png`).*
 
 ## 2. Data and preprocessing
 
@@ -140,7 +154,7 @@ Brier scores do not depend on the threshold. Threshold-dependent metrics at the 
 {V('bb629dea', thr)}
 Youden thresholds are noisy at this sample size: the spread across CV folds is shown above, and the tuned value can lower or raise F1 relative to 0.5 (last column). Prevalence matters for reading these numbers: a constant predictor of the majority class would reach accuracy {V('bff2710f', pc(cad['prevalence']['test']))} on overall CAD in the hold-out, so Brier and ROC-AUC are the more informative figures.
 
-**Split stability.** The hold-out ROC-AUC and Brier were recomputed over {V('e1978be2', len(S['seeds']))} split seeds (0–{V('5e51baeb', S['seeds'][-1])}; same stratification, same model seed). Seed {V('de5b8f63', S['official_seed'])} is the {V('52c34228', 'hardest' if S['targets']['CAD']['roc_auc']['official_percentile'] == 0 else 'a hard')} split for overall CAD: its AUC is the lowest of the {V('e1978be2', len(S['seeds']))}, and its Brier score is at percentile {V('d293b3bc', format(S['targets']['CAD']['brier']['official_percentile'], '.0f'))} (the worst).
+**Split stability.** The hold-out ROC-AUC and Brier were recomputed over {V('e1978be2', len(S['seeds']) + 1)} splits (the official seed plus seeds 0–{V('5e51baeb', S['seeds'][-1])}; same stratification, same model seed). Seed {V('de5b8f63', S['official_seed'])} is the {V('52c34228', 'hardest' if S['targets']['CAD']['roc_auc']['official_percentile'] == 0 else 'a hard')} split for overall CAD: its AUC is the lowest of the {V('e1978be2', len(S['seeds']) + 1)} splits, and its Brier score is at percentile {V('d293b3bc', format(S['targets']['CAD']['brier']['official_percentile'], '.0f'))} (the worst).
 
 {V('627fcdb6', st)}
 The headline hold-out CAD AUC ({V('6f80ea39', f3(cad['test']['tuned']['roc_auc']))}) is therefore a pessimistic draw; the median over seeds is {V('d9140f46', f3(S['targets']['CAD']['roc_auc']['median']))}. We kept seed {V('de5b8f63', S['official_seed'])} as the official split because it was fixed before the stability analysis, and report the spread instead of choosing a friendlier seed.
@@ -179,7 +193,7 @@ Total {V('7213ed6f', format(tot, ','))} triangles ({V('bb07251b', format(vis, ',
 
 **Extensibility.** A new clinical feature is a `features.yaml` entry plus `make train`. A new model is a class implementing `RiskModel` plus a registry entry. A new anatomical structure or target is an `anatomy.yaml` entry plus `make assets`.
 
-**Operations and reproducibility.** `make setup | dev | train | assets | types | check | docker`. `make docker` serves the app at http://localhost:8080 (nginx proxying to the API container). Seeds are fixed at {V('d48b9ef9', sp['seed'])}; training is deterministic, and `model_card.json` records the data hash (`{V('995b6bef', MC['data_sha256'][:12])}…`) and git SHA. The backend test suite collects {V('d3846c3f', n_tests)} tests across {V('d268c932', len(test_files))} files ({V('a332e092', ", ".join(f.removeprefix('test_').removesuffix('.py') for f in test_files))}); the main gates are leakage, SHAP additivity, split stratification and anatomy mapping.
+**Operations and reproducibility.** `make setup | dev | train | assets | types | check | docker`. `make docker` serves the app at http://localhost:8080 (nginx proxying to the API container). Seeds are fixed at {V('d48b9ef9', sp['seed'])}; training is deterministic, and `model_card.json` records the data hash (<code>{V('995b6bef', MC['data_sha256'][:12])}…</code>) and git SHA. The backend test suite collects {V('d3846c3f', n_tests)} tests across {V('d268c932', len(test_files))} files ({V('a332e092', ", ".join(f.removeprefix('test_').removesuffix('.py') for f in test_files))}); the main gates are leakage, SHAP additivity, split stratification and anatomy mapping.
 
 ## 7. Usage
 
@@ -190,10 +204,13 @@ Total {V('7213ed6f', format(tot, ','))} triangles ({V('bb07251b', format(vis, ',
 
 Colour is never the only signal: each percentage is printed, and "Likely/Unlikely" compares the estimate with that target's tuned threshold. The disclaimer banner is fixed on every tab.
 
+![LCX selected, camera rotated to the vessel](img/lcx-rotated.png)
+*Figure 2. Selecting a vessel rotates the heart to it; here LCX, with its label, threshold tick and WHY bars.*
+
 ## 8. Limitations and ethics
 
 - **Small, single-centre data.** {V('02567bfe', sp['n_train'] + sp['n_test'])} patients from one hospital; the hold-out has {V('8e1d23bb', sp['n_test'])}. Confidence intervals are wide, and results may not transfer to other populations or devices.
-- **Non-imaging inputs only.** The model never sees angiography or CT, so vessel-level estimates are population-pattern estimates, not anatomy. Localising stenosis is harder than detecting CAD: LCX and RCA hold-out ROC-AUC are {V('7fc7015c', f3(lcx['test']['tuned']['roc_auc']))} and {V('113e3ecc', f3(rca['test']['tuned']['roc_auc']))}, and their CV Brier scores ({V('2d5a949f', f3(lcx['cv']['tuned']['brier']['mean']))}, {V('b3de3f9a', f3(rca['cv']['tuned']['brier']['mean']))}) improve only modestly on a prevalence-only predictor ({V('0f7607bb', f3(pb(lcx)))} and {V('39991097', f3(pb(rca)))}, from p(1−p) on training prevalence).
+- **Non-imaging inputs only.** The model never sees angiography or CT, so vessel-level estimates are population-pattern estimates, not anatomy. Localising stenosis is harder than detecting CAD: LCX and RCA cross-validated ROC-AUC are {V('7fc7015c', f3(lcx['cv']['tuned']['roc_auc']['mean']))} and {V('113e3ecc', f3(rca['cv']['tuned']['roc_auc']['mean']))}, and their CV Brier scores ({V('2d5a949f', f3(lcx['cv']['tuned']['brier']['mean']))}, {V('b3de3f9a', f3(rca['cv']['tuned']['brier']['mean']))}) improve only modestly on a prevalence-only predictor ({V('0f7607bb', f3(pb(lcx)))} and {V('39991097', f3(pb(rca)))}, from p(1−p) on training prevalence).
 - **Noisy thresholds and split sensitivity.** Tuned thresholds move by ±{V('b92be2bd', format(max(T[t]['threshold']['cv_std'] for t in ids), '.2f'))} or more between folds; hold-out AUC for overall CAD ranges from {V('10c473ca', f3(S['targets']['CAD']['roc_auc']['min']))} to {V('5cc0e25d', f3(S['targets']['CAD']['roc_auc']['max']))} across split seeds.
 - **Models can disagree.** Overall CAD and each vessel are separate models; the interface notes this when verdicts conflict.
 - **Not clinically validated.** No prospective or external validation. The tool is for education and decision support, not a substitute for imaging or clinical judgement, and it gives no treatment advice. The wording throughout is "probability" or "model estimate".
@@ -218,6 +235,11 @@ else:
             seen[0] += 1
             return fresh[m.group(1)]
         return m.group(0)
-    path.write_text(MARK.sub(sub, cur))
+    new = MARK.sub(sub, cur)
+    stale = sorted({m.group(1) for m in MARK.finditer(new)} - set(fresh))
+    empty = [m.group(1) for m in MARK.finditer(new) if not re.sub(r"<!--/?v(:\w+)?-->", "", m.group(0)).strip()]
+    if stale or empty:
+        sys.exit(f"report_numbers: unfilled markers in docs/REPORT.md: stale={stale} empty={empty}")
+    path.write_text(new)
     print(f"refreshed {seen[0]} generated values")
 print(len(path.read_text().split()), "words")

@@ -15,9 +15,13 @@ const body = execFileSync('npx', ['--yes', 'marked@14.1.4', '--gfm', '-i', MD], 
   encoding: 'utf8',
   maxBuffer: 32 * 1024 * 1024,
 })
+if (/&lt;!--\/?v/.test(body)) {
+  console.error('report_pdf: literal <!--v:...--> marker text would print in the PDF (marker inside code span or escaped).')
+  process.exit(1)
+}
 const css = `
   @page { size: A4; margin: 18mm }
-  html { font: 11pt/1.4 "Geist", system-ui, "Segoe UI", Helvetica, Arial, sans-serif; color: #111 }
+  html { font: 10.5pt/1.4 "Geist", system-ui, "Segoe UI", Helvetica, Arial, sans-serif; color: #111 }
   body { margin: 0 }
   h1 { font-size: 18pt; margin: 0 0 4pt }
   h2 { font-size: 13pt; margin: 14pt 0 4pt; break-after: avoid }
@@ -26,7 +30,7 @@ const css = `
   table { border-collapse: collapse; width: 100%; font-size: 8.5pt; margin: 6pt 0; break-inside: avoid }
   th, td { border: 0.5pt solid #bbb; padding: 2pt 4pt; text-align: left }
   th { background: #eef1f5 }
-  img { max-width: 100%; max-height: 90mm; object-fit: contain; display: block; margin: 6pt auto }
+  img { max-width: 100%; max-height: 68mm; object-fit: contain; display: block; margin: 6pt auto }
   code { font: 9pt "Geist Mono", ui-monospace, Menlo, Consolas, monospace }
   em { color: #333 }
 `
