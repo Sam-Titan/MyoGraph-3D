@@ -7,6 +7,8 @@ stenosis in the LAD, LCX and RCA, then maps each probability onto the matching v
 with a per-feature explanation of why. It is a hackathon research prototype built on the Extension of
 the Z-Alizadeh Sani dataset (303 patients).
 
+**Demo video:** <https://youtu.be/UWsbB-3spT4>
+
 > **Disclaimer:** MyoGraph 3D is a research demo, not a medical device. Outputs are model estimates
 > of probability learned from a small public dataset and must not be used for clinical decisions.
 

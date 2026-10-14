@@ -106,7 +106,7 @@ md = f"""# MyoGraph 3D: coronary artery disease probabilities on an interactive 
 
 Swayam Bansal  
 Repository: {V('c0de5afe', REPO)}  
-Demo video: &lt;VIDEO_URL&gt;
+Demo video: https://youtu.be/UWsbB-3spT4
 
 *Model version <code>{V('784a6c5e', MC['model_version'])}</code>, trained {V('9e5b60cb', MC['trained_at'][:10])}. Generated values come from the committed artifacts via `scripts/report_numbers.py`.*
 

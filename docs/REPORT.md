@@ -4,7 +4,7 @@
 
 Swayam Bansal  
 Repository: <!--v:c0de5afe-->https://github.com/Sam-Titan/MyoGraph-3D<!--/v-->  
-Demo video: &lt;VIDEO_URL&gt;
+Demo video: https://youtu.be/UWsbB-3spT4
 
 *Model version <code><!--v:784a6c5e-->xgb-v1-b60472ec<!--/v--></code>, trained <!--v:9e5b60cb-->2026-10-13<!--/v-->. Generated values come from the committed artifacts via `scripts/report_numbers.py`.*
 
