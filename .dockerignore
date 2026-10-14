@@ -1,0 +1,10 @@
+node_modules
+.venv
+dist
+data/raw/bp3d
+.screenshots
+.git
+.env
+__pycache__
+.ruff_cache
+.pytest_cache

@@ -47,4 +47,4 @@ check: lint test
 	cd frontend && npm run typecheck
 
 docker:
-	@echo "make docker: not implemented yet (phase 7)" && exit 1
+	docker compose up --build
