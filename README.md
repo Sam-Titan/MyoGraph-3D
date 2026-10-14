@@ -112,9 +112,11 @@ Cross-validation is 5-fold repeated 3 times on the training split. Across 20 ran
 split is the hardest for overall CAD (hold-out ROC-AUC 0.824 against a median of 0.911), so the hold-out
 number is a conservative estimate.
 
-**Serving latency** (`scripts/load_test.py`, Docker stack on WSL2, 500 `POST /api/predict`, 20 concurrent, 0 errors):
-median 340 ms, p95 462 ms (about 59 requests/s). A single uncontended request is much faster; the figures
-are dominated by queueing behind the per-model lock and a single API worker.
+**Serving throughput** (`scripts/load_test.py`, laptop, WSL2 Docker, 500 `POST /api/predict` at 20 concurrent,
+0 errors): about **59 predictions/s**. A single request on an idle server takes about 40 ms (median, 60 ms p95).
+The 340 ms median / 462 ms p95 reported under load is the time with 20 requests in flight at once, i.e. queueing:
+by Little's law, 20 in flight / 59 req/s is about 0.34 s. With the 300 ms input debounce, one person editing
+the form sends at most about 3 requests/s.
 
 ## Reproducing
 
