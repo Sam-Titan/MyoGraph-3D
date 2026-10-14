@@ -232,6 +232,12 @@ class MetricsResponse(BaseModel):
 
 
 # --- /api/summary -----------------------------------------------------------------------------
+class SummaryRequest(PredictRequest):
+    """Same values as /predict; `selected_target` defaults to the overall target."""
+
+    selected_target: str | None = None
+
+
 class SummaryResponse(BaseModel):
     text: str
     source: Literal["groq", "template"]

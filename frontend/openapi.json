@@ -110,7 +110,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PredictRequest"
+                "$ref": "#/components/schemas/SummaryRequest"
               }
             }
           },
@@ -1023,6 +1023,44 @@
           "values"
         ],
         "title": "StabilityStat"
+      },
+      "SummaryRequest": {
+        "properties": {
+          "values": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Values"
+          },
+          "selected_target": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Target"
+          }
+        },
+        "type": "object",
+        "required": [
+          "values"
+        ],
+        "title": "SummaryRequest",
+        "description": "Same values as /predict; `selected_target` defaults to the overall target."
       },
       "SummaryResponse": {
         "properties": {

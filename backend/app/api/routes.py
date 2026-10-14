@@ -10,6 +10,7 @@ from app.schemas import (
     PredictRequest,
     PredictResponse,
     Preset,
+    SummaryRequest,
     SummaryResponse,
 )
 from app.services.predictor import Predictor
@@ -53,13 +54,17 @@ def predict(body: PredictRequest, predictor: Pred) -> PredictResponse:
 
 
 @router.post("/summary", response_model=SummaryResponse)
-def summary(body: PredictRequest, predictor: Pred) -> SummaryResponse:
+def summary(body: SummaryRequest, predictor: Pred) -> SummaryResponse:
     """Re-runs predict server-side (client numbers are never trusted), then words it."""
     errors = validate_values(body.values, predictor.schema)
     if errors:
         raise HTTPException(status_code=422, detail=errors)
-    facts = build_facts(predictor.predict(body.values), predictor.features.targets)
-    return summarise(facts, groq_settings())
+    targets = predictor.features.targets
+    if body.selected_target is not None and body.selected_target not in {t.id for t in targets}:
+        raise HTTPException(status_code=422, detail="unknown selected_target")
+    facts = build_facts(predictor.predict(body.values), targets, body.selected_target)
+    labels = frozenset(f.label for f in predictor.features.features)
+    return summarise(facts, groq_settings(), labels)
 
 
 @router.get("/metrics", response_model=MetricsResponse)

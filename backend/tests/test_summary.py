@@ -63,8 +63,8 @@ def test_groq_valid_output_used(
 ) -> None:
     monkeypatch.setenv("GROQ_API_KEY", KEY)
     facts = _facts(client, values)
-    pct = facts["targets"][0]["probability_percent"]
-    good = f"The model estimates a {pct}% probability overall. {S.DISCLAIMER}"
+    pcts = ", ".join(f"{t['probability_percent']}%" for t in facts["targets"])
+    good = f"The model estimates {pcts}. {S.DISCLAIMER}"
     sent: dict[str, Any] = {}
 
     def fake(f: dict[str, Any], s: GroqSettings) -> str:
@@ -113,3 +113,48 @@ def test_groq_timeout_falls_back_and_key_not_logged(
     assert res["source"] == "template"
     assert KEY not in caplog.text
     assert KEY not in repr(GroqSettings(KEY, "m"))
+
+
+def test_facts_scope_factors_to_overall_and_selected(
+    client: TestClient, values: dict[str, Any]
+) -> None:
+    p = client.app.state.predictor  # type: ignore[attr-defined]
+    targets = p.features.targets
+    overall = next(t.id for t in targets if t.role == "overall")
+    vessels = [t.id for t in targets if t.role == "vessel"]
+    resp = p.predict(values)
+    only_overall = S.build_facts(resp, targets)
+    assert only_overall["selected_target"] == overall
+    assert [b["target_id"] for b in only_overall["factors"]] == [overall]
+    scoped = S.build_facts(resp, targets, vessels[0])
+    assert [b["target_id"] for b in scoped["factors"]] == [overall, vessels[0]]
+    assert [t["id"] for t in scoped["targets"]] == [t.id for t in targets]  # API order, all targets
+    assert all(len(b["increasing"]) <= 3 and len(b["decreasing"]) <= 3 for b in scoped["factors"])
+
+
+def test_unknown_selected_target_is_422(client: TestClient, values: dict[str, Any]) -> None:
+    res = client.post("/api/summary", json={"values": values, "selected_target": "XYZ"})
+    assert res.status_code == 422
+
+
+def test_template_names_selected_target(client: TestClient, values: dict[str, Any]) -> None:
+    p = client.app.state.predictor  # type: ignore[attr-defined]
+    vessel = next(t for t in p.features.targets if t.role == "vessel")
+    res = client.post("/api/summary", json={"values": values, "selected_target": vessel.id}).json()
+    assert f"For {vessel.label}," in res["text"]
+    assert res["text"].endswith(S.DISCLAIMER)
+
+
+def test_validator_rejects_factor_not_in_selected_list(
+    client: TestClient, values: dict[str, Any]
+) -> None:
+    p = client.app.state.predictor  # type: ignore[attr-defined]
+    labels = frozenset(f.label for f in p.features.features)
+    facts = S.build_facts(p.predict(values), p.features.targets)
+    listed = {x.split(": ")[0] for b in facts["factors"] for x in b["increasing"] + b["decreasing"]}
+    foreign = sorted(labels - listed - {"Sex"})[0]
+    pcts = ", ".join(f"{t['probability_percent']}%" for t in facts["targets"])
+    ok = f"The model estimates {pcts}. {S.DISCLAIMER}"
+    bad = f"The model estimates {pcts}, influenced by {foreign}. {S.DISCLAIMER}"
+    assert S.validate_llm_text(ok, facts, labels)
+    assert not S.validate_llm_text(bad, facts, labels)

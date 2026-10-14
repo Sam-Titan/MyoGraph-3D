@@ -15,7 +15,8 @@ export const queryKeys = {
   features: ['features'] as const,
   presets: ['presets'] as const,
   metrics: ['metrics'] as const,
-  summary: (values: PredictRequest['values']) => ['summary', values] as const,
+  summary: (values: PredictRequest['values'], selected: string | null) =>
+    ['summary', values, selected] as const,
   predict: (values: PredictRequest['values']) => ['predict', values] as const,
 }
 
@@ -65,12 +66,13 @@ export function usePredict(values: PredictRequest['values'] | null) {
 
 /**
  * Plain-language summary: never fetched automatically. `refetch()` is the button; the result is
- * cached per prediction values, so it shows again for identical inputs and is gone once they change.
+ * cached per prediction values and selected target, so it shows again for identical inputs and is gone once they change.
  */
-export function useSummary(values: PredictRequest['values'] | null) {
+export function useSummary(values: PredictRequest['values'] | null, selected: string | null) {
   return useQuery({
-    queryKey: queryKeys.summary(values ?? {}),
-    queryFn: ({ signal }) => postSummary({ values: values ?? {} }, signal),
+    queryKey: queryKeys.summary(values ?? {}, selected),
+    queryFn: ({ signal }) =>
+      postSummary({ values: values ?? {}, selected_target: selected }, signal),
     enabled: false,
     staleTime: Number.POSITIVE_INFINITY,
     retry: false,

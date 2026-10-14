@@ -11,6 +11,7 @@ export type Preset = Schemas['Preset']
 export type BreakdownRow = Schemas['BreakdownRow']
 export type PredictRequest = Schemas['PredictRequest']
 export type PredictResponse = Schemas['PredictResponse']
+export type SummaryRequest = Schemas['SummaryRequest']
 export type SummaryResponse = Schemas['SummaryResponse']
 export type MetricsResponse = Schemas['MetricsResponse']
 
@@ -50,7 +51,7 @@ export const postPredict = (body: PredictRequest, signal?: AbortSignal) =>
     signal,
   })
 
-export const postSummary = (body: PredictRequest, signal?: AbortSignal) =>
+export const postSummary = (body: SummaryRequest, signal?: AbortSignal) =>
   apiFetch<SummaryResponse>('/summary', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

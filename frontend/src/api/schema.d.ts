@@ -414,6 +414,18 @@ export interface components {
             /** Values */
             values: number[];
         };
+        /**
+         * SummaryRequest
+         * @description Same values as /predict; `selected_target` defaults to the overall target.
+         */
+        SummaryRequest: {
+            /** Values */
+            values: {
+                [key: string]: number | string;
+            };
+            /** Selected Target */
+            selected_target?: string | null;
+        };
         /** SummaryResponse */
         SummaryResponse: {
             /** Text */
@@ -622,7 +634,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["PredictRequest"];
+                "application/json": components["schemas"]["SummaryRequest"];
             };
         };
         responses: {

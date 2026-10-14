@@ -7,7 +7,8 @@ import { useAppStore } from '@/store/app'
 /** SPEC 6.2: on-demand plain-language summary (template, or Groq wording when the server has a key). */
 export function SummaryPanel() {
   const values = useAppStore((s) => s.predictValues)
-  const { data, isFetching, isError, refetch } = useSummary(values)
+  const selected = useAppStore((s) => s.selectedTarget)
+  const { data, isFetching, isError, refetch } = useSummary(values, selected)
 
   return (
     <section aria-label="Plain-language summary" className="space-y-2">

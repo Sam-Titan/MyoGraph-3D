@@ -25,11 +25,18 @@ DISCLAIMER = (
 )
 SYSTEM_PROMPT = (
     "You rewrite a structured set of model outputs as a short plain-language summary for a "
-    "non-expert. Rules: at most 120 words. Use only the numbers and factor names in the facts; "
-    "never add numbers, medical facts, causes or comparisons; keep each factor list with the "
-    "target it belongs to, and do not expand abbreviations. Say 'the model estimates'. "
-    "No diagnosis, no treatment, no medication or lifestyle advice, no instructions to the reader. "
-    f"End with exactly this sentence: {DISCLAIMER}"
+    "non-expert. Rules: at most 120 words; use only the numbers and factor names in the facts; "
+    "never add numbers, medical facts, causes or comparisons; do not expand abbreviations. "
+    "Say 'the model estimates'. No diagnosis, no treatment, no medication or lifestyle advice, "
+    "no instructions to the reader. Structure, in this order: "
+    "(1) one sentence with the overall target's probability in percent and its verdict; "
+    "(2) one sentence with each remaining target's probability in percent and verdict, in the "
+    "order given; always state every percentage; "
+    "(3) one sentence naming the selected target (by its label) and its main factors, "
+    "using ONLY the factors listed for that target in facts.factors, never another target's; "
+    "(4) only if outside_training_range_warnings is not empty, one sentence saying some values "
+    "are outside the training range; write one paragraph with no line breaks; then end with "
+    f"exactly this sentence: {DISCLAIMER}"
 )
 _BANNED = re.compile(
     r"you have|you should|diagnos|treat|medicat|should take|prescrib|your doctor", re.IGNORECASE
@@ -46,14 +53,18 @@ def _fmt(v: float) -> str:
     return f"{round(v, 1):g}"
 
 
-def build_facts(resp: PredictResponse, targets: list[TargetInfo]) -> dict[str, Any]:
-    """Everything the summary may mention, pre-formatted. Built from a server-side predict."""
+def build_facts(
+    resp: PredictResponse, targets: list[TargetInfo], selected: str | None = None
+) -> dict[str, Any]:
+    """Everything the summary may mention, pre-formatted. Built from a server-side predict.
+
+    Factors are included only for the overall target and the selected target.
+    """
+    overall = next((t for t in targets if t.role == "overall"), targets[0])
+    chosen = next((t for t in targets if t.id == selected), overall)
     out_targets: list[dict[str, Any]] = []
     for t in targets:
         pred = resp.targets[t.id]
-        contribs = resp.explanations[t.id].contributions
-        up = [c for c in contribs if c.logit > 0][:TOP_N]
-        down = [c for c in contribs if c.logit < 0][:TOP_N]
         out_targets.append(
             {
                 "id": t.id,
@@ -62,18 +73,26 @@ def build_facts(resp: PredictResponse, targets: list[TargetInfo]) -> dict[str, A
                 "probability_percent": _pct(pred.probability),
                 "threshold_percent": _pct(pred.threshold),
                 "verdict": "Likely" if pred.positive else "Unlikely",
-                "increasing": [f"{c.label}: {c.display_value}" for c in up],
-                "decreasing": [f"{c.label}: {c.display_value}" for c in down],
             }
         )
-    outside = [
-        f"{r.label}: {_fmt(r.value)}{' ' + r.unit if r.unit else ''} ({r.status})"
-        for r in resp.breakdown
-        if r.status in ("low", "high")
-    ]
+    blocks: list[dict[str, Any]] = []
+    for t in dict.fromkeys([overall.id, chosen.id]):
+        contribs = resp.explanations[t].contributions
+        blocks.append(
+            {
+                "target_id": t,
+                "increasing": [f"{c.label}: {c.display_value}" for c in contribs if c.logit > 0][
+                    :TOP_N
+                ],
+                "decreasing": [f"{c.label}: {c.display_value}" for c in contribs if c.logit < 0][
+                    :TOP_N
+                ],
+            }
+        )
     return {
+        "selected_target": chosen.id,
         "targets": out_targets,
-        "outside_reference_range": outside,
+        "factors": blocks,
         "outside_training_range_warnings": list(resp.warnings),
     }
 
@@ -86,30 +105,33 @@ def _join(items: list[str]) -> str:
 
 
 def template_summary(facts: dict[str, Any]) -> str:
-    """4-6 short deterministic sentences, then the disclaimer."""
+    """S1 overall, S2 vessels (API order), S3 selected target's factors, caveat, disclaimer."""
     ts: list[dict[str, Any]] = facts["targets"]
     overall = next((t for t in ts if t["role"] == "overall"), ts[0])
-    vessels = [t for t in ts if t is not overall]
+    others = [t for t in ts if t is not overall]
+    chosen = next(t for t in ts if t["id"] == facts["selected_target"])
+    block = next(b for b in facts["factors"] if b["target_id"] == chosen["id"])
     s = [
         f"The model estimates a {overall['probability_percent']}% probability for "
         f"{overall['label']}, which is {overall['verdict'].lower()} against its "
         f"{overall['threshold_percent']}% decision threshold."
     ]
-    if vessels:
+    if others:
         parts = [
-            f"{v['label']} {v['probability_percent']}% ({v['verdict'].lower()})" for v in vessels
+            f"{t['label']} {t['probability_percent']}% ({t['verdict'].lower()})" for t in others
         ]
         s.append(f"For the individual vessels it estimates {_join(parts)}.")
-    if overall["increasing"]:
+    up, down = block["increasing"], block["decreasing"]
+    if up and down:
         s.append(
-            f"The inputs pushing the overall estimate up most were {_join(overall['increasing'])}."
+            f"For {chosen['label']}, the inputs pushing the estimate up most were {_join(up)}, "
+            f"and those pulling it down most were {_join(down)}."
         )
-    if overall["decreasing"]:
-        s.append(f"The inputs pulling it down most were {_join(overall['decreasing'])}.")
-    if facts["outside_reference_range"]:
+    elif up or down:
+        direction = "up" if up else "down"
         s.append(
-            "Measurements outside the typical reference range: "
-            f"{_join(facts['outside_reference_range'])}."
+            f"For {chosen['label']}, the inputs pushing the estimate {direction} most were "
+            f"{_join(up or down)}."
         )
     n = len(facts["outside_training_range_warnings"])
     if n:
@@ -117,7 +139,7 @@ def template_summary(facts: dict[str, Any]) -> str:
             f"{n} value{'s' if n > 1 else ''} fall outside the range seen in training, "
             "so this estimate is less reliable."
         )
-    return " ".join(s[:6]) + " " + DISCLAIMER
+    return " ".join(s) + " " + DISCLAIMER
 
 
 # --- Groq -------------------------------------------------------------------------------------
@@ -125,7 +147,7 @@ def _request_groq(facts: dict[str, Any], settings: GroqSettings) -> str:
     """One chat completion; raises on HTTP/shape errors. The key only goes in the header."""
     payload: dict[str, Any] = {
         "model": settings.model,
-        "temperature": 0.2,
+        "temperature": 0,
         "max_tokens": 800,  # headroom for reasoning models' hidden thinking tokens
         "messages": [
             {"role": "system", "content": SYSTEM_PROMPT},
@@ -141,21 +163,40 @@ def _request_groq(facts: dict[str, Any], settings: GroqSettings) -> str:
         timeout=GROQ_TIMEOUT_S,
     )
     res.raise_for_status()
-    return str(res.json()["choices"][0]["message"]["content"]).strip()
+    return " ".join(str(res.json()["choices"][0]["message"]["content"]).split())
 
 
-def validate_llm_text(text: str, facts: dict[str, Any]) -> bool:
-    """Reject missing disclaimer, over-long text, banned phrasing or numbers not in the facts."""
+def validate_llm_text(
+    text: str, facts: dict[str, Any], all_labels: frozenset[str] = frozenset()
+) -> bool:
+    """Reject missing disclaimer, over-long text, banned phrasing, numbers not in the facts, or any
+    input label that is not one of the selected target's listed factors."""
     if not text or not text.endswith(DISCLAIMER):
         return False
     body = text[: -len(DISCLAIMER)]
     if len(body.split()) > 140 or _BANNED.search(body):
         return False
+    present = set(_NUMBER.findall(body))
+    if not all(str(t["probability_percent"]) in present for t in facts["targets"]):
+        return False  # every target's percentage must be stated
     allowed = set(_NUMBER.findall(json.dumps(facts, ensure_ascii=False)))
-    return all(n in allowed for n in _NUMBER.findall(body))
+    if not all(n in allowed for n in _NUMBER.findall(body)):
+        return False
+    block = next(b for b in facts["factors"] if b["target_id"] == facts["selected_target"])
+    listed = {f.split(": ", 1)[0].lower() for f in block["increasing"] + block["decreasing"]}
+    for label in all_labels:
+        if label.lower() not in listed and re.search(
+            rf"(?<![\w]){re.escape(label)}(?![\w])", body, re.IGNORECASE
+        ):
+            return False
+    return True
 
 
-def summarise(facts: dict[str, Any], settings: GroqSettings | None) -> SummaryResponse:
+def summarise(
+    facts: dict[str, Any],
+    settings: GroqSettings | None,
+    all_labels: frozenset[str] = frozenset(),
+) -> SummaryResponse:
     template = template_summary(facts)
     if settings is None:
         return SummaryResponse(text=template, source="template")
@@ -164,7 +205,7 @@ def summarise(facts: dict[str, Any], settings: GroqSettings | None) -> SummaryRe
     except Exception as exc:  # timeout, HTTP error, bad JSON: all fall back
         logger.warning("groq summary failed (%s); using template", type(exc).__name__)
         return SummaryResponse(text=template, source="template")
-    if not validate_llm_text(text, facts):
+    if not validate_llm_text(text, facts, all_labels):
         logger.warning("groq summary rejected by validator; using template")
         return SummaryResponse(text=template, source="template")
     return SummaryResponse(text=text, source="groq", model=settings.model)
