@@ -1,0 +1,16 @@
+# Render Blueprint: free Docker web service for the API.
+# The frontend is deployed separately on Netlify (see netlify.toml).
+services:
+  - type: web
+    name: myograph-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false # set in the Render dashboard; never committed
+      - key: WEB_CONCURRENCY
+        value: "1"
