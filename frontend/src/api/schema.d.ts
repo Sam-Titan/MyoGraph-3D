@@ -453,6 +453,8 @@ export interface components {
             id: string;
             /** Label */
             label: string;
+            /** Plain Label */
+            plain_label: string;
             /**
              * Role
              * @enum {string}

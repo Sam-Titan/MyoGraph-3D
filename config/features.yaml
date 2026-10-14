@@ -20,7 +20,7 @@
 #   vessel  -> a per-artery stenosis label (at least one); the split stratifies on how many of these are positive
 # Code and UI read the role instead of hard-coding target ids.
 targets:
-  CAD: { column: Cath, positive: CAD,      label: "Overall CAD",   role: overall }
+  CAD: { column: Cath, positive: CAD,      label: "Overall CAD",   role: overall, plain_label: "coronary artery disease" }
   LAD: { column: LAD,  positive: Stenotic, label: "LAD stenosis",  role: vessel }
   LCX: { column: LCX,  positive: Stenotic, label: "LCX stenosis",  role: vessel }
   RCA: { column: RCA,  positive: Stenotic, label: "RCA stenosis",  role: vessel }

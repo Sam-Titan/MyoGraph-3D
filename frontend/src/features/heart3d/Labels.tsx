@@ -14,48 +14,6 @@ interface Props {
   probabilities: Probabilities
 }
 
-const DEBUG = new URLSearchParams(window.location.search).get('debug') === 'labels'
-
-/**
- * `?debug=labels`: logs each target's anchor (local + world), projected NDC and whether its label
- * is rendered and inside the frustum, 1 s after load / resize (once the camera has framed).
- */
-function useLabelDebug(bindings: NodeBinding[], show: boolean) {
-  const camera = useThree((s) => s.camera)
-  const size = useThree((s) => s.size)
-  useEffect(() => {
-    if (!DEBUG || size.width === 0) return
-    const id = window.setTimeout(() => {
-      camera.updateMatrixWorld()
-      for (const b of bindings) {
-        const reason = !b.target
-          ? 'context node'
-          : b.target.role !== 'vessel'
-            ? 'overall target (no label)'
-            : !b.anchor
-              ? 'NO anchor extras'
-              : !show
-                ? 'labels toggled off'
-                : 'rendered'
-        const ndc = b.anchor?.clone().project(camera) ?? null
-        const inView = ndc ? Math.abs(ndc.x) <= 1 && Math.abs(ndc.y) <= 1 && ndc.z <= 1 : null
-        const local = b.anchor ? b.object.worldToLocal(b.anchor.clone()) : null
-        console.info(`[labels] ${b.target?.id ?? b.name}`, {
-          reason,
-          anchorHidden: b.anchorHidden,
-          anchorLocal: local?.toArray().map((v) => +v.toFixed(3)),
-          anchorWorld: b.anchor?.toArray().map((v) => +v.toFixed(3)),
-          ndc: ndc?.toArray().map((v) => +v.toFixed(2)),
-          inView,
-          camera: camera.position.toArray().map((v: number) => +v.toFixed(2)),
-          viewport: `${size.width}x${size.height}`,
-        })
-      }
-    }, 1000)
-    return () => window.clearTimeout(id)
-  }, [bindings, show, camera, size.width, size.height])
-}
-
 const GAP_PX = 2
 const MAX_NUDGES = 4
 /** A label moved off its anchor sits this far (px) clear of the heart's projected bbox. */
@@ -102,7 +60,6 @@ export function Labels({ bindings, probabilities }: Props) {
   const occluded = useRef(new Map<string, boolean>())
   const lastTest = useRef(Number.NEGATIVE_INFINITY)
   const retest = useRef<number | null>(null)
-  useLabelDebug(bindings, show)
 
   const heart = bindings.find((b) => b.target?.role === 'overall') ?? null
 

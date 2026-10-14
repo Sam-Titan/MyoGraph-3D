@@ -37,7 +37,7 @@ SYSTEM_PROMPT = (
     "(1) one sentence with the overall target's probability in percent and its verdict; "
     "(2) one sentence with each remaining target's probability in percent and verdict, in the "
     "order given; always state every percentage; "
-    "(3) one sentence naming the selected target (by its label) and its main factors, "
+    "(3) one sentence naming the selected target (by its label, as given) and its main factors, "
     "using ONLY the factors listed for that target in facts.factors, never another target's; "
     "(4) only if outside_training_range_warnings is not empty, one sentence saying some values "
     "are outside the training range; write one paragraph with no line breaks; then end with "
@@ -84,11 +84,11 @@ def build_facts(
         out_targets.append(
             {
                 "id": t.id,
-                "label": t.label,
+                "label": t.plain_label,  # prose wording, e.g. "coronary artery disease"
                 "role": t.role,
                 "probability_percent": _pct(pred.probability),
                 "threshold_percent": _pct(pred.threshold),
-                "verdict": "Likely" if pred.positive else "Unlikely",
+                "verdict": "likely" if pred.positive else "unlikely",
             }
         )
     blocks: list[dict[str, Any]] = []
@@ -132,15 +132,14 @@ def template_summary(facts: dict[str, Any]) -> str:
     chosen = next(t for t in ts if t["id"] == facts["selected_target"])
     block = next(b for b in facts["factors"] if b["target_id"] == chosen["id"])
     overall_pct = overall["probability_percent"]
+    side = "above" if overall["verdict"] == "likely" else "below"
     s = [
         f"The model estimates {_a(overall_pct)} {overall_pct}% probability for "
-        f"{overall['label']}, which is {overall['verdict'].lower()} against its "
+        f"{overall['label']}, which is {side} its "
         f"{overall['threshold_percent']}% decision threshold."
     ]
     if others:
-        parts = [
-            f"{t['label']} {t['probability_percent']}% ({t['verdict'].lower()})" for t in others
-        ]
+        parts = [f"{t['label']} {t['probability_percent']}% ({t['verdict']})" for t in others]
         s.append(f"For the individual vessels it estimates {_join(parts)}.")
     up, down = block["increasing"], block["decreasing"]
     if up and down:

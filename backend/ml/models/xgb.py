@@ -1,5 +1,6 @@
 """XGBoost risk model: Platt calibration on out-of-fold margins + native TreeSHAP (SPEC §4.3)."""
 
+import threading
 from pathlib import Path
 from typing import Any, Self
 
@@ -43,6 +44,8 @@ class XGBRiskModel:
         self.params_used: dict[str, Any] = {}
         self.calibration: Calibration | None = None
         self._booster: xgb.Booster | None = None
+        # Serving: request threads share one booster; predict and pred_contribs are serialised.
+        self._lock = threading.Lock()
 
     def _classifier(self, scale_pos_weight: float) -> xgb.XGBClassifier:
         return xgb.XGBClassifier(
@@ -76,12 +79,14 @@ class XGBRiskModel:
 
     def predict_proba(self, X: pd.DataFrame) -> np.ndarray:
         booster, cal = self._fitted()
-        margin = booster.predict(xgb.DMatrix(X), output_margin=True)
+        with self._lock:
+            margin = booster.predict(xgb.DMatrix(X), output_margin=True)
         return _sigmoid(cal.a * margin + cal.b)
 
     def explain(self, X: pd.DataFrame) -> Explanation:
         booster, cal = self._fitted()
-        raw = booster.predict(xgb.DMatrix(X), pred_contribs=True)  # (n, cols + bias)
+        with self._lock:
+            raw = booster.predict(xgb.DMatrix(X), pred_contribs=True)  # (n, cols + bias)
         return Explanation(
             columns=list(X.columns),
             contribs=cal.a * raw[:, :-1],

@@ -96,7 +96,13 @@ class Predictor:
         s = self.schema
         return FeaturesResponse(
             targets=[
-                TargetInfo(id=t, label=v.label, role=v.role, node=self.nodes[t])
+                TargetInfo(
+                    id=t,
+                    label=v.label,
+                    plain_label=v.plain_label or v.label,
+                    role=v.role,
+                    node=self.nodes[t],
+                )
                 for t, v in s.targets.items()
             ],
             groups=[GroupInfo(id=g.id, label=g.label) for g in s.groups],

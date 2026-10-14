@@ -306,6 +306,7 @@ Nothing else hard-codes feature or vessel lists.
   - No training inside Docker.
   - **Build context is the repo root** for both images (the API needs `config/`; the web build needs `openapi.json`/`schema.d.ts`). Add a root `.dockerignore` (exclude `data/raw/bp3d`, `node_modules`, `.venv`).
 - **Environment** (root `.env`, git-ignored; `.env.example` is committed): `GROQ_API_KEY` (optional; enables Groq wording of the summary) and `GROQ_MODEL` (optional). Real environment variables win over `.env`. The app works fully without either. `docker compose` passes `.env` via `env_file` with `required: false`.
+- **Serving thread-safety**: FastAPI runs the sync routes in a threadpool, so each `XGBRiskModel` holds a `threading.Lock` around `predict` and `pred_contribs` (the XGBoost docs do not explicitly name `pred_contribs` as thread-safe). Predictions are tiny (1 row), so the lock costs nothing measurable.
 - **Seeds** fixed everywhere (42). `model_card.json` records a data file hash + git sha.
 
 ## 9. Out of scope (for now)

@@ -17,6 +17,7 @@ class HealthResponse(BaseModel):
 class TargetInfo(BaseModel):
     id: str
     label: str
+    plain_label: str
     role: Role
     node: str
 

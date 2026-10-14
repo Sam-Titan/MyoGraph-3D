@@ -1131,6 +1131,10 @@
             "type": "string",
             "title": "Label"
           },
+          "plain_label": {
+            "type": "string",
+            "title": "Plain Label"
+          },
           "role": {
             "type": "string",
             "enum": [
@@ -1148,6 +1152,7 @@
         "required": [
           "id",
           "label",
+          "plain_label",
           "role",
           "node"
         ],

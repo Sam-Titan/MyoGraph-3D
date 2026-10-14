@@ -21,6 +21,7 @@ class Target(_Strict):
     positive: str
     label: str
     role: Literal["overall", "vessel"]
+    plain_label: str | None = None  # wording used inside prose summaries; falls back to label
 
 
 class Group(_Strict):
