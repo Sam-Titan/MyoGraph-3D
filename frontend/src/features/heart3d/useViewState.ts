@@ -14,6 +14,8 @@ interface ViewState {
   xray: boolean
   spin: boolean
   hover: Hover | null
+  /** Target id hovered in the results panel; boosts that node's emissive, never moves the camera. */
+  rowHover: string | null
   /** Hidden-by-default context nodes the user can toggle (names read from the GLB extras). */
   toggleableNodes: string[]
   shownNodes: Record<string, boolean>
@@ -23,6 +25,7 @@ interface ViewState {
   toggleXray: () => void
   setSpin: (spin: boolean) => void
   setHover: (hover: Hover | null) => void
+  setRowHover: (id: string | null) => void
   reframe: () => void
   setToggleableNodes: (names: string[]) => void
   toggleNode: (name: string) => void
@@ -33,6 +36,7 @@ export const useViewState = create<ViewState>((set) => ({
   xray: false,
   spin: false,
   hover: null,
+  rowHover: null,
   toggleableNodes: [],
   shownNodes: {},
   viewNonce: 0,
@@ -40,6 +44,7 @@ export const useViewState = create<ViewState>((set) => ({
   toggleXray: () => set((s) => ({ xray: !s.xray })),
   setSpin: (spin) => set({ spin }),
   setHover: (hover) => set({ hover }),
+  setRowHover: (rowHover) => set({ rowHover }),
   reframe: () => set((s) => ({ viewNonce: s.viewNonce + 1 })),
   setToggleableNodes: (toggleableNodes) =>
     set((s) => (toggleableNodes.join() === s.toggleableNodes.join() ? s : { toggleableNodes })),

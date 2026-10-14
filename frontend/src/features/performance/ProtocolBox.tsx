@@ -7,7 +7,7 @@ export function ProtocolBox({ metrics }: { metrics: MetricsResponse }) {
   const total = split.n_train + split.n_test
   return (
     <section aria-label="Validation protocol" className="min-w-0 rounded-xl border bg-card p-4">
-      <h3 className="label-caps">Validation protocol</h3>
+      <h3 className="t-section">Validation protocol</h3>
       <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
         <li>
           Stratified {pct(1 - split.test_size)}/{pct(split.test_size)} hold-out (seed {split.seed};{' '}

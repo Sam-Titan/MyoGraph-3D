@@ -10,7 +10,7 @@ Track A asks for a system that predicts cardiovascular risk and makes it visible
 Three ideas shape the design. First, honest validation: a fixed hold-out, repeated cross-validation on the training part only, and a split-stability analysis that shows how much one lucky or unlucky split can move a score. Second, calibrated, explainable output: every probability is calibrated and decomposes exactly into per-input contributions. Third, one source of truth: the feature schema and the target-to-mesh map live in two YAML files, and the backend, API, form and 3D scene all derive from them.
 
 ![MyoGraph 3D workspace](img/workspace-3vessel.png)
-*Figure 1. Patient Workspace with a three-vessel hold-out preset (`docs/img/workspace-3vessel.png`).*
+*Figure 1. Patient workspace with a three-vessel hold-out preset (`docs/img/workspace-3vessel.png`).*
 
 ## 2. Data and preprocessing
 
@@ -138,7 +138,7 @@ Total <!--v:7213ed6f-->67,618<!--/v--> triangles (<!--v:bb07251b-->61,618<!--/v-
 1. Run `make docker` and open http://localhost:8080 (or `make setup && make dev` for the development servers on :5173 and :8000).
 2. Load a preset from the dropdown. The presets are <!--v:5e6bc949-->6<!--/v--> patients taken only from the hold-out set (<!--v:f8e72321-->no-cad, lad-only, lcx-rca-only, 2-vessel, 3-vessel, hard-case<!--/v-->), so the model never saw them in training; each shows the actual catheterisation result next to the model estimate.
 3. Read the right panel top-down: overall CAD estimate, then the vessel cards, then the WHY bars for the selected target. Click a card or a vessel in the 3D view to change the selection. Edit any field and the estimates update live.
-4. The Model Performance tab shows CV and hold-out metrics, ROC curves, confusion matrices, calibration and importance. The About tab holds the method and credits.
+4. The Model performance tab shows CV and hold-out metrics, ROC curves, confusion matrices, calibration and importance. The About tab holds the method and credits.
 
 Colour is never the only signal: each percentage is printed, and "Likely/Unlikely" compares the estimate with that target's tuned threshold. The disclaimer banner is fixed on every tab.
 

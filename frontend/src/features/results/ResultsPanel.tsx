@@ -2,9 +2,10 @@ import { QueryBoundary } from '@/features/layout/QueryBoundary'
 import { cn } from '@/lib/utils'
 import { BreakdownTable } from './BreakdownTable'
 import { DisagreementNote, targetsDisagree } from './DisagreementNote'
+import { Headline } from './Headline'
 import { SummaryPanel } from './SummaryPanel'
-import { TargetCard } from './TargetCard'
 import { useResults } from './useResults'
+import { VesselTable } from './VesselTable'
 import { WhyPanel } from './WhyPanel'
 
 /** SPEC 6.2 predictions column: cards, disagreement note, WHY bars, physiological breakdown. */
@@ -25,33 +26,36 @@ export function ResultsPanel() {
         })
         const disagree =
           overallPositive !== undefined && targetsDisagree(overallPositive, vesselPositives)
-        const card = (t: (typeof f.targets)[number], prominent = false) => (
-          <TargetCard
-            key={t.id}
-            target={t}
-            prediction={data?.targets[t.id]}
-            actual={truth?.[t.id]}
-            selected={t.id === selected}
-            prominent={prominent}
-            onSelect={() => setSelected(t.id)}
-          />
-        )
         return (
-          <div className="space-y-4">
-            <div className={cn('space-y-2 transition-opacity', stale && 'opacity-60')}>
-              {overall && card(overall, true)}
-              {vessels.map((t) => card(t))}
+          <div className="space-y-6">
+            <div className={cn('space-y-4 transition-opacity', stale && 'opacity-60')}>
+              {overall && (
+                <Headline
+                  target={overall}
+                  prediction={data?.targets[overall.id]}
+                  selected={overall.id === selected}
+                  onSelect={() => setSelected(overall.id)}
+                />
+              )}
+              <VesselTable
+                vessels={vessels}
+                predictions={data?.targets}
+                truth={truth}
+                selected={selected}
+                onSelect={setSelected}
+              />
               {presetEdited && (
-                <p className="text-xs text-muted-foreground">
-                  Patient edited since the preset loaded, so its actual findings no longer apply.
+                <p className="t-meta px-3">
+                  The patient was edited after the preset loaded, so the cath results no longer
+                  apply.
                 </p>
               )}
             </div>
             {disagree && <DisagreementNote />}
-            <SummaryPanel />
             {predict.isError && (
               <p role="alert" className="text-xs text-destructive">
-                Couldn’t get a prediction for these values.
+                Couldn’t get an estimate. Check the highlighted patient values, or that the API is
+                running.
               </p>
             )}
             {data && data.warnings.length > 0 && (
@@ -62,7 +66,7 @@ export function ResultsPanel() {
               </ul>
             )}
             {data && selectedTarget && data.explanations[selectedTarget.id] && (
-              <div className={cn('space-y-4 transition-opacity', stale && 'opacity-60')}>
+              <div className={cn('space-y-6 transition-opacity', stale && 'opacity-60')}>
                 <WhyPanel
                   target={selectedTarget}
                   explanation={data.explanations[selectedTarget.id]}
@@ -71,6 +75,7 @@ export function ResultsPanel() {
                 <BreakdownTable rows={data.breakdown} groups={f.groups} target={selectedTarget} />
               </div>
             )}
+            <SummaryPanel />
           </div>
         )
       }}

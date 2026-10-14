@@ -6,7 +6,7 @@ import { Section } from './Section'
 export function ConfusionTiles({ metrics }: { metrics: MetricsResponse }) {
   return (
     <Section
-      title="Confusion matrices · hold-out, tuned threshold"
+      title="Confusion matrices, hold-out, tuned threshold"
       caption="Each row shows what the model estimated for patients whose actual status was negative or positive; percentages are per row."
     >
       <ul className="grid grid-cols-[repeat(auto-fit,minmax(15rem,1fr))] gap-4">
@@ -22,11 +22,9 @@ export function ConfusionTiles({ metrics }: { metrics: MetricsResponse }) {
                   style={{ background: targetColor(i) }}
                 />
                 <span className="num font-semibold">{id}</span>{' '}
-                <span className="text-muted-foreground">
-                  · threshold {fixed(t.threshold.tuned)}
-                </span>
+                <span className="text-muted-foreground">threshold {fixed(t.threshold.tuned)}</span>
               </p>
-              <div className="grid grid-cols-[1rem_3.5rem_minmax(0,1fr)_minmax(0,1fr)] gap-1 text-[11px] text-muted-foreground">
+              <div className="grid grid-cols-[1rem_3.5rem_minmax(0,1fr)_minmax(0,1fr)] gap-1 text-xs text-muted-foreground">
                 <span className="col-span-2" />
                 <span className="col-span-2 text-center">Predicted</span>
                 <span className="col-span-2" />

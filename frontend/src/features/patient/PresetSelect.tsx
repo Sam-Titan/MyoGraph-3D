@@ -1,6 +1,7 @@
+import { useEffect } from 'react'
 import { useFormContext } from 'react-hook-form'
 import type { FeatureInfo } from '@/api/client'
-import { usePresets } from '@/api/queries'
+import { useFeatures, usePresets } from '@/api/queries'
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -9,16 +10,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { vesselTargets } from '@/lib/features'
 import { useAppStore } from '@/store/app'
 import { defaultValues, type FormValues, valuesForPreset } from './formSchema'
 
 const CUSTOM = '__custom__'
 
-/** Loading a preset replaces every input (and the truth labels used for the actual-vs-predicted view). */
+/** The first preset is auto-loaded once per page load, not again after the user picks Custom. */
+let autoLoaded = false
+
+/** Loading a preset replaces every input (and the truth labels used for the cath-result column). */
 export function PresetSelect({ features }: { features: FeatureInfo[] }) {
   const { reset } = useFormContext<FormValues>()
   const { data: presets = [], isError } = usePresets()
+  const targets = useFeatures().data?.targets
   const selected = useAppStore((s) => s.selectedPresetId)
+  const edited = useAppStore((s) => s.presetEdited)
   const setSelected = useAppStore((s) => s.setSelectedPresetId)
   const setEdited = useAppStore((s) => s.setPresetEdited)
 
@@ -26,6 +33,20 @@ export function PresetSelect({ features }: { features: FeatureInfo[] }) {
     { value: CUSTOM, label: 'Custom (typical values)' },
     ...presets.map((p) => ({ value: p.id, label: p.label })),
   ]
+
+  // First impression: the hold-out patient with every vessel stenotic (picked by truth labels,
+  // never by id), else the first preset.
+  useEffect(() => {
+    if (autoLoaded || presets.length === 0 || !targets) return
+    autoLoaded = true
+    const vessels = vesselTargets(targets)
+    const preset =
+      presets.find((p) => vessels.length > 0 && vessels.every((v) => p.truth[v.id] === true)) ??
+      presets[0]
+    reset(valuesForPreset(preset, features))
+    setSelected(preset.id)
+    setEdited(false)
+  }, [presets, targets, features, reset, setSelected, setEdited])
 
   function onChange(value: string | null) {
     if (value === null) return
@@ -35,10 +56,11 @@ export function PresetSelect({ features }: { features: FeatureInfo[] }) {
     setEdited(false)
   }
 
+  const current = presets.find((p) => p.id === selected)
   return (
     <div className="space-y-1.5">
-      <Label htmlFor="preset-select" className="label-caps">
-        Hold-out patient preset
+      <Label htmlFor="preset-select" className="text-sm font-medium">
+        Hold-out patient
       </Label>
       <Select items={items} value={selected ?? CUSTOM} onValueChange={onChange}>
         <SelectTrigger id="preset-select" className="w-full">
@@ -52,13 +74,14 @@ export function PresetSelect({ features }: { features: FeatureInfo[] }) {
           ))}
         </SelectContent>
       </Select>
-      {isError && <p className="text-xs text-destructive">Couldn’t load presets.</p>}
-      {selected && (
-        <p
-          className="truncate text-xs text-muted-foreground"
-          title={presets.find((p) => p.id === selected)?.description}
-        >
-          {presets.find((p) => p.id === selected)?.description}
+      {isError && (
+        <p className="text-xs text-destructive">
+          Couldn’t load the hold-out patients. Reload the page, or enter values by hand.
+        </p>
+      )}
+      {current && !edited && (
+        <p className="t-meta" title={current.description}>
+          Showing a hold-out patient. Choose another or edit any value.
         </p>
       )}
     </div>

@@ -7,7 +7,7 @@ import { type WhyRow, whyRows } from './whyModel'
 type Explanation = components['schemas']['TargetExplanation']
 
 const rowTitle = (r: WhyRow): string =>
-  `${r.axis} · ${signed(r.logit)} log-odds (${r.logit >= 0 ? 'raises' : 'lowers'} the estimate)`
+  `${r.axis}: ${signed(r.logit)} log-odds (${r.logit >= 0 ? 'raises' : 'lowers'} the estimate)`
 
 /** Diverging bar centred at 0; its length is relative to the largest |contribution| shown. */
 function Bar({ row, max }: { row: WhyRow; max: number }) {
@@ -40,8 +40,11 @@ export function WhyPanel({ target, explanation, probability }: Props) {
   const max = rows.reduce((m, r) => Math.max(m, Math.abs(r.logit)), 0)
 
   return (
-    <section aria-label={`Why: ${target.id}`} className="space-y-2">
-      <h3 className="label-caps">Why · {target.label}</h3>
+    <section aria-label={`Why: ${target.id}`} className="rule-t space-y-2 pt-4">
+      <h3 className="t-section">
+        What drives this estimate
+        <span className="t-meta ml-2 font-normal">{target.label}</span>
+      </h3>
       <p className="text-sm">
         Average patient (model baseline){' '}
         <span className="num font-semibold">{pct(explanation.base_probability)}</span>
@@ -52,7 +55,7 @@ export function WhyPanel({ target, explanation, probability }: Props) {
       <div
         aria-hidden
         title="Contribution to the estimate, in log-odds"
-        className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-x-3 text-[11px] whitespace-nowrap text-muted-foreground"
+        className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-x-3 text-xs whitespace-nowrap text-muted-foreground"
       >
         <span />
         <span className="flex min-w-0 items-center gap-1.5">

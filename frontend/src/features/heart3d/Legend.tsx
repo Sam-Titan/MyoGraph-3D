@@ -33,7 +33,7 @@ export function Legend({
         <div className="relative h-7">
           {active && (
             <span
-              className="num absolute top-0 whitespace-nowrap rounded border border-white/25 bg-slate-950/90 px-1.5 py-0.5 text-[11px] leading-none text-viewport-foreground"
+              className="num absolute top-0 whitespace-nowrap rounded border border-white/25 bg-slate-950/90 px-1.5 py-0.5 text-xs leading-none text-viewport-foreground"
               // Slides from left-aligned (0%) to right-aligned (100%) so it never overflows the bar.
               style={{
                 left: `${active.threshold * 100}%`,
@@ -72,9 +72,9 @@ export function Legend({
             )
           })}
         </div>
-        <div className="num mt-1 flex justify-between gap-2 text-[11px] text-viewport-muted">
+        <div className="mt-1 flex justify-between gap-2 text-xs text-viewport-muted">
           <span>0%</span>
-          <span className="truncate">model estimate · tick = decision threshold</span>
+          <span className="truncate">model estimate, tick marks the threshold</span>
           <span>100%</span>
         </div>
       </div>

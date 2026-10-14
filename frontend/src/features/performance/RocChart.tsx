@@ -17,12 +17,12 @@ export function RocChart({ metrics }: { metrics: MetricsResponse }) {
   const config: ChartConfig = {
     chance: { label: 'Chance', color: 'var(--muted-foreground)' },
     ...Object.fromEntries(
-      series.map((s) => [s.id, { label: `${s.id} · AUC ${fixed(s.auc)}`, color: s.color }]),
+      series.map((s) => [s.id, { label: `${s.id}, AUC ${fixed(s.auc)}`, color: s.color }]),
     ),
   }
   return (
     <Section
-      title="ROC curves · hold-out"
+      title="ROC curves, hold-out"
       caption="Further towards the top-left means the model separates patients with and without stenosis better; the dashed line is chance."
     >
       <ChartContainer

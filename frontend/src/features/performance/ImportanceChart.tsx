@@ -14,7 +14,7 @@ export function ImportanceChart({ metrics }: { metrics: MetricsResponse }) {
 
   return (
     <Section
-      title={`Global feature importance · top ${TOP_N}`}
+      title={`Global feature importance, top ${TOP_N}`}
       caption="Average size of each input’s push on the model estimate across training patients (mean |SHAP|, log-odds); it shows influence, not cause."
       aside={
         <TargetPicker

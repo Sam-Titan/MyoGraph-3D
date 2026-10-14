@@ -78,7 +78,7 @@ const VIEWS = [
     name: 'performance',
     fullPage: true,
     run: async (page) => {
-      await page.getByRole('tab', { name: 'Model Performance' }).click()
+      await page.getByRole('tab', { name: 'Model performance' }).click()
       await page.waitForSelector('.recharts-surface', { timeout: 30_000 })
       await page.waitForTimeout(1500)
     },
@@ -87,7 +87,7 @@ const VIEWS = [
     name: 'about',
     fullPage: true,
     run: async (page) => {
-      await page.getByRole('tab', { name: 'About & Method' }).click()
+      await page.getByRole('tab', { name: 'About and method' }).click()
       await page.waitForTimeout(1000)
     },
   },

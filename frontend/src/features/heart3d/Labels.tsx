@@ -188,7 +188,7 @@ export function Labels({ bindings, probabilities }: Props) {
               )}
             >
               {id} {pct(probabilities[id])}
-              <span className="hidden group-data-[hidden=true]:inline"> · behind</span>
+              <span className="hidden group-data-[hidden=true]:inline"> (behind)</span>
             </span>
           </Html>
         )

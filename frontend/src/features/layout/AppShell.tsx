@@ -10,9 +10,9 @@ import { PerformancePanel } from '@/features/performance/PerformancePanel'
 import { type Tab, useAppStore } from '@/store/app'
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: 'workspace', label: 'Patient Workspace' },
-  { id: 'performance', label: 'Model Performance' },
-  { id: 'about', label: 'About & Method' },
+  { id: 'workspace', label: 'Patient workspace' },
+  { id: 'performance', label: 'Model performance' },
+  { id: 'about', label: 'About and method' },
 ]
 
 // Inactive panels use keepMounted and stay in the DOM, hidden via the `hidden` attribute. Phase 7
@@ -33,10 +33,10 @@ export function AppShell() {
       {/* Banner + header never scroll away: the disclaimer is visible on every tab. */}
       <div className="sticky top-0 z-50 shrink-0">
         <DisclaimerBanner />
-        <header className="flex flex-wrap items-center gap-x-8 gap-y-2 border-b bg-card px-(--gutter) py-2">
+        <header className="flex flex-wrap items-center gap-x-8 gap-y-2 border-b bg-background px-(--gutter) py-2">
           <div className="flex items-baseline gap-2">
             <h1 className="text-lg font-semibold tracking-tight">MyoGraph</h1>
-            <span className="num text-xs text-muted-foreground">3D</span>
+            <span className="text-xs text-muted-foreground">3D</span>
           </div>
           <TabsList variant="line" aria-label="Sections">
             {TABS.map((t) => (

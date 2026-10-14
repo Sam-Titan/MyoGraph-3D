@@ -31,7 +31,7 @@ export function CalibrationChart({ metrics }: { metrics: MetricsResponse }) {
 
   return (
     <Section
-      title="Calibration · out-of-fold on training set"
+      title="Calibration, out-of-fold on training set"
       caption={`Points on the dashed line mean the estimated probability matches how often stenosis was actually present; each point is a bin of ${Math.min(...sizes)}–${Math.max(...sizes)} patients.`}
       aside={
         <TargetPicker

@@ -11,9 +11,9 @@ export function SummaryPanel() {
   const { data, isFetching, isError, refetch } = useSummary(values, selected)
 
   return (
-    <section aria-label="Plain-language summary" className="space-y-2">
+    <section aria-label="Plain-language summary" className="rule-t space-y-2 pt-4">
       <div className="flex items-center justify-between gap-2">
-        <h3 className="label-caps">Summary</h3>
+        <h3 className="t-section">Plain-language summary</h3>
         <Button
           variant="outline"
           size="sm"
@@ -25,15 +25,17 @@ export function SummaryPanel() {
         </Button>
       </div>
       {values === null && (
-        <p className="text-xs text-muted-foreground">Fix the highlighted inputs to summarise.</p>
+        <p className="text-xs text-muted-foreground">
+          Correct the highlighted patient values, then choose Summarise.
+        </p>
       )}
       {isError && (
         <p role="alert" className="text-xs text-destructive">
-          Couldn’t get a summary for these values.
+          Couldn’t get a summary. Choose Summarise again, or check that the API is running.
         </p>
       )}
       {data && (
-        <div className="space-y-2 rounded-lg border bg-card px-3 py-2">
+        <div className="space-y-2">
           <Badge variant={data.source === 'groq' ? 'default' : 'secondary'}>
             {data.source === 'groq' ? 'AI-generated wording' : 'Template summary'}
           </Badge>

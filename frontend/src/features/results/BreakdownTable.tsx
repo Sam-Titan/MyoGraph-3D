@@ -24,7 +24,7 @@ function StatusChip({ status }: { status: BreakdownRow['status'] }) {
   return (
     <span
       className={cn(
-        'inline-block rounded-full px-1.5 py-0.5 text-[11px] font-medium capitalize',
+        'inline-block rounded-full px-1.5 py-0.5 text-xs font-medium capitalize',
         STATUS_STYLE[status],
       )}
     >
@@ -50,7 +50,7 @@ function MiniBar({ value, max }: { value: number; max: number }) {
           }
         />
       </span>
-      <span className="num w-9 text-right text-[11px]">{signed(value)}</span>
+      <span className="num w-9 text-right text-xs">{signed(value)}</span>
     </span>
   )
 }
@@ -80,9 +80,9 @@ export function BreakdownTable({ rows, groups, target }: Props) {
   )
 
   return (
-    <section aria-label="Physiological breakdown" className="space-y-2">
+    <section aria-label="Physiological breakdown" className="rule-t space-y-2 pt-4">
       <div className="flex items-center justify-between gap-2">
-        <h3 className="label-caps">Physiological breakdown</h3>
+        <h3 className="t-section">Physiological breakdown</h3>
         <label
           htmlFor={switchId}
           className="flex items-center gap-1.5 text-xs text-muted-foreground"
@@ -109,7 +109,7 @@ export function BreakdownTable({ rows, groups, target }: Props) {
                 Measure
               </th>
               <th scope="col" className="px-2 py-1.5 font-medium">
-                Reference · status
+                Reference and status
               </th>
               <th
                 scope="col"
@@ -138,7 +138,7 @@ export function BreakdownTable({ rows, groups, target }: Props) {
                 <th
                   scope="colgroup"
                   colSpan={3}
-                  className="label-caps bg-muted/50 px-2 py-1 text-left"
+                  className="px-0 pb-1 pt-3 text-left text-xs font-semibold text-foreground"
                 >
                   {s.group.label}
                 </th>
@@ -152,7 +152,7 @@ export function BreakdownTable({ rows, groups, target }: Props) {
                     <span className="block">{r.label}</span>
                     <span className="num text-muted-foreground">
                       {formatValue(r)}
-                      {r.outside_training_range && ' · outside training range'}
+                      {r.outside_training_range && ', outside training range'}
                     </span>
                   </th>
                   <td className="px-2 py-1.5 align-top">

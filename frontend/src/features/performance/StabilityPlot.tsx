@@ -27,7 +27,7 @@ export function StabilityPlot({ metrics }: { metrics: MetricsResponse }) {
 
   return (
     <Section
-      title="Split stability · hold-out ROC-AUC"
+      title="Split stability, hold-out ROC-AUC"
       caption={`Our official hold-out is one draw of ${metrics.split.n_test} patients; this shows how much a test set that size varies.`}
     >
       <div aria-hidden className="space-y-2">
@@ -74,8 +74,8 @@ export function StabilityPlot({ metrics }: { metrics: MetricsResponse }) {
         </div>
       </div>
       <p className="text-xs text-muted-foreground">
-        Line = min–max · box = interquartile range · tick = median · ◆ = official seed{' '}
-        {metrics.stability.official_seed} hold-out.
+        Line is min to max, box is the interquartile range, tick is the median, ◆ is the official
+        seed {metrics.stability.official_seed} hold-out.
       </p>
       <ul className="space-y-1 text-sm">
         {rows.map((r) => (

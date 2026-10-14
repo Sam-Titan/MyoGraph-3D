@@ -14,8 +14,8 @@ export function PipelineDiagram({ nModels }: Props) {
     [`${nModels} XGBoost models`, 'one per target'],
     ['Platt calibration', 'out-of-fold margins'],
     ['TreeSHAP explanations', 'sum to the calibrated logit'],
-    ['FastAPI', 'predict · metrics'],
-    ['React + React Three Fiber', 'form · 3D heart · results'],
+    ['FastAPI', 'predict, metrics'],
+    ['React + React Three Fiber', 'form, 3D heart, results'],
   ]
   const height = steps.length * (H + GAP) - GAP
   return (

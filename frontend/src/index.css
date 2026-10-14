@@ -68,25 +68,25 @@
 
 :root {
   /* Surfaces: cool slate neutrals (hue 255), low chroma. */
-  --background: oklch(0.975 0.004 255);
-  --foreground: oklch(0.24 0.02 258);
-  --card: oklch(1 0.002 255);
-  --card-foreground: oklch(0.24 0.02 258);
-  --popover: oklch(1 0.002 255);
-  --popover-foreground: oklch(0.24 0.02 258);
+  --background: #fafaf8; /* paper */
+  --foreground: #1b2430; /* ink */
+  --card: #ffffff;
+  --card-foreground: #1b2430;
+  --popover: #ffffff;
+  --popover-foreground: #1b2430;
   /* Interactive / selection accent: calm teal-blue. Never used for risk. */
-  --primary: oklch(0.44 0.085 235);
-  --primary-foreground: oklch(0.985 0.003 255);
-  --secondary: oklch(0.945 0.008 255);
-  --secondary-foreground: oklch(0.3 0.03 258);
-  --muted: oklch(0.945 0.008 255);
-  --muted-foreground: oklch(0.46 0.025 258);
-  --accent: oklch(0.935 0.02 235);
-  --accent-foreground: oklch(0.32 0.07 235);
+  --primary: #1f5f8b; /* accent */
+  --primary-foreground: #ffffff;
+  --secondary: #f0f1f0;
+  --secondary-foreground: #1b2430;
+  --muted: #f0f1f0;
+  --muted-foreground: #5a6573; /* muted */
+  --accent: #e6eff6;
+  --accent-foreground: #174a6d;
   --destructive: oklch(0.52 0.19 27);
-  --border: oklch(0.905 0.008 255);
-  --input: oklch(0.88 0.01 255);
-  --ring: oklch(0.55 0.1 235);
+  --border: #dde1e6; /* rule */
+  --input: #c9cfd6;
+  --ring: #1f5f8b;
   --chart-1: oklch(0.44 0.085 235);
   --chart-2: oklch(0.62 0.08 215);
   --chart-3: oklch(0.5 0.03 258);
@@ -127,13 +127,8 @@
   --notice-border: oklch(0.86 0.06 88);
 
   /* 3D viewport: dark navy radial gradient so vessel colours pop. */
-  --viewport-bg: radial-gradient(
-    120% 90% at 50% 38%,
-    oklch(0.3 0.06 255) 0%,
-    oklch(0.2 0.05 258) 55%,
-    oklch(0.14 0.04 262) 100%
-  );
-  --viewport-foreground: oklch(0.93 0.01 250);
+  --viewport-bg: radial-gradient(120% 90% at 50% 38%, #162338 0%, #101a2b 55%, #0b1220 100%);
+  --viewport-foreground: #e6edf5;
   --viewport-muted: oklch(0.8 0.03 255);
 
   /* Layout scale (4px base): chrome heights, gutters, column widths. */
@@ -199,13 +194,19 @@
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.01em;
   }
-  /* Small caps-style section label. */
-  .label-caps {
-    font-size: 0.6875rem;
+  /* Type roles: section heading and quiet secondary text. */
+  .t-section {
+    font-size: 0.9375rem;
     font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    line-height: 1.35;
+  }
+  .t-meta {
+    font-size: 0.78125rem;
+    line-height: 1.45;
     color: var(--muted-foreground);
+  }
+  .rule-t {
+    border-top: 1px solid var(--border);
   }
   .viewport-surface {
     background: var(--viewport-bg);

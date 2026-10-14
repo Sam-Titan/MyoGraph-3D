@@ -142,7 +142,7 @@ def test_template_names_selected_target(client: TestClient, values: dict[str, An
     p = client.app.state.predictor  # type: ignore[attr-defined]
     vessel = next(t for t in p.features.targets if t.role == "vessel")
     res = client.post("/api/summary", json={"values": values, "selected_target": vessel.id}).json()
-    assert f"For {vessel.label}," in res["text"]
+    assert f"For {vessel.plain_label or vessel.label}," in res["text"]
     assert res["text"].endswith(S.DISCLAIMER)
 
 

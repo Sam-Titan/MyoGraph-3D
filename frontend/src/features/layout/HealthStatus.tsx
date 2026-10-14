@@ -16,11 +16,11 @@ export function HealthStatus() {
       aria-live="polite"
     >
       <span aria-hidden className={`size-1.5 rounded-full ${dot}`} />
-      {state === 'checking' && 'API: checking…'}
-      {state === 'unreachable' && 'API: unreachable'}
+      {state === 'checking' && 'Checking the API…'}
+      {state === 'unreachable' && 'API unreachable. Start it with make dev.'}
       {state === 'ok' && (
         <span className="flex min-w-0 gap-1">
-          <span className="shrink-0">API ok · model</span>
+          <span className="shrink-0">API ready, model</span>
           <span className="num min-w-0 truncate" title={data?.model_version}>
             {data?.model_version}
           </span>

@@ -5,7 +5,7 @@ export function DisagreementNote() {
   return (
     <p
       role="note"
-      className="flex gap-2 rounded-lg border border-notice-border bg-notice px-3 py-2 text-xs text-notice-foreground"
+      className="flex gap-2 rounded-md bg-notice px-3 py-2 text-xs text-notice-foreground"
     >
       <Info className="mt-0.5 size-3.5 shrink-0" aria-hidden />
       <span>

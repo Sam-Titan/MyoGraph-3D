@@ -4,7 +4,7 @@ import { fixed, pm } from '@/lib/format'
 import { maxThresholdStd, WEAKER_GAP, weakerTargets } from './aboutModel'
 import { PipelineDiagram } from './PipelineDiagram'
 
-const H3 = 'label-caps'
+const H3 = 't-section'
 
 export function AboutPanel() {
   const metrics = useMetrics()

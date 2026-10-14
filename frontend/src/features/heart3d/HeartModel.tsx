@@ -87,6 +87,7 @@ export function HeartModel({ bindings, probabilities, isClick }: Props) {
   const gl = useThree((s) => s.gl)
   const selected = useAppStore((s) => s.selectedTarget)
   const xray = useViewState((s) => s.xray)
+  const rowHover = useViewState((s) => s.rowHover)
   const shownNodes = useViewState((s) => s.shownNodes)
   const rigs = useMemo(() => bindings.map(makeRig), [bindings])
 
@@ -121,7 +122,7 @@ export function HeartModel({ bindings, probabilities, isClick }: Props) {
   // biome-ignore lint/correctness/useExhaustiveDependencies: selection/x-ray changes must request a frame
   useEffect(() => {
     invalidate()
-  }, [selected, xray, invalidate])
+  }, [selected, xray, rowHover, invalidate])
 
   // frameloop="demand": keep requesting frames only while something is still animating.
   useFrame(() => {
@@ -129,7 +130,8 @@ export function HeartModel({ bindings, probabilities, isClick }: Props) {
     let busy = false
     for (const r of rigs) {
       const isSelected = r.b.target !== null && r.b.target.id === selected
-      const boost = isSelected ? SELECT_BOOST : 0
+      const isHovered = r.b.target !== null && r.b.target.id === rowHover
+      const boost = isSelected || isHovered ? SELECT_BOOST : 0
       if (r.kind === 'risk') {
         const t = Math.min(1, (now - r.start) / TWEEN_MS)
         const k = easeOut(t)

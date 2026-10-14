@@ -21,9 +21,9 @@
 # Code and UI read the role instead of hard-coding target ids.
 targets:
   CAD: { column: Cath, positive: CAD,      label: "Overall CAD",   role: overall, plain_label: "coronary artery disease" }
-  LAD: { column: LAD,  positive: Stenotic, label: "LAD stenosis",  role: vessel }
-  LCX: { column: LCX,  positive: Stenotic, label: "LCX stenosis",  role: vessel }
-  RCA: { column: RCA,  positive: Stenotic, label: "RCA stenosis",  role: vessel }
+  LAD: { column: LAD,  positive: Stenotic, label: "LAD stenosis",  role: vessel, plain_label: "left anterior descending artery" }
+  LCX: { column: LCX,  positive: Stenotic, label: "LCX stenosis",  role: vessel, plain_label: "left circumflex artery" }
+  RCA: { column: RCA,  positive: Stenotic, label: "RCA stenosis",  role: vessel, plain_label: "right coronary artery" }
 
 # Leakage guard: these columns must NEVER appear in model inputs for ANY target. Enforced by a test.
 excluded_from_inputs: [Cath, LAD, LCX, RCA]
