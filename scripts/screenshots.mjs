@@ -182,14 +182,20 @@ for (const vp of VIEWPORTS.filter((v) => v.mobile)) {
       const banner = document.querySelector('[role="note"]')
       return {
         innerWidth: window.innerWidth,
+        visualWidth: window.visualViewport?.width ?? window.innerWidth,
         docWidth: document.documentElement.scrollWidth,
         bodyWidth: document.body.scrollWidth,
         bannerTop: banner ? banner.getBoundingClientRect().top : null,
       }
     })
     const where = `${vp.width}px / ${name}`
-    if (r.docWidth > r.innerWidth || r.bodyWidth > r.innerWidth)
-      failures.push(`${where}: scrollWidth ${Math.max(r.docWidth, r.bodyWidth)} > innerWidth ${r.innerWidth}`)
+    // Mobile emulation widens the layout viewport when content overflows, so innerWidth alone would hide the
+    // bug; compare against the real device width.
+    const limit = Math.min(vp.width, r.visualWidth)
+    if (r.innerWidth > limit || r.docWidth > limit || r.bodyWidth > limit)
+      failures.push(
+        `${where}: layout ${r.innerWidth}px, scrollWidth ${Math.max(r.docWidth, r.bodyWidth)}px > device ${limit}px`,
+      )
     if (r.bannerTop === null || Math.abs(r.bannerTop) > 1)
       failures.push(`${where}: disclaimer top is ${r.bannerTop}, expected ~0 after scrolling to the bottom`)
   }
