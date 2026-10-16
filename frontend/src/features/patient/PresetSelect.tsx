@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { track } from '@/lib/analytics'
 import { vesselTargets } from '@/lib/features'
 import { useAppStore } from '@/store/app'
 import { defaultValues, type FormValues, valuesForPreset } from './formSchema'
@@ -46,6 +47,7 @@ export function PresetSelect({ features }: { features: FeatureInfo[] }) {
     reset(valuesForPreset(preset, features))
     setSelected(preset.id)
     setEdited(false)
+    track('preset_loaded', { preset: preset.id, source: 'auto' })
   }, [presets, targets, features, reset, setSelected, setEdited])
 
   function onChange(value: string | null) {
@@ -54,6 +56,7 @@ export function PresetSelect({ features }: { features: FeatureInfo[] }) {
     reset(preset ? valuesForPreset(preset, features) : defaultValues(features))
     setSelected(preset ? preset.id : null)
     setEdited(false)
+    if (preset) track('preset_loaded', { preset: preset.id, source: 'user' })
   }
 
   const current = presets.find((p) => p.id === selected)

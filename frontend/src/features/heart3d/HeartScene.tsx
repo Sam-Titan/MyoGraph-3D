@@ -4,6 +4,7 @@ import { EffectComposer, Outline, Selection } from '@react-three/postprocessing'
 import { type RefObject, Suspense, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import type { TargetInfo } from '@/api/client'
+import { track } from '@/lib/analytics'
 import { overallTarget } from '@/lib/features'
 import { CameraRig } from './CameraRig'
 import { FrameBudget } from './FrameBudget'
@@ -140,7 +141,10 @@ export default function HeartScene({ targets }: { targets: TargetInfo[] }) {
           gl={{ antialias: true, powerPreference: 'low-power' }}
           // Empty space (not a drag) -> overall target + default view.
           onPointerMissed={() => {
-            if (isClick() && overall) focusTarget(overall.id)
+            if (isClick() && overall) {
+              focusTarget(overall.id)
+              track('target_selected', { target: overall.id, source: '3d' })
+            }
           }}
         >
           <Suspense fallback={null}>

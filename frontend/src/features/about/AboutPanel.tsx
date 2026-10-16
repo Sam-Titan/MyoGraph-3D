@@ -111,6 +111,17 @@ export function AboutPanel() {
       </section>
 
       <section className="space-y-2">
+        <h3 className={H3}>Privacy</h3>
+        <p>
+          The site counts page views and anonymous actions (such as which tab or preset was opened)
+          with cookieless analytics that also shows country and device type. No cookies are set. The
+          server logs the IP address and browser string of each request. Nothing typed into the
+          patient form is ever stored, logged or sent to analytics. The optional AI summary sends
+          the model’s results to Groq, as described next to that button.
+        </p>
+      </section>
+
+      <section className="space-y-2">
         <h3 className={H3}>Credits</h3>
         <ul className="list-disc space-y-1 pl-5">
           <li>

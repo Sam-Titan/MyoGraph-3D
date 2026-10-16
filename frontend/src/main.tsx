@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from '@/App'
+import { initAnalytics } from '@/lib/analytics'
 import '@/index.css'
 
 const queryClient = new QueryClient()
@@ -15,3 +16,5 @@ createRoot(root).render(
     </QueryClientProvider>
   </StrictMode>,
 )
+
+initAnalytics()

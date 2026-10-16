@@ -147,6 +147,25 @@ GROQ_MODEL=            # optional; leave empty for the default
 Restart the API (`docker compose up -d` again, or restart `make dev`). Only the summary facts
 (percentages, verdicts, top factors) are sent to Groq. `.env` is git-ignored; never commit it.
 
+### Analytics (optional)
+
+Visitor analytics use PostHog Cloud, cookieless, and are **off unless all three are true**: a production
+build, `VITE_POSTHOG_KEY` set, and the page's hostname listed in `VITE_POSTHOG_DOMAINS`. Set these as
+build-time environment variables on the frontend host (for example Netlify) and redeploy:
+
+```
+VITE_POSTHOG_KEY=phc_...                       # project API key (public by design)
+VITE_POSTHOG_HOST=https://us.i.posthog.com     # or https://eu.i.posthog.com for an EU project
+VITE_POSTHOG_DOMAINS=your-site.netlify.app     # comma-separated live hostnames
+```
+
+In the PostHog project, turn on the cookieless setting (Settings, Web analytics, "Cookieless server hash
+mode"); without it cookieless events are ignored. Only page views and a few anonymous actions are sent,
+never form values. The API logs one line per request (`access ip=... path=... status=...`) with the visitor
+IP taken from Netlify's `x-nf-client-connection-ip` header, never query strings or bodies. Read it in the
+Render dashboard under the service's Logs. `TRUST_PROXY_HEADERS` (default `true`) and `LOG_IP_MODE`
+(`full` or `truncated`) control this; the headers can be forged, so the IP is for analytics only.
+
 ### Optional and advanced
 
 | Command | What it does |

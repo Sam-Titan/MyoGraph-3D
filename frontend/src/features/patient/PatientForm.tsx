@@ -9,6 +9,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
+import { track } from '@/lib/analytics'
 import { groupFeatures } from '@/lib/features'
 import { useAppStore } from '@/store/app'
 import { fieldErrors } from './apiErrors'
@@ -46,6 +47,11 @@ export function PatientForm({ data }: { data: FeaturesResponse }) {
   const { setError } = form
 
   useEffect(() => setEdited(hasPreset && isDirty), [hasPreset, isDirty, setEdited])
+
+  // Once per session; the event carries no field or value.
+  useEffect(() => {
+    if (isDirty) track('form_edited')
+  }, [isDirty])
 
   // Server-side rejections (shouldn't happen if zod mirrors the bounds) land inline on the field.
   useEffect(() => {

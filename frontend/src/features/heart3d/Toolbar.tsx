@@ -1,6 +1,7 @@
 import { Eye, EyeOff, Orbit, ScanSearch, Spline, Tags } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
+import { track } from '@/lib/analytics'
 import { focusTarget, useViewState } from './useViewState'
 
 const BTN =
@@ -36,19 +37,41 @@ export function Toolbar({ overallId }: { overallId: string | null }) {
       <Tool
         label="Reset"
         onClick={() => {
+          track('view_toggled', { control: 'reset' })
           if (overallId) focusTarget(overallId)
           else reframe()
         }}
       >
         <ScanSearch />
       </Tool>
-      <Tool label="Labels" pressed={labels} onClick={toggleLabels}>
+      <Tool
+        label="Labels"
+        pressed={labels}
+        onClick={() => {
+          track('view_toggled', { control: 'labels' })
+          toggleLabels()
+        }}
+      >
         <Tags />
       </Tool>
-      <Tool label="X-ray" pressed={xray} onClick={toggleXray}>
+      <Tool
+        label="X-ray"
+        pressed={xray}
+        onClick={() => {
+          track('view_toggled', { control: 'xray' })
+          toggleXray()
+        }}
+      >
         {xray ? <Eye /> : <EyeOff />}
       </Tool>
-      <Tool label="Spin" pressed={spin} onClick={() => setSpin(!spin)}>
+      <Tool
+        label="Spin"
+        pressed={spin}
+        onClick={() => {
+          track('view_toggled', { control: 'spin' })
+          setSpin(!spin)
+        }}
+      >
         <Orbit />
       </Tool>
       {toggleableNodes.map((name) => (
@@ -56,7 +79,10 @@ export function Toolbar({ overallId }: { overallId: string | null }) {
           key={name}
           label={name.charAt(0).toUpperCase() + name.slice(1)}
           pressed={Boolean(shownNodes[name])}
-          onClick={() => toggleNode(name)}
+          onClick={() => {
+            track('view_toggled', { control: name })
+            toggleNode(name)
+          }}
         >
           <Spline />
         </Tool>

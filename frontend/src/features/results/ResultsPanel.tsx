@@ -1,4 +1,5 @@
 import { QueryBoundary } from '@/features/layout/QueryBoundary'
+import { track } from '@/lib/analytics'
 import { cn } from '@/lib/utils'
 import { BreakdownTable } from './BreakdownTable'
 import { DisagreementNote, targetsDisagree } from './DisagreementNote'
@@ -12,6 +13,10 @@ import { WhyPanel } from './WhyPanel'
 export function ResultsPanel() {
   const { features, predict, selected, setSelected, truth, presetEdited, overall, vessels } =
     useResults()
+  const selectFromList = (id: string) => {
+    setSelected(id)
+    track('target_selected', { target: id, source: 'list' })
+  }
   const stale = predict.isFetching || predict.isPlaceholderData
   const data = predict.data
 
@@ -34,7 +39,7 @@ export function ResultsPanel() {
                   target={overall}
                   prediction={data?.targets[overall.id]}
                   selected={overall.id === selected}
-                  onSelect={() => setSelected(overall.id)}
+                  onSelect={() => selectFromList(overall.id)}
                 />
               )}
               <VesselTable
@@ -42,7 +47,7 @@ export function ResultsPanel() {
                 predictions={data?.targets}
                 truth={truth}
                 selected={selected}
-                onSelect={setSelected}
+                onSelect={selectFromList}
               />
               {presetEdited && (
                 <p className="t-meta px-3">

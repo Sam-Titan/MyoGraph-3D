@@ -2,6 +2,7 @@ import { type ThreeEvent, useFrame, useThree } from '@react-three/fiber'
 import { Select } from '@react-three/postprocessing'
 import { useEffect, useLayoutEffect, useMemo } from 'react'
 import { Color, DoubleSide, MeshStandardMaterial, SRGBColorSpace } from 'three'
+import { track } from '@/lib/analytics'
 import { NEUTRAL, riskEmissive, riskRgb } from '@/lib/riskColor'
 import { useAppStore } from '@/store/app'
 import type { NodeBinding } from './useHeartModel'
@@ -199,7 +200,10 @@ export function HeartModel({ bindings, probabilities, isClick }: Props) {
               }}
               onClick={(e: PointerEvent3D) => {
                 e.stopPropagation()
-                if (isClick()) focusTarget(target.id)
+                if (isClick()) {
+                  focusTarget(target.id)
+                  track('target_selected', { target: target.id, source: '3d' })
+                }
               }}
             />
           </Select>

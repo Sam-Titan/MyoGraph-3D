@@ -317,3 +317,27 @@ Nothing else hard-codes feature or vessel lists.
 - 3D anatomy (BodyParts3D 4.0): "BodyParts3D, © The Database Center for Life Science licensed under CC Attribution 4.0 International". The BodyParts3D site states CC BY 4.0, but the source OBJ headers still embed CC BY-SA 2.1 Japan. The derived `heart.glb` is therefore released under CC BY-SA 4.0, which satisfies both; the repo's code remains MIT (`public/models/LICENSE-ASSETS.md`).
 
 ## v2.0
+
+### Phase 14: visitor analytics and real client IPs
+- **Client IP** (`app/core/client_ip.py`): `x-nf-client-connection-ip`, else the left-most globally routable
+  `X-Forwarded-For` entry, else the socket peer; malformed values ignored. `TRUST_PROXY_HEADERS` (default
+  `true`; `false` = socket peer only). `LOG_IP_MODE=full|truncated` (truncated zeroes the last IPv4 octet or the
+  last 80 bits of IPv6). Forgeable by direct callers of the Render URL: analytics only, never a security input.
+- **Access log** (`app/core/access_log.py`): pure ASGI middleware, registered outermost (CORS preflights and
+  unhandled exceptions, logged as `status=500`, are included). One line per request:
+  `access ip= method= path= status= ms= rid= [rid_nf=] ua= ref=`. Never query strings or bodies; UA cut to 120
+  chars and escaped; referer reduced to scheme+host+path; `X-Request-ID` response header; `/api/health` at DEBUG.
+  Logger `myograph.access` is configured explicitly (INFO, stdout, `propagate=False`) because uvicorn runs with
+  `--no-access-log` and the root logger would otherwise hide it. `rid_nf` is Netlify's `x-nf-request-id`.
+- **Analytics** (`src/lib/analytics.ts`, PostHog, lazy-loaded after first paint): active only for a production
+  build with `VITE_POSTHOG_KEY` set and `location.hostname` in `VITE_POSTHOG_DOMAINS`. Config: `cookieless_mode:
+  "always"`, `person_profiles: "never"`, `autocapture: false`, session recording, heatmaps, dead clicks and
+  surveys off, `respect_dnt`, pageview and pageleave on. `before_send` strips `?query` and `#hash` from
+  `$current_url`, `$referrer`, `$pathname` and URL-like `$initial_*` / `$prev_*` properties.
+- **Events** (property allow-list enforced in `track()`): `preset_loaded {preset, source: auto|user}`,
+  `target_selected {target, source: 3d|list}`, `tab_viewed {tab}`, `form_edited` (once per session),
+  `summary_requested`, `view_toggled {control}`. Never a field value, probability or free text.
+  `quick_mode_used` and `shared_link_opened` arrive with Phase 18.
+- No Netlify `/ingest` reverse proxy: events from ad-blocking visitors are lost, which is accepted.
+- `netlify.toml` sets no CSP, so no allow-listing was needed. `render.yaml` carries `TRUST_PROXY_HEADERS` and
+  `LOG_IP_MODE` as plain values. Frontend unit tests use vitest (`npm test`, part of `make test`).

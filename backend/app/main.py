@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import router
+from app.core.access_log import AccessLogMiddleware
 from app.services.predictor import Predictor
 
 logging.basicConfig(level=logging.INFO)
@@ -24,4 +25,6 @@ app.add_middleware(
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
+# Added last = outermost, so CORS preflights and unhandled exceptions are logged too.
+app.add_middleware(AccessLogMiddleware)
 app.include_router(router)

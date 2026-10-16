@@ -2,6 +2,7 @@ import { Loader2, Sparkles } from 'lucide-react'
 import { useSummary } from '@/api/queries'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { track } from '@/lib/analytics'
 import { useAppStore } from '@/store/app'
 
 /** SPEC 6.2: on-demand plain-language summary (template, or Groq wording when the server has a key). */
@@ -18,7 +19,10 @@ export function SummaryPanel() {
           variant="outline"
           size="sm"
           disabled={values === null || isFetching}
-          onClick={() => void refetch()}
+          onClick={() => {
+            track('summary_requested')
+            void refetch()
+          }}
         >
           {isFetching ? <Loader2 className="animate-spin" /> : <Sparkles />}
           {data ? 'Summarise again' : 'Summarise'}

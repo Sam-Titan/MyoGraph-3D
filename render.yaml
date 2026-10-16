@@ -12,5 +12,9 @@ services:
     envVars:
       - key: GROQ_API_KEY
         sync: false # set in the Render dashboard; never committed
+      - key: TRUST_PROXY_HEADERS
+        value: "true" # take the visitor IP from Netlify's headers for access logs
+      - key: LOG_IP_MODE
+        value: "full" # or "truncated" to zero the last IPv4 octet
       - key: WEB_CONCURRENCY
         value: "1"

@@ -7,6 +7,7 @@ import { HealthStatus } from '@/features/layout/HealthStatus'
 import { useInitSelectedTarget } from '@/features/layout/useInitSelectedTarget'
 import { WorkspaceLayout } from '@/features/patient/WorkspaceLayout'
 import { PerformancePanel } from '@/features/performance/PerformancePanel'
+import { track } from '@/lib/analytics'
 import { type Tab, useAppStore } from '@/store/app'
 
 const TABS: { id: Tab; label: string }[] = [
@@ -27,7 +28,10 @@ export function AppShell() {
   return (
     <Tabs
       value={tab}
-      onValueChange={(v) => setTab(v as Tab)}
+      onValueChange={(v) => {
+        setTab(v as Tab)
+        track('tab_viewed', { tab: v })
+      }}
       className="h-dvh gap-0 bg-background text-foreground"
     >
       {/* Banner + header never scroll away: the disclaimer is visible on every tab. */}

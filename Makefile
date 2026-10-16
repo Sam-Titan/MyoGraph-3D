@@ -45,6 +45,7 @@ fmt:
 
 test:
 	cd backend && uv run pytest
+	cd frontend && npm test
 
 check: lint test
 	cd frontend && npm run typecheck
