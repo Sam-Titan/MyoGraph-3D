@@ -9,7 +9,13 @@ const OUT = resolve(dirname(fileURLToPath(import.meta.url)), '../.screenshots')
 const { chromium } = await import(
   resolve(dirname(fileURLToPath(import.meta.url)), '../frontend/node_modules/playwright/index.mjs')
 )
-const WIDTHS = [1440, 1100]
+// Phones use mobile emulation (isMobile + hasTouch + high DPR); desktops are plain contexts.
+const VIEWPORTS = [
+  { width: 1440, height: 900 },
+  { width: 1024, height: 768 },
+  { width: 390, height: 844, mobile: true, scale: 3 },
+  { width: 360, height: 800, mobile: true, scale: 2 },
+]
 
 async function preflight() {
   for (const path of ['/', '/api/health']) {
@@ -48,6 +54,10 @@ async function frameAdvance(page, action) {
   await settle(page)
 }
 
+// DOM click: still works when a layout bug (e.g. the disclaimer overlapping the tab bar on phones)
+// makes the element unclickable by pointer, so the screenshot captures the bug instead of timing out.
+const domClick = (locator) => locator.evaluate((el) => el.click())
+
 const clickCard = (page, name) => () =>
   page.getByRole('button', { name: new RegExp(`^${name}`) }).first().click()
 
@@ -73,12 +83,19 @@ const VIEWS = [
       await frameAdvance(page, () => page.getByRole('button', { name: 'X-ray' }).click())
     },
   },
+  {
+    name: 'patient-form',
+    run: async (page) => {
+      await page.evaluate(() => document.querySelector('#preset-select')?.scrollIntoView({ block: 'start' }))
+    },
+    keepScroll: true,
+  },
   { name: 'hard-case', run: (page) => pickPreset(page, 'Hard case') },
   {
     name: 'performance',
     fullPage: true,
     run: async (page) => {
-      await page.getByRole('tab', { name: 'Model performance' }).click()
+      await domClick(page.getByRole('tab', { name: 'Model performance' }))
       await page.waitForSelector('.recharts-surface', { timeout: 30_000 })
       await page.waitForTimeout(1500)
     },
@@ -87,7 +104,7 @@ const VIEWS = [
     name: 'about',
     fullPage: true,
     run: async (page) => {
-      await page.getByRole('tab', { name: 'About and method' }).click()
+      await domClick(page.getByRole('tab', { name: 'About and method' }))
       await page.waitForTimeout(1000)
     },
   },
@@ -106,30 +123,33 @@ try {
   process.exit(2)
 }
 
-for (const width of WIDTHS) {
+for (const vp of VIEWPORTS) {
+  const { width, height } = vp
   for (const view of VIEWS) {
-    const ctx = await browser.newContext({ viewport: { width, height: 900 } })
+    const ctx = await browser.newContext({
+      viewport: { width, height },
+      ...(vp.mobile ? { isMobile: true, hasTouch: true, deviceScaleFactor: vp.scale } : {}),
+    })
     const page = await ctx.newPage()
     await page.goto(BASE)
     await waitReady(page)
     await view.run(page)
-    let target = page
     if (view.fullPage) {
       // The shell is h-screen with scrolling panels, so full-page = the active panel's scroll height.
       const h = await page.evaluate(() => {
         const p = [...document.querySelectorAll('[role="tabpanel"]')].find((e) => !e.hidden)
         return p ? Math.max(p.scrollHeight, p.firstElementChild?.scrollHeight ?? 0) : 0
       })
-      if (h > 900) await page.setViewportSize({ width, height: Math.min(h + 120, 8000) })
+      if (h > height) await page.setViewportSize({ width, height: Math.min(h + 120, 8000) })
       await page.waitForTimeout(800)
     }
-    if (!view.fullPage) {
+    if (!view.fullPage && !view.keepScroll) {
       // Stacked layout (<1280px) scrolls: bring the 3D viewport to the top of the scroller.
       await page.evaluate(() => document.querySelector('section[aria-label="3D heart"]')?.scrollIntoView({ block: 'start' }))
       await settle(page)
     }
-    const file = `${OUT}/${view.name}-${width}.png`
-    await target.screenshot({ path: file, fullPage: Boolean(view.fullPage) })
+    const file = `${OUT}/${view.name}-${width}x${height}.png`
+    await page.screenshot({ path: file, fullPage: false })
     console.log('wrote', file)
     await ctx.close()
   }

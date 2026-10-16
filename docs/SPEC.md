@@ -315,3 +315,5 @@ Nothing else hard-codes feature or vessel lists.
 ## 10. Credits to include (README + About + report)
 - Dataset (license CC BY 4.0, so committing it with attribution is fine): Alizadehsani, R., Roshanzamir, M., & Sani, Z. (2013). *extention of Z-Alizadeh sani dataset* [Dataset]. UCI Machine Learning Repository. https://doi.org/10.24432/C5461K
 - 3D anatomy (BodyParts3D 4.0): "BodyParts3D, © The Database Center for Life Science licensed under CC Attribution 4.0 International". The BodyParts3D site states CC BY 4.0, but the source OBJ headers still embed CC BY-SA 2.1 Japan. The derived `heart.glb` is therefore released under CC BY-SA 4.0, which satisfies both; the repo's code remains MIT (`public/models/LICENSE-ASSETS.md`).
+
+## v2.0
