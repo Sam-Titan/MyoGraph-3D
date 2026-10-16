@@ -154,4 +154,50 @@ for (const vp of VIEWPORTS) {
     await ctx.close()
   }
 }
+
+// DOM probe (Phase 14.5): no page-level sideways scroll, and the disclaimer stays pinned to the top
+// after scrolling to the bottom, on every tab at the two phone widths.
+const TAB_NAMES = ['Patient workspace', 'Model performance', 'About and method']
+const failures = []
+for (const vp of VIEWPORTS.filter((v) => v.mobile)) {
+  const ctx = await browser.newContext({
+    viewport: { width: vp.width, height: vp.height },
+    isMobile: true,
+    hasTouch: true,
+    deviceScaleFactor: vp.scale,
+  })
+  const page = await ctx.newPage()
+  await page.goto(BASE)
+  await waitReady(page)
+  for (const name of TAB_NAMES) {
+    await domClick(page.getByRole('tab', { name }))
+    await page.waitForTimeout(800)
+    const r = await page.evaluate(() => {
+      // Scroll the window and every scrollable element in the active panel to the bottom.
+      window.scrollTo(0, document.documentElement.scrollHeight)
+      const panel = [...document.querySelectorAll('[role="tabpanel"]')].find((e) => !e.hidden)
+      for (const el of [panel, ...(panel?.querySelectorAll('*') ?? [])]) {
+        if (el && el.scrollHeight > el.clientHeight + 1) el.scrollTop = el.scrollHeight
+      }
+      const banner = document.querySelector('[role="note"]')
+      return {
+        innerWidth: window.innerWidth,
+        docWidth: document.documentElement.scrollWidth,
+        bodyWidth: document.body.scrollWidth,
+        bannerTop: banner ? banner.getBoundingClientRect().top : null,
+      }
+    })
+    const where = `${vp.width}px / ${name}`
+    if (r.docWidth > r.innerWidth || r.bodyWidth > r.innerWidth)
+      failures.push(`${where}: scrollWidth ${Math.max(r.docWidth, r.bodyWidth)} > innerWidth ${r.innerWidth}`)
+    if (r.bannerTop === null || Math.abs(r.bannerTop) > 1)
+      failures.push(`${where}: disclaimer top is ${r.bannerTop}, expected ~0 after scrolling to the bottom`)
+  }
+  await ctx.close()
+}
 await browser.close()
+if (failures.length) {
+  console.error(`screenshots: DOM probe failed:\n  ${failures.join('\n  ')}`)
+  process.exit(1)
+}
+console.log('DOM probe ok: no horizontal overflow, disclaimer pinned (360, 390)')

@@ -37,14 +37,19 @@ export function AppShell() {
       {/* Banner + header never scroll away: the disclaimer is visible on every tab. */}
       <div className="sticky top-0 z-50 shrink-0">
         <DisclaimerBanner />
-        <header className="flex flex-wrap items-center gap-x-8 gap-y-2 border-b bg-background px-(--gutter) py-2">
+        <header className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b sm:gap-x-8 bg-background px-(--gutter) py-2">
           <div className="flex items-baseline gap-2">
             <h1 className="text-lg font-semibold tracking-tight">MyoGraph</h1>
             <span className="text-xs text-muted-foreground">3D</span>
           </div>
-          <TabsList variant="line" aria-label="Sections">
+          {/* Scrolls inside its own row on phones instead of widening the page. */}
+          <TabsList
+            variant="line"
+            aria-label="Sections"
+            className="max-w-full min-w-0 justify-start overflow-x-auto"
+          >
             {TABS.map((t) => (
-              <TabsTrigger key={t.id} value={t.id} className="px-3">
+              <TabsTrigger key={t.id} value={t.id} className="shrink-0 px-3">
                 {t.label}
               </TabsTrigger>
             ))}
