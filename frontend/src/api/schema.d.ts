@@ -55,6 +55,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/stories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Stories */
+        get: operations["stories_api_stories_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/predict": {
         parameters: {
             query?: never;
@@ -148,6 +165,11 @@ export interface components {
             mean_predicted: number;
             /** N */
             n: number;
+        };
+        /** Camera */
+        Camera: {
+            /** Target */
+            target: string;
         };
         /** Confusion */
         Confusion: {
@@ -250,6 +272,22 @@ export interface components {
             /** Model Version */
             model_version: string;
         };
+        /** Highlight */
+        Highlight: {
+            /** Target */
+            target: string;
+            /**
+             * Direction
+             * @default up
+             * @enum {string}
+             */
+            direction: "up" | "down";
+            /**
+             * Top
+             * @default 3
+             */
+            top: number;
+        };
         /** ImportanceRow */
         ImportanceRow: {
             /** Id */
@@ -304,6 +342,16 @@ export interface components {
             value: string;
             /** Label */
             label: string;
+        };
+        /** Part */
+        Part: {
+            /** Text */
+            text: string;
+            /**
+             * When
+             * @default []
+             */
+            when: string[];
         };
         /** PredictRequest */
         PredictRequest: {
@@ -413,6 +461,38 @@ export interface components {
             official_percentile: number;
             /** Values */
             values: number[];
+        };
+        /** Step */
+        Step: {
+            /** Id */
+            id: string;
+            /** Parts */
+            parts: components["schemas"]["Part"][];
+            camera?: components["schemas"]["Camera"] | null;
+            highlight?: components["schemas"]["Highlight"] | null;
+            /**
+             * Reveal Truth
+             * @default false
+             */
+            reveal_truth: boolean;
+        };
+        /** Stories */
+        Stories: {
+            /** Stories */
+            stories: components["schemas"]["Story"][];
+        };
+        /** Story */
+        Story: {
+            /** Id */
+            id: string;
+            /** Title */
+            title: string;
+            /** Blurb */
+            blurb: string;
+            /** Preset */
+            preset: string;
+            /** Steps */
+            steps: components["schemas"]["Step"][];
         };
         /**
          * SummaryRequest
@@ -592,6 +672,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Preset"][];
+                };
+            };
+        };
+    };
+    stories_api_stories_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Stories"];
                 };
             };
         };

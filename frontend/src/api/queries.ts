@@ -5,6 +5,7 @@ import {
   getHealth,
   getMetrics,
   getPresets,
+  getStories,
   type PredictRequest,
   postPredict,
   postSummary,
@@ -15,6 +16,7 @@ export const queryKeys = {
   features: ['features'] as const,
   presets: ['presets'] as const,
   metrics: ['metrics'] as const,
+  stories: ['stories'] as const,
   summary: (values: PredictRequest['values'], selected: string | null) =>
     ['summary', values, selected] as const,
   predict: (values: PredictRequest['values']) => ['predict', values] as const,
@@ -40,6 +42,14 @@ export function usePresets() {
   return useQuery({
     queryKey: queryKeys.presets,
     queryFn: ({ signal }) => getPresets(signal),
+    staleTime: Number.POSITIVE_INFINITY,
+  })
+}
+
+export function useStories() {
+  return useQuery({
+    queryKey: queryKeys.stories,
+    queryFn: ({ signal }) => getStories(signal),
     staleTime: Number.POSITIVE_INFINITY,
   })
 }

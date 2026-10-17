@@ -42,6 +42,7 @@ from ml.schema import (
     load_schema,
 )
 from ml.stats import load_feature_stats
+from ml.stories import Stories, load_stories, validate_stories
 
 logger = logging.getLogger(__name__)
 
@@ -81,6 +82,9 @@ class Predictor:
         self.nodes = {t: nodes[t] for t in self.schema.targets}
         self.where = {n.target: n.where for n in load_anatomy().nodes if n.target and n.where}
         self.presets = [Preset(**p) for p in _read("presets.json")]
+        # Fail fast at startup if a story names a missing preset or target or breaks the rules.
+        self.stories: Stories = load_stories()
+        validate_stories(self.stories, self.schema, {p.id for p in self.presets})
         self.metrics = MetricsResponse(
             **_read("metrics.json"),
             stability=_read("stability.json"),

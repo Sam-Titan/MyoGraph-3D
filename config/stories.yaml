@@ -1,0 +1,189 @@
+# Guided walk-throughs of hold-out presets (Phase 16b). Validated by backend/ml/stories.py, served by
+# GET /api/stories, played by frontend/src/features/story.
+#
+# Rules (a test enforces them):
+#   - Story text contains no digits or %: every number comes from the live API through tokens.
+#   - A part's text may only state an outcome or comparison (agree, miss, above, below, far, wrong, ...) if the
+#     part has a `when` condition, which the browser evaluates on the live prediction. A step must keep at least
+#     one part with no `when` and no factor token, so it never renders empty.
+#   - `preset` must be a hold-out preset (backend/artifacts/presets.json). `camera.target` / `highlight.target`
+#     are target ids; the frontend maps them to mesh nodes through /api/features (no vessel names in TS).
+#   - {truth:ID} needs `reveal_truth: true` on the step (the real result stays hidden in the UI until then).
+#   - Parts whose {factors_*} token has no factor in that direction are skipped.
+#   - Story text never ranks arteries and gives no clinical advice.
+#
+# Tokens   {p:ID} probability   {thr:ID} decision threshold   {truth:ID} "narrowing (stenosis) found" / "no narrowing found"
+#          {name:ID} target id   {plain:ID} plain name   {where:ID} where it runs (anatomy.yaml)
+#          {factors_up:N} / {factors_down:N}  up to N factors (of `highlight.target`) that raised / lowered the estimate
+# `when`   above_threshold:ID  below_threshold:ID  well_above_threshold:ID  well_below_threshold:ID  (well = 0.25 beyond)
+#          agrees:ID  disagrees:ID (model verdict vs real result)  all_agree  any_disagrees
+stories:
+  - id: low-estimate
+    title: A low estimate
+    blurb: A hold-out patient the model rates low, and the real result.
+    preset: no-cad
+    steps:
+      - id: intro
+        camera: {target: CAD}
+        parts:
+          - text: >-
+              This is a real patient from the hold-out set: the model never saw this person while it was learning.
+              Their clinical values go in, and the model returns an estimate for the whole heart and for each artery.
+      - id: estimate
+        camera: {target: CAD}
+        highlight: {target: CAD, direction: down, top: 3}
+        parts:
+          - text: The model estimates {p:CAD} for coronary artery disease. Its decision threshold is {thr:CAD}.
+          - text: That is below the decision threshold.
+            when: [below_threshold:CAD]
+          - text: That is at or above the decision threshold.
+            when: [above_threshold:CAD]
+          - text: "The factors that pulled the estimate down: {factors_down:3}."
+      - id: result
+        camera: {target: CAD}
+        reveal_truth: true
+        parts:
+          - text: "The angiogram showed: {truth:CAD}."
+          - text: Here the estimate and the real result agree.
+            when: [agrees:CAD]
+          - text: Here the estimate and the real result disagree.
+            when: [disagrees:CAD]
+          - text: This is a model estimate, not a diagnosis.
+
+  - id: one-artery
+    title: One artery stands out
+    blurb: How to tell the three arteries apart, and what the model weighed for one of them.
+    preset: lad-only
+    steps:
+      - id: first-artery
+        camera: {target: LAD}
+        parts:
+          - text: >-
+              Colour shows only the estimated probability. Which artery is which comes from the outline, the label and
+              where it sits.
+          - text: The {name:LAD} ({plain:LAD}) lies on the {where:LAD}. The model estimates {p:LAD} for it.
+      - id: second-artery
+        camera: {target: LCX}
+        parts:
+          - text: The {name:LCX} lies on the {where:LCX}. The model estimates {p:LCX} for it.
+          - text: That is well below its decision threshold of {thr:LCX}.
+            when: [well_below_threshold:LCX]
+      - id: third-artery
+        camera: {target: RCA}
+        parts:
+          - text: The {name:RCA} lies on the {where:RCA}. The model estimates {p:RCA} for it.
+          - text: That is well below its decision threshold of {thr:RCA}.
+            when: [well_below_threshold:RCA]
+      - id: reasons
+        camera: {target: LAD}
+        highlight: {target: LAD, direction: up, top: 3}
+        parts:
+          - text: Back to the {name:LAD}. Here is what the model weighed for this artery.
+          - text: "The factors that raised the {name:LAD} estimate: {factors_up:3}."
+      - id: result
+        camera: {target: CAD}
+        reveal_truth: true
+        parts:
+          - text: >-
+              The angiogram showed: {name:LAD}, {truth:LAD}; {name:LCX}, {truth:LCX}; {name:RCA}, {truth:RCA}.
+          - text: For every artery the estimate and the real result agree.
+            when: [agrees:LAD, agrees:LCX, agrees:RCA]
+          - text: This is a model estimate, not a diagnosis.
+
+  - id: arteries-differ
+    title: When an artery is missed
+    blurb: Three arteries, three estimates, and where an estimate falls on the other side of its threshold.
+    preset: 3-vessel
+    steps:
+      - id: intro
+        camera: {target: CAD}
+        parts:
+          - text: >-
+              This patient also had an angiogram, but its result stays hidden for now. First, what did the model
+              estimate for each artery?
+      - id: first-artery
+        camera: {target: LAD}
+        parts:
+          - text: The {name:LAD} lies on the {where:LAD}. Estimate {p:LAD}, decision threshold {thr:LAD}.
+          - text: That is below its threshold.
+            when: [below_threshold:LAD]
+          - text: That is at or above its threshold.
+            when: [above_threshold:LAD]
+      - id: second-artery
+        camera: {target: RCA}
+        parts:
+          - text: The {name:RCA} lies on the {where:RCA}. Estimate {p:RCA}, decision threshold {thr:RCA}.
+          - text: That is below its threshold.
+            when: [below_threshold:RCA]
+          - text: That is at or above its threshold.
+            when: [above_threshold:RCA]
+      - id: third-artery
+        camera: {target: LCX}
+        parts:
+          - text: >-
+              The {name:LCX} lies on the {where:LCX}, so it is partly hidden from the front: turn the heart or use the
+              view buttons. Estimate {p:LCX}, decision threshold {thr:LCX}.
+          - text: That is below its threshold.
+            when: [below_threshold:LCX]
+          - text: That is at or above its threshold.
+            when: [above_threshold:LCX]
+      - id: result
+        camera: {target: CAD}
+        reveal_truth: true
+        parts:
+          - text: >-
+              The angiogram showed: {name:LAD}, {truth:LAD}; {name:LCX}, {truth:LCX}; {name:RCA}, {truth:RCA}.
+          - text: For the {name:LAD} the estimate and the real result disagree.
+            when: [disagrees:LAD]
+          - text: For the {name:LCX} the estimate and the real result disagree.
+            when: [disagrees:LCX]
+          - text: For the {name:RCA} the estimate and the real result disagree.
+            when: [disagrees:RCA]
+          - text: >-
+              Where an estimate lands on the other side of its threshold from the real result, the model got that
+              estimate wrong. That is why this is an estimate, not a diagnosis.
+            when: [any_disagrees]
+          - text: Here every estimate agrees with the real result. This is still a model estimate, not a diagnosis.
+            when: [all_agree]
+
+  - id: confidently-wrong
+    title: When the model is confidently wrong
+    blurb: The hold-out patient the model gets most wrong, told honestly.
+    preset: hard-case
+    steps:
+      - id: intro
+        camera: {target: CAD}
+        parts:
+          - text: Not every case is straightforward. Let's look at what the model said, and then at the real result.
+          - text: This is one of the hold-out patients the model got most wrong.
+            when: [disagrees:CAD]
+          - text: This hold-out patient was picked because some estimates sit far from the real result.
+            when: [agrees:CAD]
+      - id: estimate
+        camera: {target: CAD}
+        highlight: {target: CAD, direction: up, top: 3}
+        parts:
+          - text: The model estimates {p:CAD} for coronary artery disease. Its decision threshold is {thr:CAD}.
+          - text: That is far above the decision threshold.
+            when: [well_above_threshold:CAD]
+          - text: That is far below the decision threshold.
+            when: [well_below_threshold:CAD]
+          - text: "The factors that raised the estimate: {factors_up:3}."
+      - id: result
+        camera: {target: CAD}
+        reveal_truth: true
+        parts:
+          - text: "The angiogram showed: {truth:CAD}."
+          - text: "The estimate and the real result disagree: a model can be confident and still wrong."
+            when: [disagrees:CAD]
+          - text: This is a model estimate, not a diagnosis.
+      - id: single-artery
+        camera: {target: LCX}
+        reveal_truth: true
+        parts:
+          - text: Single arteries can be off too. The {name:LCX} estimate is {p:LCX}; its decision threshold is {thr:LCX}.
+          - text: "The angiogram showed: {truth:LCX}. The estimate and the real result disagree."
+            when: [disagrees:LCX]
+          - text: "The angiogram showed: {truth:LCX}."
+            when: [agrees:LCX]
+          - text: This is a model estimate, not a diagnosis.

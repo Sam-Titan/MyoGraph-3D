@@ -99,7 +99,8 @@ export function CameraRig({ bindings }: Props) {
       return
     }
     moved.current = false
-    frame(selected, true)
+    // Reduced motion: cut straight to the view instead of flying.
+    frame(selected, !window.matchMedia('(prefers-reduced-motion: reduce)').matches)
   }, [selected, nonce, frame])
 
   // Canvas got a real size (first mount, shown again after being hidden, or resized between the

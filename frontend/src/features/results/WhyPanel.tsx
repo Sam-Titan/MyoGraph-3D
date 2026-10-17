@@ -1,5 +1,6 @@
 import type { TargetInfo } from '@/api/client'
 import type { components } from '@/api/schema'
+import { useStory } from '@/features/story/useStory'
 import { pct, signed } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { type WhyRow, whyRows } from './whyModel'
@@ -37,6 +38,8 @@ interface Props {
 /** SPEC 6.2 WHY panel: diverging SHAP contributions (log-odds) for the selected target. */
 export function WhyPanel({ target, explanation, probability }: Props) {
   const rows = whyRows(explanation)
+  const hl = useStory((s) => s.highlight)
+  const marked = new Set(hl?.target === target.id ? hl.ids : [])
   const max = rows.reduce((m, r) => Math.max(m, Math.abs(r.logit)), 0)
 
   return (
@@ -71,7 +74,8 @@ export function WhyPanel({ target, explanation, probability }: Props) {
           <li
             key={r.key}
             title={rowTitle(r)}
-            className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-x-3 py-1"
+            data-highlight={marked.has(r.key) || undefined}
+            className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-x-3 py-1 data-[highlight]:rounded data-[highlight]:bg-primary/10 data-[highlight]:ring-2 data-[highlight]:ring-primary/50"
           >
             <span className="line-clamp-2 min-w-0 break-words text-xs leading-snug">{r.axis}</span>
             <span className="flex min-w-0 items-center gap-1.5">

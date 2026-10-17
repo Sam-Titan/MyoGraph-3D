@@ -16,6 +16,7 @@ from app.schemas import (
 from app.services.predictor import Predictor
 from app.services.summary import build_facts, summarise
 from app.services.validation import validate_values
+from ml.stories import Stories
 
 router = APIRouter(prefix="/api")
 
@@ -43,6 +44,11 @@ def features(predictor: Pred) -> FeaturesResponse:
 @router.get("/presets", response_model=list[Preset])
 def presets(predictor: Pred) -> list[Preset]:
     return predictor.presets
+
+
+@router.get("/stories", response_model=Stories)
+def stories(predictor: Pred) -> Stories:
+    return predictor.stories
 
 
 @router.post("/predict", response_model=PredictResponse)

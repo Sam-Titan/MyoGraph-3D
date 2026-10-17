@@ -63,6 +63,24 @@
         }
       }
     },
+    "/api/stories": {
+      "get": {
+        "summary": "Stories",
+        "operationId": "stories_api_stories_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Stories"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/predict": {
       "post": {
         "summary": "Predict",
@@ -271,6 +289,20 @@
           "n"
         ],
         "title": "CalibrationBin"
+      },
+      "Camera": {
+        "properties": {
+          "target": {
+            "type": "string",
+            "title": "Target"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "target"
+        ],
+        "title": "Camera"
       },
       "Confusion": {
         "properties": {
@@ -573,6 +605,36 @@
         ],
         "title": "HealthResponse"
       },
+      "Highlight": {
+        "properties": {
+          "target": {
+            "type": "string",
+            "title": "Target"
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "up",
+              "down"
+            ],
+            "title": "Direction",
+            "default": "up"
+          },
+          "top": {
+            "type": "integer",
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "title": "Top",
+            "default": 3
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "target"
+        ],
+        "title": "Highlight"
+      },
       "ImportanceRow": {
         "properties": {
           "id": {
@@ -719,6 +781,29 @@
           "label"
         ],
         "title": "OptionInfo"
+      },
+      "Part": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Text"
+          },
+          "when": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "When",
+            "default": []
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "title": "Part"
       },
       "PredictRequest": {
         "properties": {
@@ -1023,6 +1108,110 @@
           "values"
         ],
         "title": "StabilityStat"
+      },
+      "Step": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "parts": {
+            "items": {
+              "$ref": "#/components/schemas/Part"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Parts"
+          },
+          "camera": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Camera"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "highlight": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Highlight"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reveal_truth": {
+            "type": "boolean",
+            "title": "Reveal Truth",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "parts"
+        ],
+        "title": "Step"
+      },
+      "Stories": {
+        "properties": {
+          "stories": {
+            "items": {
+              "$ref": "#/components/schemas/Story"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Stories"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "stories"
+        ],
+        "title": "Stories"
+      },
+      "Story": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "blurb": {
+            "type": "string",
+            "title": "Blurb"
+          },
+          "preset": {
+            "type": "string",
+            "title": "Preset"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/Step"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Steps"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "blurb",
+          "preset",
+          "steps"
+        ],
+        "title": "Story"
       },
       "SummaryRequest": {
         "properties": {

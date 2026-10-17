@@ -18,10 +18,13 @@ export function Legend({
   targets,
   probabilities,
   thresholds,
+  compact = false,
 }: {
   targets: TargetInfo[]
   probabilities: Probabilities
   thresholds: Probabilities
+  /** During a story the key rows give way to the story card (chips still show every number). */
+  compact?: boolean
 }) {
   const selected = useAppStore((s) => s.selectedTarget)
   const ticks = targets.flatMap((t) => {
@@ -80,7 +83,7 @@ export function Legend({
           <span>100%</span>
         </div>
       </div>
-      <ul aria-label="Vessel key" className="space-y-0.5">
+      <ul aria-label="Vessel key" hidden={compact} className="space-y-0.5">
         {targets.map((t) => {
           const p = probabilities[t.id]
           const vessel = t.role === 'vessel'

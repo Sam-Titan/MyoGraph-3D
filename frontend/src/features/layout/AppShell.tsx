@@ -7,6 +7,8 @@ import { HealthStatus } from '@/features/layout/HealthStatus'
 import { useInitSelectedTarget } from '@/features/layout/useInitSelectedTarget'
 import { WorkspaceLayout } from '@/features/patient/WorkspaceLayout'
 import { PerformancePanel } from '@/features/performance/PerformancePanel'
+import { StoryLauncher } from '@/features/story/StoryLauncher'
+import { StoryPrompt } from '@/features/story/StoryPrompt'
 import { track } from '@/lib/analytics'
 import { type Tab, useAppStore } from '@/store/app'
 
@@ -54,7 +56,8 @@ export function AppShell() {
               </TabsTrigger>
             ))}
           </TabsList>
-          <div className="ml-auto min-w-0 max-w-full">
+          <div className="ml-auto flex min-w-0 max-w-full items-center gap-3">
+            <StoryLauncher />
             <HealthStatus />
           </div>
         </header>
@@ -72,6 +75,7 @@ export function AppShell() {
           <AboutPanel />
         </TabsContent>
       </ErrorBoundary>
+      <StoryPrompt />
       <Toaster position="bottom-right" />
     </Tabs>
   )

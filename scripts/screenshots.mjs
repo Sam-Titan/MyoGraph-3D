@@ -9,6 +9,8 @@ const OUT = resolve(dirname(fileURLToPath(import.meta.url)), '../.screenshots')
 const { chromium } = await import(
   resolve(dirname(fileURLToPath(import.meta.url)), '../frontend/node_modules/playwright/index.mjs')
 )
+// Returning visitor: the first-visit story offer (a toast) is not part of the layout shots.
+const SEEN = { cookies: [], origins: [{ origin: BASE, localStorage: [{ name: 'myograph.story-seen', value: '1' }] }] }
 // Phones use mobile emulation (isMobile + hasTouch + high DPR); desktops are plain contexts.
 const VIEWPORTS = [
   { width: 1440, height: 900 },
@@ -91,6 +93,16 @@ const VIEWS = [
     },
     keepScroll: true,
   },
+  {
+    name: 'story-step',
+    run: async (page) => {
+      await page.getByRole('button', { name: 'How it works' }).click()
+      await page.locator('[data-story-start]').nth(1).click()
+      await page.waitForFunction(() => !document.querySelector('[data-story-text]')?.textContent?.startsWith('Loading'))
+      await page.locator('[data-story-next]').click()
+      await page.waitForTimeout(2500)
+    },
+  },
   { name: 'hard-case', run: (page) => pickPreset(page, 'Hard case') },
   {
     name: 'performance',
@@ -128,6 +140,7 @@ for (const vp of VIEWPORTS) {
   const { width, height } = vp
   for (const view of VIEWS) {
     const ctx = await browser.newContext({
+      storageState: SEEN,
       viewport: { width, height },
       ...(vp.mobile ? { isMobile: true, hasTouch: true, deviceScaleFactor: vp.scale } : {}),
     })
@@ -162,6 +175,7 @@ const TAB_NAMES = ['Patient workspace', 'Model performance', 'About and method']
 const failures = []
 for (const vp of VIEWPORTS.filter((v) => v.mobile)) {
   const ctx = await browser.newContext({
+    storageState: SEEN,
     viewport: { width: vp.width, height: vp.height },
     isMobile: true,
     hasTouch: true,

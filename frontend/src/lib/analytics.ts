@@ -15,6 +15,8 @@ export type AnalyticsEvent =
   | 'form_edited'
   | 'summary_requested'
   | 'view_toggled'
+  | 'story_started'
+  | 'story_completed'
 
 /** Allowed property keys per event; anything else is dropped before sending. */
 const ALLOWED_PROPS: Record<AnalyticsEvent, readonly string[]> = {
@@ -24,6 +26,8 @@ const ALLOWED_PROPS: Record<AnalyticsEvent, readonly string[]> = {
   form_edited: [],
   summary_requested: [],
   view_toggled: ['control'],
+  story_started: ['story'],
+  story_completed: ['story'],
 }
 
 const MAX_VALUE_LENGTH = 64
@@ -127,6 +131,13 @@ export function _setClientForTest(c: Client | null): void {
 
 /** Send one allow-listed event. Silent when analytics is off or blocked. */
 export function track(event: AnalyticsEvent, data?: Record<string, unknown>): void {
+  // Dev-only test seam: Playwright installs `window.__trackLog` to see what would have been sent.
+  if (import.meta.env.DEV && typeof window !== 'undefined') {
+    ;(window as unknown as { __trackLog?: unknown[] }).__trackLog?.push([
+      event,
+      sanitizeProps(event, data),
+    ])
+  }
   if (!client) return
   if (event === 'form_edited') {
     if (formEditedSent) return

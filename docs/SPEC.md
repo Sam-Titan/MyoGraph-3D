@@ -317,6 +317,35 @@ Nothing else hard-codes feature or vessel lists.
 
 ## v2.0
 
+### Phase 16b: story mode
+- **`config/stories.yaml`** (validated by `backend/ml/stories.py` at startup and in `tests/test_stories.py`, served by
+  `GET /api/stories`): `stories[{id, title, blurb, preset, steps[{id, camera?{target}, highlight?{target, direction
+  up|down, top}, reveal_truth, parts[{text, when[]}]}]}]`. `preset` must be a hold-out preset; targets are target ids
+  (the browser maps them to mesh nodes through `/api/features`). Four stories: a low estimate (no-cad), one artery
+  stands out (lad-only), when an artery is missed (3-vessel), when the model is confidently wrong (hard-case).
+- **Text rules (enforced):** no digits or `%` (every number is a token filled from the API at runtime); a part that
+  states an outcome or comparison (agree, miss, above/below, far, well, wrong, ...) needs a `when`; a step keeps one
+  part with no `when` and no factor token; `{truth:ID}` only on a `reveal_truth` step; no ranking of arteries; no
+  clinical advice. Tokens: `{p:ID}`, `{thr:ID}`, `{truth:ID}` ("narrowing (stenosis) found" / "no narrowing found"),
+  `{name:ID}`, `{plain:ID}`, `{where:ID}`, `{factors_up:N}`, `{factors_down:N}` (up to N signed factors of the
+  highlight target, joined; a part whose list is empty is skipped). Conditions: `above_threshold`, `below_threshold`,
+  `well_above_threshold`, `well_below_threshold` (0.25 beyond the threshold), `agrees`, `disagrees` (model verdict vs real
+  result), `all_agree`, `any_disagrees`.
+- **Player** (`frontend/src/features/story`): a card under the heart with Back / Next (Finish) / Exit, arrow keys and Esc;
+  offered once per browser as a toast ("See how it works · 1 min", `localStorage` key `myograph.story-seen`),
+  replayable from the header button "How it works". Starting loads the story's hold-out patient into the form
+  (`preset_loaded` with `source: "story"`); each step selects and frames its target (instant cut under reduced
+  motion), marks the factors it names in the results panel and keeps the real result hidden (preset name, cath
+  column) until a reveal step. Exit or Finish restores the patient from before (values, preset, edited flag, selection).
+  The story's numbers come from its own prediction of the preset (same `/api/predict`).
+- Analytics: `story_started {story}` on start, `story_completed {story}` on Finish (not on early exit).
+- Dev-only test seam: `window.__trackLog` (installed by Playwright) records `track()` calls.
+
+### Phase 16a2: balanced supply regions
+- BodyParts3D has no circumflex branches beyond FMA3895 (the left marginal vein is a vein), so `anatomy.yaml` nodes may
+  override `territory_falloff_mm` / `territory_max_mm`; LCX uses 22 / 45 mm (global 12 / 30). Share of heart vertices with
+  weight > 0.5: LAD 20 %, LCX 22 %, RCA 29 % (LCX was 8 %). A test requires every channel to reach at least half of the largest.
+
 ### Phase 16a: scene (outlines, focus, supply regions, labels)
 - **Colour = risk only.** Vessel identity comes from outlines, name chips with leader lines, position, the
   vessel key and interaction, so three vessels at nearly the same probability stay distinguishable. The number
@@ -380,9 +409,9 @@ Nothing else hard-codes feature or vessel lists.
   "always"`, `person_profiles: "never"`, `autocapture: false`, session recording, heatmaps, dead clicks and
   surveys off, `respect_dnt`, pageview and pageleave on. `before_send` strips `?query` and `#hash` from
   `$current_url`, `$referrer`, `$pathname` and URL-like `$initial_*` / `$prev_*` properties.
-- **Events** (property allow-list enforced in `track()`): `preset_loaded {preset, source: auto|user}`,
+- **Events** (property allow-list enforced in `track()`): `preset_loaded {preset, source: auto|user|story}`,
   `target_selected {target, source: 3d|list}`, `tab_viewed {tab}`, `form_edited` (once per session),
-  `summary_requested`, `view_toggled {control}`. Never a field value, probability or free text.
+  `summary_requested`, `view_toggled {control}`, `story_started {story}`, `story_completed {story}`. Never a field value, probability or free text.
   `quick_mode_used` and `shared_link_opened` arrive with Phase 18.
 - No Netlify `/ingest` reverse proxy: events from ad-blocking visitors are lost, which is accepted.
 - `netlify.toml` sets no CSP, so no allow-listing was needed. `render.yaml` carries `TRUST_PROXY_HEADERS` and

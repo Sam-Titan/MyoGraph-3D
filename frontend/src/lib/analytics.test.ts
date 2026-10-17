@@ -28,6 +28,21 @@ describe('analyticsEnabled', () => {
   })
 })
 
+describe('story events', () => {
+  it('allow only the story id', () => {
+    for (const e of ['story_started', 'story_completed'] as const)
+      expect(sanitizeProps(e, { story: 'one-artery', probability: 0.8, step: 2 })).toEqual({
+        story: 'one-artery',
+      })
+  })
+  it('keeps source on preset_loaded so story loads are not user actions', () => {
+    expect(sanitizeProps('preset_loaded', { preset: 'lad-only', source: 'story' })).toEqual({
+      preset: 'lad-only',
+      source: 'story',
+    })
+  })
+})
+
 describe('sanitizeProps', () => {
   it('keeps only allow-listed primitive properties', () => {
     expect(

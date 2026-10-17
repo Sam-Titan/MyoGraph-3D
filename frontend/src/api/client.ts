@@ -14,6 +14,10 @@ export type PredictResponse = Schemas['PredictResponse']
 export type SummaryRequest = Schemas['SummaryRequest']
 export type SummaryResponse = Schemas['SummaryResponse']
 export type MetricsResponse = Schemas['MetricsResponse']
+export type Stories = Schemas['Stories']
+export type Story = Schemas['Story']
+export type StoryStep = Schemas['Step']
+export type StoryPart = Schemas['Part']
 
 export class ApiError extends Error {
   readonly status: number
@@ -40,6 +44,7 @@ export const getHealth = (signal?: AbortSignal) => apiFetch<HealthResponse>('/he
 export const getFeatures = (signal?: AbortSignal) =>
   apiFetch<FeaturesResponse>('/features', { signal })
 export const getPresets = (signal?: AbortSignal) => apiFetch<Preset[]>('/presets', { signal })
+export const getStories = (signal?: AbortSignal) => apiFetch<Stories>('/stories', { signal })
 export const getMetrics = (signal?: AbortSignal) =>
   apiFetch<MetricsResponse>('/metrics', { signal })
 

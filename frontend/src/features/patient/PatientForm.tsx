@@ -9,6 +9,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
+import { registerPatientBridge } from '@/features/story/patientBridge'
 import { track } from '@/lib/analytics'
 import { groupFeatures } from '@/lib/features'
 import { useAppStore } from '@/store/app'
@@ -74,6 +75,20 @@ export function PatientForm({ data }: { data: FeaturesResponse }) {
     const preset = presets?.find((p) => p.id === presetId)
     return preset ? valuesForPreset(preset, data.features) : null
   }, [presets, presetId, data.features])
+  // Story mode loads and restores patients through this (it never touches react-hook-form itself).
+  useEffect(
+    () =>
+      registerPatientBridge({
+        getValues: () => form.getValues(),
+        reset: (v, keepDefaults) =>
+          form.reset(v, keepDefaults ? { keepDefaultValues: true } : undefined),
+        presetValues: (id) => {
+          const preset = presets?.find((p) => p.id === id)
+          return preset ? valuesForPreset(preset, data.features) : null
+        },
+      }),
+    [form, presets, data.features],
+  )
   const counts = new Map(
     groups.map(({ group, inputs, derived: computed }) => {
       let outside = 0

@@ -1,6 +1,7 @@
 import { defineConfig } from '@playwright/test'
 
 // Expects `make dev` to be running (web 5180, API 8010), like `make screenshots`.
+const BASE_URL = process.env.BASE_URL ?? 'http://localhost:5180'
 const SOFTWARE_GL = [
   '--use-angle=swiftshader',
   '--enable-unsafe-swiftshader',
@@ -14,7 +15,12 @@ export default defineConfig({
   timeout: 120_000,
   reporter: [['list']],
   use: {
-    baseURL: process.env.BASE_URL ?? 'http://localhost:5180',
+    baseURL: BASE_URL,
+    // The first-visit story offer is a toast; every test starts as a returning visitor (stories.spec covers the offer).
+    storageState: {
+      cookies: [],
+      origins: [{ origin: BASE_URL, localStorage: [{ name: 'myograph.story-seen', value: '1' }] }],
+    },
     viewport: { width: 1440, height: 900 },
     launchOptions: { args: SOFTWARE_GL },
   },

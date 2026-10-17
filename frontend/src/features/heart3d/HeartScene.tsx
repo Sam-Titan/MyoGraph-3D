@@ -3,8 +3,11 @@ import { Canvas, useFrame } from '@react-three/fiber'
 import { type RefObject, Suspense, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import type { TargetInfo } from '@/api/client'
+import { StoryPlayer } from '@/features/story/StoryPlayer'
+import { useStory } from '@/features/story/useStory'
 import { track } from '@/lib/analytics'
 import { overallTarget } from '@/lib/features'
+import { cn } from '@/lib/utils'
 import { useAppStore } from '@/store/app'
 import { CameraRig } from './CameraRig'
 import { FrameBudget } from './FrameBudget'
@@ -143,12 +146,15 @@ export default function HeartScene({ targets }: { targets: TargetInfo[] }) {
   const registry = useRef<LabelRegistry>(new Map()).current
   const onDecline = () => setRung((r) => Math.min(r + 1, DPR_STEPS.length - 1))
   const tab = useAppStore((s) => s.tab)
+  const storyActive = useStory((s) => s.active !== null)
 
   // Esc resets the selection and view (Tab/Enter work natively on the label chips and key rows).
   useEffect(() => {
     if (tab !== 'workspace' || !overall) return
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !e.defaultPrevented) focusTarget(overall.id)
+      // While a story plays, Esc exits the story instead (handled by the story card).
+      if (e.key === 'Escape' && !e.defaultPrevented && !useStory.getState().active)
+        focusTarget(overall.id)
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
@@ -157,7 +163,13 @@ export default function HeartScene({ targets }: { targets: TargetInfo[] }) {
   return (
     <div ref={containerRef} className="absolute inset-0">
       {/* Below xl the legend sits under the canvas instead of over the heart. */}
-      <div className="absolute inset-x-0 top-0 bottom-44 xl:bottom-0">
+      <div
+        className={cn(
+          'absolute inset-x-0 top-0',
+          // The story card sits under the heart (also on wide screens, where the legend normally overlays it).
+          storyActive ? 'bottom-64 xl:bottom-60' : 'bottom-44 xl:bottom-0',
+        )}
+      >
         <Canvas
           flat
           frameloop="demand"
@@ -196,8 +208,14 @@ export default function HeartScene({ targets }: { targets: TargetInfo[] }) {
           <OrientationMarker />
         </div>
         <SupplyCaption targets={targets} />
-        <div className="pointer-events-auto">
-          <Legend targets={targets} probabilities={probabilities} thresholds={thresholds} />
+        <div className="pointer-events-auto space-y-2">
+          <StoryPlayer />
+          <Legend
+            targets={targets}
+            probabilities={probabilities}
+            thresholds={thresholds}
+            compact={storyActive}
+          />
         </div>
       </div>
       <ModelProgress />

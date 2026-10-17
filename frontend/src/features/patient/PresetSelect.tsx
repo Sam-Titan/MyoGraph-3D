@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { useHidingTruth } from '@/features/story/useStory'
 import { track } from '@/lib/analytics'
 import { vesselTargets } from '@/lib/features'
 import { useAppStore } from '@/store/app'
@@ -30,9 +31,14 @@ export function PresetSelect({ features }: { features: FeatureInfo[] }) {
   const setSelected = useAppStore((s) => s.setSelectedPresetId)
   const setEdited = useAppStore((s) => s.setPresetEdited)
 
+  // Preset names such as "No CAD" state the real result, so a story shows a neutral name until its reveal step.
+  const hiding = useHidingTruth()
   const items = [
     { value: CUSTOM, label: 'Custom (typical values)' },
-    ...presets.map((p) => ({ value: p.id, label: p.label })),
+    ...presets.map((p) => ({
+      value: p.id,
+      label: hiding && p.id === selected ? 'Hold-out patient (story)' : p.label,
+    })),
   ]
 
   // First impression: the hold-out patient with every vessel stenotic (picked by truth labels,
@@ -83,7 +89,7 @@ export function PresetSelect({ features }: { features: FeatureInfo[] }) {
         </p>
       )}
       {current && !edited && (
-        <p className="t-meta" title={current.description}>
+        <p className="t-meta" title={hiding ? undefined : current.description}>
           Showing a hold-out patient. Choose another or edit any value.
         </p>
       )}
