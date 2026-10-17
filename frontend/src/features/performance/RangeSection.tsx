@@ -1,5 +1,5 @@
 import type { MetricsResponse } from '@/api/client'
-import { RANGE_MEANING } from '@/features/results/RangeNote'
+import { useDisplay } from '@/api/queries'
 import { pct } from '@/lib/format'
 import { targetIds } from './performanceModel'
 import { Section } from './Section'
@@ -9,8 +9,9 @@ const TH = 'px-2 py-2 text-left align-bottom font-medium'
 /** Hold-out numbers for the bootstrap ranges: how wide they are and how often the point falls outside. */
 export function RangeSection({ metrics }: { metrics: MetricsResponse }) {
   const u = metrics.uncertainty
+  const { data: display } = useDisplay()
   return (
-    <Section title="Ranges on the hold-out set" caption={RANGE_MEANING}>
+    <Section title="Ranges on the hold-out set" caption={display?.range_meaning ?? ''}>
       <div className="max-w-full overflow-x-auto">
         <table className="w-full min-w-[32rem] text-sm">
           <thead className="border-b text-xs text-muted-foreground">

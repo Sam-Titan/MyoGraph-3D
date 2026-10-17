@@ -2,10 +2,9 @@ import type { TargetInfo, TargetRange } from '@/api/client'
 import { useDisplay } from '@/api/queries'
 import type { components } from '@/api/schema'
 import { useViewState } from '@/features/heart3d/useViewState'
-import { pctRange } from '@/lib/format'
 import { riskCss } from '@/lib/riskColor'
 import { cn } from '@/lib/utils'
-import { TweenedPercent } from './TweenedPercent'
+import { HeadlineSentence } from './HeadlineSentence'
 import { labelSentence } from './verdict'
 
 type Prediction = components['schemas']['TargetPrediction']
@@ -42,14 +41,14 @@ export function Headline({ target, prediction, range, selected, onSelect }: Prop
           className="mt-2 size-2.5 shrink-0 rounded-full border border-black/10"
           style={{ background: prediction ? riskCss(prediction.probability) : 'transparent' }}
         />
-        <span className="min-w-0 text-[1.375rem] font-semibold leading-snug">
-          <TweenedPercent value={prediction?.probability} className="num" />
-          {range && (
-            <span className="num ml-1 text-[1rem] font-medium text-muted-foreground">
-              ({pctRange(range.interval.lo, range.interval.hi)})
-            </span>
-          )}{' '}
-          probability of {target.plain_label}
+        <span className="min-w-0 text-[1.25rem] font-semibold leading-snug">
+          <HeadlineSentence
+            target={target}
+            probability={prediction?.probability}
+            range={range?.interval}
+            tween
+            glossary={false}
+          />
         </span>
       </span>
       {prediction && range && (

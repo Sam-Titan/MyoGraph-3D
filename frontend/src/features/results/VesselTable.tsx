@@ -5,7 +5,7 @@ import { pct, pctRange } from '@/lib/format'
 import { riskCss } from '@/lib/riskColor'
 import { cn } from '@/lib/utils'
 import { TweenedPercent } from './TweenedPercent'
-import { useThresholdLabel } from './verdict'
+import { useThresholdParts } from './verdict'
 
 type Prediction = components['schemas']['TargetPrediction']
 
@@ -53,14 +53,14 @@ function EstimateBar({
 export function VesselTable({ vessels, predictions, ranges, truth, selected, onSelect }: Props) {
   const setRowHover = useViewState((s) => s.setRowHover)
   const hovered3d = useViewState((s) => s.hover?.id)
-  const thresholdLabel = useThresholdLabel()
+  const thresholdParts = useThresholdParts()
   return (
     <table className="w-full table-fixed border-collapse text-sm">
       <colgroup>
-        <col className="w-[26%]" />
-        <col className="w-[34%]" />
+        <col className="w-[22%]" />
+        <col className="w-[29%]" />
+        <col className="w-[30%]" />
         <col className="w-[19%]" />
-        <col className="w-[21%]" />
       </colgroup>
       <thead>
         <tr className="t-meta text-left">
@@ -134,7 +134,18 @@ export function VesselTable({ vessels, predictions, ranges, truth, selected, onS
                   </span>
                 )}
               </td>
-              <td className="px-1 py-2 align-top">{range ? thresholdLabel(range) : '—'}</td>
+              <td className="px-1 py-2 align-top text-[0.8125rem] leading-snug">
+                {range ? (
+                  <>
+                    <span className="block">{thresholdParts(range).main}</span>
+                    {thresholdParts(range).qualifier && (
+                      <span className="t-meta block">{thresholdParts(range).qualifier}</span>
+                    )}
+                  </>
+                ) : (
+                  '—'
+                )}
+              </td>
               <td className="px-1 py-2 align-top">
                 {actual === undefined ? (
                   <span className="t-meta">—</span>

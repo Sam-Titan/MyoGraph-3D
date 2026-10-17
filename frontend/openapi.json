@@ -235,6 +235,25 @@
   },
   "components": {
     "schemas": {
+      "BaseRateNote": {
+        "properties": {
+          "line1": {
+            "type": "string",
+            "title": "Line1"
+          },
+          "line2": {
+            "type": "string",
+            "title": "Line2"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "line1",
+          "line2"
+        ],
+        "title": "BaseRateNote"
+      },
       "BreakdownRow": {
         "properties": {
           "id": {
@@ -494,14 +513,103 @@
         "properties": {
           "threshold_labels": {
             "$ref": "#/components/schemas/ThresholdLabels"
+          },
+          "waterfall_top_n": {
+            "type": "integer",
+            "maximum": 15.0,
+            "minimum": 1.0,
+            "title": "Waterfall Top N"
+          },
+          "headline": {
+            "type": "string",
+            "title": "Headline"
+          },
+          "headline_range": {
+            "type": "string",
+            "title": "Headline Range"
+          },
+          "cutoff_line": {
+            "type": "string",
+            "title": "Cutoff Line"
+          },
+          "cutoff_crosses": {
+            "type": "string",
+            "title": "Cutoff Crosses"
+          },
+          "base_rate_note": {
+            "$ref": "#/components/schemas/BaseRateNote"
+          },
+          "range_meaning": {
+            "type": "string",
+            "title": "Range Meaning"
+          },
+          "waterfall": {
+            "$ref": "#/components/schemas/WaterfallText"
+          },
+          "dots": {
+            "$ref": "#/components/schemas/DotsText"
+          },
+          "performance": {
+            "$ref": "#/components/schemas/PerformanceText"
+          },
+          "trust": {
+            "$ref": "#/components/schemas/TrustText"
+          },
+          "glossary": {
+            "items": {
+              "$ref": "#/components/schemas/GlossaryEntry"
+            },
+            "type": "array",
+            "title": "Glossary"
           }
         },
         "additionalProperties": false,
         "type": "object",
         "required": [
-          "threshold_labels"
+          "threshold_labels",
+          "waterfall_top_n",
+          "headline",
+          "headline_range",
+          "cutoff_line",
+          "cutoff_crosses",
+          "base_rate_note",
+          "range_meaning",
+          "waterfall",
+          "dots",
+          "performance",
+          "trust",
+          "glossary"
         ],
         "title": "DisplayConfig"
+      },
+      "DotsText": {
+        "properties": {
+          "caption": {
+            "type": "string",
+            "title": "Caption"
+          },
+          "legend_solid": {
+            "type": "string",
+            "title": "Legend Solid"
+          },
+          "legend_light": {
+            "type": "string",
+            "title": "Legend Light"
+          },
+          "legend_ring": {
+            "type": "string",
+            "title": "Legend Ring"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "caption",
+          "legend_solid",
+          "legend_light",
+          "legend_ring"
+        ],
+        "title": "DotsText"
       },
       "FeatureInfo": {
         "properties": {
@@ -646,6 +754,34 @@
           "features"
         ],
         "title": "FeaturesResponse"
+      },
+      "GlossaryEntry": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "match": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Match"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "match",
+          "text"
+        ],
+        "title": "GlossaryEntry"
       },
       "GroupInfo": {
         "properties": {
@@ -955,6 +1091,50 @@
           "text"
         ],
         "title": "Part"
+      },
+      "PerformanceText": {
+        "properties": {
+          "roc_auc": {
+            "type": "string",
+            "title": "Roc Auc"
+          },
+          "metric_example": {
+            "type": "string",
+            "title": "Metric Example"
+          },
+          "brier": {
+            "type": "string",
+            "title": "Brier"
+          },
+          "accuracy": {
+            "type": "string",
+            "title": "Accuracy"
+          },
+          "precision": {
+            "type": "string",
+            "title": "Precision"
+          },
+          "recall": {
+            "type": "string",
+            "title": "Recall"
+          },
+          "f1": {
+            "type": "string",
+            "title": "F1"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "roc_auc",
+          "metric_example",
+          "brier",
+          "accuracy",
+          "precision",
+          "recall",
+          "f1"
+        ],
+        "title": "PerformanceText"
       },
       "PredictRequest": {
         "properties": {
@@ -1457,13 +1637,21 @@
             },
             "type": "array",
             "title": "Contributions"
+          },
+          "waterfall": {
+            "items": {
+              "$ref": "#/components/schemas/WaterfallStep"
+            },
+            "type": "array",
+            "title": "Waterfall"
           }
         },
         "type": "object",
         "required": [
           "base_probability",
           "base_logit",
-          "contributions"
+          "contributions",
+          "waterfall"
         ],
         "title": "TargetExplanation"
       },
@@ -1480,6 +1668,10 @@
           "plain_label": {
             "type": "string",
             "title": "Plain Label"
+          },
+          "outcome_phrase": {
+            "type": "string",
+            "title": "Outcome Phrase"
           },
           "role": {
             "type": "string",
@@ -1510,6 +1702,7 @@
           "id",
           "label",
           "plain_label",
+          "outcome_phrase",
           "role",
           "node"
         ],
@@ -1694,6 +1887,47 @@
         ],
         "title": "ThresholdLabels"
       },
+      "TrustText": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "reliable_min_auc": {
+            "type": "number",
+            "exclusiveMaximum": 1.0,
+            "exclusiveMinimum": 0.5,
+            "title": "Reliable Min Auc"
+          },
+          "rule": {
+            "type": "string",
+            "title": "Rule"
+          },
+          "reliable": {
+            "type": "string",
+            "title": "Reliable"
+          },
+          "weak": {
+            "type": "string",
+            "title": "Weak"
+          },
+          "footer": {
+            "type": "string",
+            "title": "Footer"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "title",
+          "reliable_min_auc",
+          "rule",
+          "reliable",
+          "weak",
+          "footer"
+        ],
+        "title": "TrustText"
+      },
       "UncertaintyMetrics": {
         "properties": {
           "method": {
@@ -1802,6 +2036,101 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "WaterfallStep": {
+        "properties": {
+          "feature": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Feature"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "value_display": {
+            "type": "string",
+            "title": "Value Display"
+          },
+          "from_p": {
+            "type": "number",
+            "title": "From P"
+          },
+          "to_p": {
+            "type": "number",
+            "title": "To P"
+          }
+        },
+        "type": "object",
+        "required": [
+          "feature",
+          "label",
+          "value_display",
+          "from_p",
+          "to_p"
+        ],
+        "title": "WaterfallStep",
+        "description": "One step of the probability waterfall: `from_p` -> `to_p` after adding this factor."
+      },
+      "WaterfallText": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "start_label": {
+            "type": "string",
+            "title": "Start Label"
+          },
+          "end_label": {
+            "type": "string",
+            "title": "End Label"
+          },
+          "baseline_caption": {
+            "type": "string",
+            "title": "Baseline Caption"
+          },
+          "order_caption": {
+            "type": "string",
+            "title": "Order Caption"
+          },
+          "points": {
+            "type": "string",
+            "title": "Points"
+          },
+          "cutoff_tick": {
+            "type": "string",
+            "title": "Cutoff Tick"
+          },
+          "technical_title": {
+            "type": "string",
+            "title": "Technical Title"
+          },
+          "technical_line": {
+            "type": "string",
+            "title": "Technical Line"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "title",
+          "start_label",
+          "end_label",
+          "baseline_caption",
+          "order_caption",
+          "points",
+          "cutoff_tick",
+          "technical_title",
+          "technical_line"
+        ],
+        "title": "WaterfallText"
       }
     }
   }

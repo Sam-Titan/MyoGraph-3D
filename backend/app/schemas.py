@@ -18,6 +18,7 @@ class TargetInfo(BaseModel):
     id: str
     label: str
     plain_label: str
+    outcome_phrase: str  # "probability of <outcome_phrase>"; falls back to plain_label
     role: Role
     node: str
     where: str | None = None  # plain-language location (anatomy.yaml), for the vessel key
@@ -122,10 +123,22 @@ class Contribution(BaseModel):
     logit: float
 
 
+class WaterfallStep(BaseModel):
+    """One step of the probability waterfall: `from_p` -> `to_p` after adding this factor."""
+
+    feature: str | None  # input id; None for the aggregated "N other factors" step
+    label: str
+    value_display: str
+    from_p: float
+    to_p: float
+
+
 class TargetExplanation(BaseModel):
     base_probability: float
     base_logit: float
     contributions: list[Contribution]
+    #: Starts at `base_probability`; the last `to_p` is the predicted probability.
+    waterfall: list[WaterfallStep]
 
 
 class BreakdownRow(BaseModel):

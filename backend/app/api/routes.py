@@ -88,6 +88,7 @@ def summary(body: SummaryRequest, predictor: Pred) -> SummaryResponse:
         predictor.intervals(body.values),
         targets,
         body.selected_target,
+        n_patients=predictor.metrics.split.n_train + predictor.metrics.split.n_test,
     )
     labels = frozenset(f.label for f in predictor.features.features)
     return summarise(facts, groq_settings(), labels)

@@ -435,3 +435,15 @@ Nothing else hard-codes feature or vessel lists.
   guarantee, and not the range of your true risk." `positive` (point >= threshold) still drives agree/miss against the cath
   result; the main label compares the point estimate with the threshold (Above / Below the model's cut-off), with an "uncertain" qualifier when the range crosses it (Phase 16.5c). `metrics.json` `uncertainty.targets[T]` also has `n_uncertain` / `uncertain_fraction` (hold-out range crosses the threshold), shown on the Performance tab.
 - Stories: token `{range:ID}`; conditions `range_crosses_threshold:ID`, `range_clear_of_threshold:ID`.
+
+### Phase 17: plain-language results and waterfall
+- **`config/display.yaml`** (validated by `backend/ml/display.py`, served by `GET /api/display`): threshold labels, headline,
+  base-rate note, waterfall/dot captions, performance one-liners, trust box, glossary. Unknown keys or placeholders fail at startup.
+- **`outcome_phrase`** (optional per target in `features.yaml`, in `TargetInfo`): "probability of <outcome_phrase>".
+- **Waterfall** (`ml/waterfall.py`, `TargetExplanation.waterfall`): starts at the model baseline `sigmoid(base)` (not the dataset
+  prevalence; each target has its own), adds factors largest |log-odds| first (id tie-break), top `waterfall_top_n` (6) as steps
+  plus one "N other factors" step; the last `to_p` equals the served probability (the chain closes to 1e-6, tested). Step sizes
+  depend on order. This replaces the SHAP-bar WHY view of 6.2 as the default; the log-odds bars live under "Technical details".
+- Base-rate note and baseline caption use the selected target's own prevalence from `metrics.json`. Dot picture: solid dots to the
+  start of the range, lighter dots across it, ring on the estimate, number always printed. Story factor tokens use waterfall steps
+  (never the "other factors" row); `/api/summary` facts use them too and the validator requires the "trained on N patients" sentence.

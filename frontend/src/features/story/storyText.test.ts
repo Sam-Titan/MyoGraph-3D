@@ -7,6 +7,7 @@ const targets: TargetInfo[] = [
     id: 'CAD',
     label: 'CAD',
     plain_label: 'coronary artery disease',
+    outcome_phrase: 'coronary artery disease',
     role: 'overall',
     node: 'heart',
   },
@@ -14,6 +15,7 @@ const targets: TargetInfo[] = [
     id: 'AAA',
     label: 'AAA',
     plain_label: 'some artery',
+    outcome_phrase: 'a narrowing in some artery',
     role: 'vessel',
     node: 'a',
     where: 'front of the heart',
@@ -33,6 +35,12 @@ const response = {
         { id: 'a', label: 'Age', display_value: '70', logit: 1.2 },
         { id: 'b', label: 'Chest pain type', display_value: 'None', logit: -0.9 },
         { id: 'c', label: 'T inversion', display_value: 'Yes', logit: 0.7 },
+      ],
+      waterfall: [
+        { feature: 'a', label: 'Age', value_display: '70', from_p: 0.6, to_p: 0.72 },
+        { feature: 'b', label: 'Chest pain type', value_display: 'None', from_p: 0.72, to_p: 0.65 },
+        { feature: 'c', label: 'T inversion', value_display: 'Yes', from_p: 0.65, to_p: 0.8 },
+        { feature: null, label: '5 other factors', value_display: '', from_p: 0.8, to_p: 0.98 },
       ],
     },
   },
@@ -157,10 +165,15 @@ describe('rendering', () => {
     expect(highlightedFactors(down, ctx(null)).map((c) => c.id)).toEqual(['b'])
   })
 
+  it('never lists the "N other factors" step, even when it raised the estimate most', () => {
+    const up = step({ highlight: { target: 'CAD', direction: 'up', top: 9 } })
+    expect(highlightedFactors(up, ctx(null)).map((c) => c.id)).toEqual(['a', 'c'])
+  })
+
   it('drops a factor sentence when nothing pushed in that direction', () => {
     const none = {
       ...response,
-      explanations: { CAD: { ...response.explanations.CAD, contributions: [] } },
+      explanations: { CAD: { ...response.explanations.CAD, waterfall: [] } },
     } as unknown as PredictResponse
     const s = step({
       highlight: { target: 'CAD', direction: 'up', top: 3 },

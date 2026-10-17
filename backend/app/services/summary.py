@@ -6,6 +6,7 @@ to the template, so the endpoint always returns something safe.
 
 import json
 import logging
+import math
 import re
 import threading
 import time
@@ -15,7 +16,13 @@ from typing import Any
 import httpx
 
 from app.core.config import GroqSettings
-from app.schemas import IntervalsResponse, PredictResponse, SummaryResponse, TargetInfo
+from app.schemas import (
+    IntervalsResponse,
+    PredictResponse,
+    SummaryResponse,
+    TargetInfo,
+    WaterfallStep,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -42,22 +49,26 @@ SYSTEM_PROMPT = (
     "cut-off for each, and uncertain only for targets whose facts say uncertain is true; the "
     "range only describes how much the estimate depends on which patients the model learned "
     "from, never call it the patient's true risk or a guarantee; "
-    "(3) one sentence naming the selected target (by its label, as given) and its main factors, "
-    "using ONLY the factors listed for that target in facts.factors, never another target's; "
-    "(4) only if outside_training_range_warnings is not empty, one sentence saying some values "
+    "(3) one sentence naming the selected target (by its outcome, as given) and its main factors "
+    "with their points as written, using ONLY the factors listed for that target in "
+    "facts.factors, never another target's; "
+    "(4) one sentence saying the estimates come from a model trained on n_patients patients who "
+    "had already been referred for an angiogram; "
+    "(5) only if outside_training_range_warnings is not empty, one sentence saying some values "
     "are outside the training range; write one paragraph with no line breaks; then end with "
     f"exactly this sentence: {DISCLAIMER}\n"
     "Style: say 'probability of <condition>', never 'probability that X is likely'; write "
     "percentages like 75% (no space); no meta phrases such as 'the selected target is'. "
     "Match the tone and structure of this example, but take the target names, above/below words, "
     "uncertain flags and order from the facts, never from the example:\n"
-    "EXAMPLE: The model estimates a {overall_pct} probability of coronary artery disease for this "
+    "EXAMPLE: The model estimates a {overall_pct} probability of {overall_outcome} for this "
     "patient (range {overall_range}), above the model's {overall_thr} cut-off. For the individual "
     "arteries, it estimates {lad_pct} (range {lad_range}) for the LAD (above the cut-off), "
     "{lcx_pct} (range {lcx_range}) for the LCX (below the cut-off) and {rca_pct} (range "
-    "{rca_range}) for the RCA (below the cut-off, uncertain). For {selected_label}, the factors "
-    "that raised the estimate most were "
-    "{up_factor_1} and {up_factor_2}, while {down_factor_1} lowered it. {disclaimer}"
+    "{rca_range}) for the RCA (below the cut-off, uncertain). For the estimate of "
+    "{selected_outcome}, the factors that raised it most were {up_factor_1} and {up_factor_2}, "
+    "while {down_factor_1} lowered it. The estimates come from a model trained on {n_patients} "
+    "patients who had already been referred for an angiogram. {disclaimer}"
 )
 _BANNED = re.compile(
     r"you have|you should|diagnos|treat|medicat|should take|prescrib|your doctor", re.IGNORECASE
@@ -76,11 +87,19 @@ def _fmt(v: float) -> str:
     return f"{round(v, 1):g}"
 
 
+def _move(step: WaterfallStep, points: int) -> str:
+    """Waterfall wording: "Typical chest pain: Yes (+18 points)"."""
+    sign = "+" if points > 0 else "−"
+    return f"{step.label}: {step.value_display} ({sign}{abs(points)} points)"
+
+
 def build_facts(
     resp: PredictResponse,
     ranges: IntervalsResponse,
     targets: list[TargetInfo],
     selected: str | None = None,
+    *,
+    n_patients: int,
 ) -> dict[str, Any]:
     """Everything the summary may mention, pre-formatted. Built from a server-side predict.
 
@@ -95,7 +114,8 @@ def build_facts(
         out_targets.append(
             {
                 "id": t.id,
-                "label": t.plain_label,  # prose wording, e.g. "coronary artery disease"
+                "label": t.plain_label,  # prose wording, e.g. "left anterior descending artery"
+                "outcome": t.outcome_phrase,  # "probability of <outcome>"
                 "role": t.role,
                 "probability_percent": _pct(pred.probability),
                 "threshold_percent": _pct(pred.threshold),
@@ -108,19 +128,20 @@ def build_facts(
         )
     blocks: list[dict[str, Any]] = []
     for t in dict.fromkeys([overall.id, chosen.id]):
-        contribs = resp.explanations[t].contributions
+        moves = [
+            (s, math.floor((s.to_p - s.from_p) * 100 + 0.5))
+            for s in resp.explanations[t].waterfall
+            if s.feature is not None  # never the aggregated "N other factors" step
+        ]
         blocks.append(
             {
                 "target_id": t,
-                "increasing": [f"{c.label}: {c.display_value}" for c in contribs if c.logit > 0][
-                    :TOP_N
-                ],
-                "decreasing": [f"{c.label}: {c.display_value}" for c in contribs if c.logit < 0][
-                    :TOP_N
-                ],
+                "increasing": [_move(s, d) for s, d in moves if d > 0][:TOP_N],
+                "decreasing": [_move(s, d) for s, d in moves if d < 0][:TOP_N],
             }
         )
     return {
+        "n_patients": n_patients,  # whole dataset: everyone had been referred for an angiogram
         "selected_target": chosen.id,
         "targets": out_targets,
         "factors": blocks,
@@ -160,8 +181,8 @@ def template_summary(facts: dict[str, Any]) -> str:
     if overall["uncertain"]:
         where += " The range crosses the cut-off, so this is uncertain."
     s = [
-        f"The model estimates {_a(overall_pct)} {overall_pct}% probability "
-        f"(range {_range(overall)}) for {overall['label']}. {where}"
+        f"The model estimates {_a(overall_pct)} {overall_pct}% probability of "
+        f"{overall['outcome']} (range {_range(overall)}). {where}"
     ]
     if others:
         parts = [
@@ -172,15 +193,19 @@ def template_summary(facts: dict[str, Any]) -> str:
     up, down = block["increasing"], block["decreasing"]
     if up and down:
         s.append(
-            f"For {chosen['label']}, the inputs pushing the estimate up most were {_join(up)}, "
-            f"and those pulling it down most were {_join(down)}."
+            f"For the estimate of {chosen['outcome']}, the factors that moved it up most were "
+            f"{_join(up)}, and those that moved it down most were {_join(down)}."
         )
     elif up or down:
         direction = "up" if up else "down"
         s.append(
-            f"For {chosen['label']}, the inputs pushing the estimate {direction} most were "
-            f"{_join(up or down)}."
+            f"For the estimate of {chosen['outcome']}, the factors that moved it {direction} most "
+            f"were {_join(up or down)}."
         )
+    s.append(
+        f"These estimates come from a model trained on {facts['n_patients']} patients who had "
+        "already been referred for an angiogram."
+    )
     n = len(facts["outside_training_range_warnings"])
     if n:
         s.append(
@@ -262,7 +287,9 @@ def validate_llm_text(
     present = set(_NUMBER.findall(body))
     if not all(str(t["probability_percent"]) in present for t in facts["targets"]):
         return False  # every target's percentage must be stated
-    if not _states_ranges_and_sides(body, facts):
+    if str(facts["n_patients"]) not in present:
+        return False  # the "trained on N patients" statement is required
+    if not _states_ranges_and_sides(body, facts) or "angiogra" not in body.lower():
         return False
     allowed = set(_NUMBER.findall(json.dumps(facts, ensure_ascii=False)))
     if not all(n in allowed for n in _NUMBER.findall(body)):

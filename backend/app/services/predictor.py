@@ -7,6 +7,7 @@ import threading
 import time
 from collections import OrderedDict
 from collections.abc import Mapping
+from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
@@ -31,8 +32,10 @@ from app.schemas import (
     TargetInfo,
     TargetPrediction,
     TargetRange,
+    WaterfallStep,
 )
 from ml.anatomy import ANATOMY_PATH, load_anatomy
+from ml.display import load_display
 from ml.explain import aggregate_to_inputs
 from ml.models import Calibration, model_class
 from ml.preprocess import inputs_to_matrix
@@ -49,6 +52,7 @@ from ml.schema import (
 from ml.stats import load_feature_stats
 from ml.stories import Stories, load_stories, validate_stories
 from ml.uncertainty import ReplicateSet, crosses, load_uncertainty, replicate_path, side
+from ml.waterfall import Factor, build_waterfall
 
 logger = logging.getLogger(__name__)
 
@@ -114,6 +118,7 @@ class Predictor:
                     id=t,
                     label=v.label,
                     plain_label=v.plain_label or v.label,
+                    outcome_phrase=v.outcome_phrase or v.plain_label or v.label,
                     role=v.role,
                     node=self.nodes[t],
                     where=self.where.get(t),
@@ -182,18 +187,26 @@ class Predictor:
             contribs = {i: float(agg[0, k]) for k, i in enumerate(ids)}
             per_target[t] = contribs
             order = sorted(ids, key=lambda i: (-abs(contribs[i]), i))
+            contributions = [
+                Contribution(
+                    id=i,
+                    label=self._by_id[i].label,
+                    display_value=self._display(self._by_id[i], values, row),
+                    logit=contribs[i],
+                )
+                for i in order
+            ]
+            steps = build_waterfall(
+                float(expl.base[0]),
+                [Factor(c.id, c.label, c.display_value, c.logit) for c in contributions],
+                prob,
+                load_display().waterfall_top_n,
+            )
             explanations[t] = TargetExplanation(
                 base_probability=_sigmoid(float(expl.base[0])),
                 base_logit=float(expl.base[0]),
-                contributions=[
-                    Contribution(
-                        id=i,
-                        label=self._by_id[i].label,
-                        display_value=self._display(self._by_id[i], values, row),
-                        logit=contribs[i],
-                    )
-                    for i in order
-                ],
+                contributions=contributions,
+                waterfall=[WaterfallStep(**asdict(s)) for s in steps],
             )
         breakdown, warnings = self._breakdown(row, per_target)
         logger.info("predict took %.1f ms", (time.perf_counter() - t0) * 1000)

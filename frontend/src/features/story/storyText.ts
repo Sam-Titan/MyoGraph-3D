@@ -67,13 +67,33 @@ export function evalCondition(cond: string, ctx: StoryContext): boolean {
   }
 }
 
-/** Contributions of the step's highlight target in the highlight direction, largest first. */
-export function highlightedFactors(step: StoryStep, ctx: StoryContext, limit?: number) {
+export interface HighlightedFactor {
+  id: string
+  label: string
+  display_value: string
+}
+
+/**
+ * Waterfall steps of the step's highlight target that moved the estimate in the highlight direction,
+ * largest first. The aggregated "N other factors" step is never listed.
+ */
+export function highlightedFactors(
+  step: StoryStep,
+  ctx: StoryContext,
+  limit?: number,
+): HighlightedFactor[] {
   const hl = step.highlight
   if (!hl) return []
-  const all = ctx.response.explanations[hl.target]?.contributions ?? []
-  const wanted = all.filter((c) => (hl.direction === 'up' ? c.logit > 0 : c.logit < 0))
-  return wanted.slice(0, limit ?? hl.top)
+  const steps = ctx.response.explanations[hl.target]?.waterfall ?? []
+  return steps
+    .flatMap((s) => {
+      const up = s.to_p > s.from_p
+      const wanted = hl.direction === 'up' ? up : s.to_p < s.from_p
+      return s.feature !== null && wanted
+        ? [{ id: s.feature, label: s.label, display_value: s.value_display }]
+        : []
+    })
+    .slice(0, limit ?? hl.top)
 }
 
 /** Text for one token, or null when it cannot be filled (a factor list that is empty). */

@@ -1,9 +1,15 @@
 import type { MetricsResponse } from '@/api/client'
+import { useDisplay } from '@/api/queries'
+import { GlossaryText } from '@/components/GlossaryText'
 import { fixed, pm } from '@/lib/format'
+import { rocAucLine } from '@/lib/plain'
 import { targetIds } from './performanceModel'
+import { usePlainTargets } from './usePlainTargets'
 
 /** One tile per target: cross-validated ROC-AUC (primary) and hold-out ROC-AUC (secondary). */
 export function HeadlineStrip({ metrics }: { metrics: MetricsResponse }) {
+  const { data: display } = useDisplay()
+  const targets = usePlainTargets()
   return (
     <ul className="grid grid-cols-[repeat(auto-fit,minmax(11rem,1fr))] gap-3">
       {targetIds(metrics).map((id) => {
@@ -20,6 +26,11 @@ export function HeadlineStrip({ metrics }: { metrics: MetricsResponse }) {
               <span className="num font-semibold">{fixed(t.test.default.roc_auc)}</span>{' '}
               <span className="text-muted-foreground">hold-out</span>
             </p>
+            {display && targets[id] && (
+              <p className="mt-1 text-xs leading-snug text-muted-foreground" data-testid="auc-line">
+                <GlossaryText text={rocAucLine(display, metrics, targets[id])} />
+              </p>
+            )}
           </li>
         )
       })}

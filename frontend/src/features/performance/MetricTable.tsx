@@ -1,17 +1,26 @@
 import { useState } from 'react'
 import type { MetricsResponse } from '@/api/client'
+import { useDisplay } from '@/api/queries'
+import { GlossaryText } from '@/components/GlossaryText'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { fixed, pct, pm } from '@/lib/format'
+import { metricLines } from '@/lib/plain'
+import { fillText } from '@/lib/template'
 import { METRICS, metricRows, type ThresholdMode } from './performanceModel'
 import { Section } from './Section'
+import { usePlainTargets } from './usePlainTargets'
 
 const TH = 'px-2 py-2 text-left align-bottom font-medium'
 
 export function MetricTable({ metrics }: { metrics: MetricsResponse }) {
   const [tuned, setTuned] = useState(true)
+  const { data: display } = useDisplay()
+  const targets = usePlainTargets()
   const mode: ThresholdMode = tuned ? 'tuned' : 'default'
   const rows = metricRows(metrics, mode)
+  const example = rows[0]?.id
+  const exampleTarget = example ? targets[example] : undefined
   const defaultThreshold = fixed(Object.values(metrics.targets)[0]?.threshold.default ?? 0.5)
 
   return (
@@ -79,6 +88,23 @@ export function MetricTable({ metrics }: { metrics: MetricsResponse }) {
           </tbody>
         </table>
       </div>
+      {display && exampleTarget && (
+        <div className="space-y-1 text-xs" data-testid="metric-sentences">
+          <p className="font-medium">
+            {fillText(display.performance.metric_example, {
+              target: exampleTarget.label,
+              n_test: metrics.split.n_test,
+            })}
+          </p>
+          <ul className="space-y-1 text-muted-foreground">
+            {metricLines(display, metrics, exampleTarget, mode).map((l) => (
+              <li key={l.key}>
+                <GlossaryText text={l.text} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <p className="text-xs text-muted-foreground">
         ROC-AUC and Brier do not depend on the threshold. Accuracy should be read against the
         majority-class reference: always predicting the commoner class would already score that

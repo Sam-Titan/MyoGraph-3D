@@ -1,28 +1,44 @@
 import type { DisplayConfig, TargetRange } from '@/api/client'
 import { useDisplay } from '@/api/queries'
 import { pct } from '@/lib/format'
+import { fillText } from '@/lib/template'
 
-/** The main label: the point estimate against the cut-off, plus "· uncertain" when the range crosses it. */
-export function thresholdLabel(range: TargetRange, display: DisplayConfig | undefined): string {
-  if (!display) return ''
+/** The main label (point estimate vs the cut-off) and the "uncertain" qualifier when the range crosses it. */
+export function thresholdParts(
+  range: TargetRange,
+  display: DisplayConfig | undefined,
+): { main: string; qualifier: string | null } {
+  if (!display) return { main: '', qualifier: null }
   const { above, below, uncertain_suffix } = display.threshold_labels
-  return `${range.side === 'above' ? above : below}${range.uncertain ? ` · ${uncertain_suffix}` : ''}`
+  return {
+    main: range.side === 'above' ? above : below,
+    qualifier: range.uncertain ? uncertain_suffix : null,
+  }
 }
 
-/** Label formatter bound to the served wording (config/display.yaml). */
-export function useThresholdLabel(): (range: TargetRange) => string {
+/** "Above the model's cut-off · uncertain" as one string. */
+export function thresholdLabel(range: TargetRange, display: DisplayConfig | undefined): string {
+  const { main, qualifier } = thresholdParts(range, display)
+  return qualifier ? `${main} · ${qualifier}` : main
+}
+
+/** Parts formatter bound to the served wording (config/display.yaml). */
+export function useThresholdParts(): (range: TargetRange) => {
+  main: string
+  qualifier: string | null
+} {
   const { data } = useDisplay()
-  return (range) => thresholdLabel(range, data)
+  return (range) => thresholdParts(range, data)
 }
 
-/** The sentence under the headline; the cut-off is that target's own, from the API. */
+/** The line under a headline: the label, then that target's own cut-off (and the range note). */
 export function labelSentence(
   range: TargetRange,
   threshold: number,
   display: DisplayConfig | undefined,
 ): string {
   const label = thresholdLabel(range, display)
-  if (!label) return ''
-  const crossing = range.uncertain ? ' The range crosses the cut-off.' : ''
-  return `${label}: the cut-off for this estimate is ${pct(threshold)}.${crossing}`
+  if (!display || !label) return ''
+  const cutoff = fillText(display.cutoff_line, { thr: pct(threshold) })
+  return `${label}. ${cutoff}${range.uncertain ? ` ${display.cutoff_crosses}` : ''}`
 }

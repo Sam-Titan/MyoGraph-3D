@@ -9,6 +9,7 @@ import { ProtocolBox } from './ProtocolBox'
 import { RangeSection } from './RangeSection'
 import { RocChart } from './RocChart'
 import { StabilityPlot } from './StabilityPlot'
+import { TrustBox } from './TrustBox'
 
 /** SPEC 6.4: everything here is derived from /api/metrics. */
 export function PerformancePanel() {
@@ -21,6 +22,7 @@ export function PerformancePanel() {
         {(m) => (
           <>
             <HeadlineStrip metrics={m} />
+            <TrustBox metrics={m} />
             <ProtocolBox metrics={m} />
             <MetricTable metrics={m} />
             <StabilityPlot metrics={m} />

@@ -1,101 +1,99 @@
-import type { TargetInfo } from '@/api/client'
+import type { TargetInfo, TargetRange } from '@/api/client'
+import { useDisplay, useMetrics } from '@/api/queries'
 import type { components } from '@/api/schema'
+import { GlossaryText } from '@/components/GlossaryText'
 import { useStory } from '@/features/story/useStory'
-import { pct, signed } from '@/lib/format'
-import { cn } from '@/lib/utils'
-import { type WhyRow, whyRows } from './whyModel'
+import { pct } from '@/lib/format'
+import { datasetPrevalence } from '@/lib/plain'
+import { fillText } from '@/lib/template'
+import { DotPicture } from './DotPicture'
+import { HeadlineSentence } from './HeadlineSentence'
+import { LogOddsBars } from './LogOddsBars'
+import { thresholdLabel } from './verdict'
+import { Waterfall } from './Waterfall'
 
 type Explanation = components['schemas']['TargetExplanation']
-
-const rowTitle = (r: WhyRow): string =>
-  `${r.axis}: ${signed(r.logit)} log-odds (${r.logit >= 0 ? 'raises' : 'lowers'} the estimate)`
-
-/** Diverging bar centred at 0; its length is relative to the largest |contribution| shown. */
-function Bar({ row, max }: { row: WhyRow; max: number }) {
-  const half = max > 0 ? Math.min(50, (Math.abs(row.logit) / max) * 50) : 0
-  const up = row.logit >= 0
-  return (
-    <span aria-hidden className="relative block h-3.5 min-w-0 flex-1">
-      <span className="absolute inset-y-0 left-1/2 w-px bg-border" />
-      <span
-        className={cn(
-          'absolute inset-y-0.5 rounded-sm',
-          up ? 'bg-contrib-up' : 'bg-contrib-down',
-          row.other && 'opacity-55',
-        )}
-        style={up ? { left: '50%', width: `${half}%` } : { right: '50%', width: `${half}%` }}
-      />
-    </span>
-  )
-}
 
 interface Props {
   target: TargetInfo
   explanation: Explanation
   probability: number
+  threshold: number
+  range: TargetRange | undefined
 }
 
-/** SPEC 6.2 WHY panel: diverging SHAP contributions (log-odds) for the selected target. */
-export function WhyPanel({ target, explanation, probability }: Props) {
-  const rows = whyRows(explanation)
+/**
+ * The selected target in plain words: a sentence, the 100-dot picture (when the range is known),
+ * the probability waterfall, and the log-odds (SHAP) numbers behind it under "Technical details".
+ */
+export function WhyPanel({ target, explanation, probability, threshold, range }: Props) {
+  const { data: display } = useDisplay()
+  const { data: metrics } = useMetrics()
   const hl = useStory((s) => s.highlight)
+  if (!display) return null
   const marked = new Set(hl?.target === target.id ? hl.ids : [])
-  const max = rows.reduce((m, r) => Math.max(m, Math.abs(r.logit)), 0)
-
+  const w = display.waterfall
+  const logit = explanation.base_logit + explanation.contributions.reduce((s, c) => s + c.logit, 0)
   return (
-    <section aria-label={`Why: ${target.id}`} className="rule-t space-y-2 pt-4">
+    <section aria-label={`Why: ${target.id}`} className="rule-t space-y-3 pt-4">
       <h3 className="t-section">
-        What drives this estimate
+        {fillText(w.title, { p: pct(probability) })}
         <span className="t-meta ml-2 font-normal">{target.label}</span>
       </h3>
-      <p className="text-sm">
-        Average patient (model baseline){' '}
-        <span className="num font-semibold">{pct(explanation.base_probability)}</span>
-        <span aria-hidden> → </span>
-        <span className="sr-only"> to </span>
-        this patient <span className="num font-semibold">{pct(probability)}</span>
-      </p>
-      <div
-        aria-hidden
-        title="Contribution to the estimate, in log-odds"
-        className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-x-3 text-xs whitespace-nowrap text-muted-foreground"
-      >
-        <span />
-        <span className="flex min-w-0 items-center gap-1.5">
-          <span className="relative flex min-w-0 flex-1 justify-between">
-            <span>← lowers</span>
-            <span>raises →</span>
+      <p className="text-sm" data-testid="why-sentence">
+        <HeadlineSentence target={target} probability={probability} range={range?.interval} />
+        {range && (
+          <span className="mt-0.5 block text-xs text-muted-foreground">
+            {thresholdLabel(range, display)}
           </span>
-          <span className="w-11 shrink-0" />
-        </span>
-      </div>
-      <ul className="divide-y" aria-hidden>
-        {rows.map((r) => (
-          <li
-            key={r.key}
-            title={rowTitle(r)}
-            data-highlight={marked.has(r.key) || undefined}
-            className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-x-3 py-1 data-[highlight]:rounded data-[highlight]:bg-primary/10 data-[highlight]:ring-2 data-[highlight]:ring-primary/50"
-          >
-            <span className="line-clamp-2 min-w-0 break-words text-xs leading-snug">{r.axis}</span>
-            <span className="flex min-w-0 items-center gap-1.5">
-              <Bar row={r} max={max} />
-              <span className="num w-11 shrink-0 text-right text-xs">{signed(r.logit)}</span>
-            </span>
-          </li>
-        ))}
-      </ul>
-      <p className="text-xs text-muted-foreground">
-        Bars show how much each factor pushed this estimate up or down relative to the average
-        patient. Contributions are in log-odds.
+        )}
       </p>
-      <ul className="sr-only">
-        {rows.map((r) => (
-          <li key={r.key}>
-            {r.axis}: {signed(r.logit)} log-odds, {r.logit >= 0 ? 'raises' : 'lowers'} the estimate
-          </li>
-        ))}
-      </ul>
+      {range && (
+        <DotPicture
+          target={target}
+          probability={probability}
+          range={range.interval}
+          display={display}
+        />
+      )}
+      <Waterfall
+        steps={explanation.waterfall}
+        probability={probability}
+        threshold={threshold}
+        range={range?.interval}
+        display={display}
+        marked={marked}
+      />
+      <div className="space-y-1 text-xs text-muted-foreground">
+        {metrics && (
+          <p data-testid="baseline-caption">
+            <GlossaryText
+              text={fillText(w.baseline_caption, {
+                target: target.label,
+                base: pct(explanation.base_probability),
+                prev: `${datasetPrevalence(metrics, target.id)} in 100`,
+                outcome: target.outcome_phrase,
+              })}
+            />
+          </p>
+        )}
+        <p>{w.order_caption}</p>
+      </div>
+      <details className="group rounded-md border px-3 py-2">
+        <summary className="cursor-pointer text-xs font-medium">{w.technical_title}</summary>
+        <div className="mt-2 space-y-2">
+          <p className="text-xs text-muted-foreground">
+            <GlossaryText
+              text={fillText(w.technical_line, {
+                base_logit: explanation.base_logit.toFixed(2),
+                logit: logit.toFixed(2),
+                p: pct(probability),
+              })}
+            />
+          </p>
+          <LogOddsBars targetId={target.id} explanation={explanation} />
+        </div>
+      </details>
     </section>
   )
 }

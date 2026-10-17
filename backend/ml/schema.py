@@ -22,6 +22,9 @@ class Target(_Strict):
     label: str
     role: Literal["overall", "vessel"]
     plain_label: str | None = None  # wording used inside prose summaries; falls back to label
+    #: What the target means in "probability of <outcome_phrase>" (headline, dot caption, summary);
+    #: falls back to plain_label.
+    outcome_phrase: str | None = None
 
 
 class Group(_Strict):

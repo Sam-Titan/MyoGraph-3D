@@ -33,7 +33,7 @@ def no_key(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def _facts(client: TestClient, values: dict[str, Any]) -> dict[str, Any]:
     p = client.app.state.predictor  # type: ignore[attr-defined]
-    return S.build_facts(p.predict(values), p.intervals(values), p.features.targets)
+    return S.build_facts(p.predict(values), p.intervals(values), p.features.targets, n_patients=303)
 
 
 def test_template_is_deterministic(client: TestClient, values: dict[str, Any]) -> None:
@@ -43,7 +43,7 @@ def test_template_is_deterministic(client: TestClient, values: dict[str, Any]) -
     assert a["source"] == "template" and a["model"] is None
     assert a["text"].endswith(S.DISCLAIMER)
     assert "diagnos" not in a["text"].lower()
-    assert 4 <= a["text"].count(". ") + 1 <= 7
+    assert 5 <= a["text"].count(". ") + 1 <= 8
 
 
 def test_invalid_values_422(client: TestClient, values: dict[str, Any]) -> None:
@@ -64,7 +64,7 @@ def test_groq_valid_output_used(
 ) -> None:
     monkeypatch.setenv("GROQ_API_KEY", KEY)
     facts = _facts(client, values)
-    good = f"The model estimates {_stated(facts)}. {S.DISCLAIMER}"
+    good = _good_text(client, values)
     sent: dict[str, Any] = {}
 
     def fake(f: dict[str, Any], s: GroqSettings) -> str:
@@ -123,10 +123,10 @@ def test_facts_scope_factors_to_overall_and_selected(
     overall = next(t.id for t in targets if t.role == "overall")
     vessels = [t.id for t in targets if t.role == "vessel"]
     resp, rng = p.predict(values), p.intervals(values)
-    only_overall = S.build_facts(resp, rng, targets)
+    only_overall = S.build_facts(resp, rng, targets, n_patients=303)
     assert only_overall["selected_target"] == overall
     assert [b["target_id"] for b in only_overall["factors"]] == [overall]
-    scoped = S.build_facts(resp, rng, targets, vessels[0])
+    scoped = S.build_facts(resp, rng, targets, vessels[0], n_patients=303)
     assert [b["target_id"] for b in scoped["factors"]] == [overall, vessels[0]]
     assert [t["id"] for t in scoped["targets"]] == [t.id for t in targets]  # API order, all targets
     assert all(len(b["increasing"]) <= 3 and len(b["decreasing"]) <= 3 for b in scoped["factors"])
@@ -141,7 +141,8 @@ def test_template_names_selected_target(client: TestClient, values: dict[str, An
     p = client.app.state.predictor  # type: ignore[attr-defined]
     vessel = next(t for t in p.features.targets if t.role == "vessel")
     res = client.post("/api/summary", json={"values": values, "selected_target": vessel.id}).json()
-    assert f"For {vessel.plain_label or vessel.label}," in res["text"]
+    assert f"For the estimate of {vessel.outcome_phrase}," in res["text"]
+    assert "already been referred for an angiogram" in res["text"]
     assert res["text"].endswith(S.DISCLAIMER)
 
 
@@ -150,12 +151,12 @@ def test_validator_rejects_factor_not_in_selected_list(
 ) -> None:
     p = client.app.state.predictor  # type: ignore[attr-defined]
     labels = frozenset(f.label for f in p.features.features)
-    facts = S.build_facts(p.predict(values), p.intervals(values), p.features.targets)
+    facts = _facts(client, values)
     listed = {x.split(": ")[0] for b in facts["factors"] for x in b["increasing"] + b["decreasing"]}
     foreign = sorted(labels - listed - {"Sex"})[0]
     pcts = _stated(facts)
-    ok = f"The model estimates {pcts}. {S.DISCLAIMER}"
-    bad = f"The model estimates {pcts}, influenced by {foreign}. {S.DISCLAIMER}"
+    ok = f"The model estimates {pcts}, from 303 patients referred for an angiogram. {S.DISCLAIMER}"
+    bad = f"{ok.split(S.DISCLAIMER)[0]}Influenced by {foreign}. {S.DISCLAIMER}"
     assert S.validate_llm_text(ok, facts, labels)
     assert not S.validate_llm_text(bad, facts, labels)
 
@@ -170,7 +171,10 @@ def _stated(facts: dict[str, Any]) -> str:
 
 
 def _good_text(client: TestClient, values: dict[str, Any]) -> str:
-    return f"The model estimates {_stated(_facts(client, values))}. {S.DISCLAIMER}"
+    return (
+        f"The model estimates {_stated(_facts(client, values))}, "
+        f"from 303 patients referred for an angiogram. {S.DISCLAIMER}"
+    )
 
 
 def test_validator_requires_ranges_and_sides(client: TestClient, values: dict[str, Any]) -> None:
@@ -212,7 +216,7 @@ def test_validator_without_ranges_in_facts_is_unchanged(
         for k in ("range_low_percent", "range_high_percent", "range_level_percent", "side"):
             t.pop(k)
     pcts = ", ".join(f"{t['probability_percent']}%" for t in facts["targets"])
-    text = f"The model estimates {pcts}."
+    text = f"The model estimates {pcts}, from 303 patients referred for an angiogram."
     assert S.validate_llm_text(f"{text} {S.DISCLAIMER}", facts, frozenset())
 
 
@@ -291,3 +295,16 @@ def test_article_before_eight_and_eleven() -> None:
         "an 85% and an 11% and a 26% and An 8%"
     )
     assert [S._a(p) for p in (85, 8, 11, 18, 26, 98)] == ["an", "an", "an", "an", "a", "a"]
+
+
+def test_validator_requires_referral_statement(client: TestClient, values: dict[str, Any]) -> None:
+    facts = _facts(client, values)
+    text = _good_text(client, values)
+    assert S.validate_llm_text(text, facts, frozenset())
+    assert not S.validate_llm_text(text.replace("angiogram", "scan"), facts, frozenset())
+
+
+def test_validator_requires_patient_count(client: TestClient, values: dict[str, Any]) -> None:
+    facts = _facts(client, values)
+    text = _good_text(client, values).replace("303 ", "")
+    assert not S.validate_llm_text(text, facts, frozenset())

@@ -1,6 +1,7 @@
 import { QueryBoundary } from '@/features/layout/QueryBoundary'
 import { track } from '@/lib/analytics'
 import { cn } from '@/lib/utils'
+import { BaseRateNote } from './BaseRateNote'
 import { BreakdownTable } from './BreakdownTable'
 import { DisagreementNote, targetsDisagree } from './DisagreementNote'
 import { Headline } from './Headline'
@@ -63,6 +64,7 @@ export function ResultsPanel() {
                 onSelect={selectFromList}
               />
               {data && <RangeNote ranges={ranges} />}
+              <BaseRateNote target={selectedTarget ?? overall} />
               {presetEdited && (
                 <p className="t-meta px-3">
                   The patient was edited after the preset loaded, so the cath results no longer
@@ -90,6 +92,8 @@ export function ResultsPanel() {
                   target={selectedTarget}
                   explanation={data.explanations[selectedTarget.id]}
                   probability={data.targets[selectedTarget.id].probability}
+                  threshold={data.targets[selectedTarget.id].threshold}
+                  range={ranges?.[selectedTarget.id]}
                 />
                 <BreakdownTable rows={data.breakdown} groups={f.groups} target={selectedTarget} />
               </div>

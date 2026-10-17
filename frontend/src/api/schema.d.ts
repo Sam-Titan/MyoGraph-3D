@@ -164,6 +164,13 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** BaseRateNote */
+        BaseRateNote: {
+            /** Line1 */
+            line1: string;
+            /** Line2 */
+            line2: string;
+        };
         /** BreakdownRow */
         BreakdownRow: {
             /** Id */
@@ -257,6 +264,36 @@ export interface components {
         /** DisplayConfig */
         DisplayConfig: {
             threshold_labels: components["schemas"]["ThresholdLabels"];
+            /** Waterfall Top N */
+            waterfall_top_n: number;
+            /** Headline */
+            headline: string;
+            /** Headline Range */
+            headline_range: string;
+            /** Cutoff Line */
+            cutoff_line: string;
+            /** Cutoff Crosses */
+            cutoff_crosses: string;
+            base_rate_note: components["schemas"]["BaseRateNote"];
+            /** Range Meaning */
+            range_meaning: string;
+            waterfall: components["schemas"]["WaterfallText"];
+            dots: components["schemas"]["DotsText"];
+            performance: components["schemas"]["PerformanceText"];
+            trust: components["schemas"]["TrustText"];
+            /** Glossary */
+            glossary: components["schemas"]["GlossaryEntry"][];
+        };
+        /** DotsText */
+        DotsText: {
+            /** Caption */
+            caption: string;
+            /** Legend Solid */
+            legend_solid: string;
+            /** Legend Light */
+            legend_light: string;
+            /** Legend Ring */
+            legend_ring: string;
         };
         /** FeatureInfo */
         FeatureInfo: {
@@ -294,6 +331,15 @@ export interface components {
             groups: components["schemas"]["GroupInfo"][];
             /** Features */
             features: components["schemas"]["FeatureInfo"][];
+        };
+        /** GlossaryEntry */
+        GlossaryEntry: {
+            /** Id */
+            id: string;
+            /** Match */
+            match: string[];
+            /** Text */
+            text: string;
         };
         /** GroupInfo */
         GroupInfo: {
@@ -423,6 +469,23 @@ export interface components {
              * @default []
              */
             when: string[];
+        };
+        /** PerformanceText */
+        PerformanceText: {
+            /** Roc Auc */
+            roc_auc: string;
+            /** Metric Example */
+            metric_example: string;
+            /** Brier */
+            brier: string;
+            /** Accuracy */
+            accuracy: string;
+            /** Precision */
+            precision: string;
+            /** Recall */
+            recall: string;
+            /** F1 */
+            f1: string;
         };
         /** PredictRequest */
         PredictRequest: {
@@ -599,6 +662,8 @@ export interface components {
             base_logit: number;
             /** Contributions */
             contributions: components["schemas"]["Contribution"][];
+            /** Waterfall */
+            waterfall: components["schemas"]["WaterfallStep"][];
         };
         /** TargetInfo */
         TargetInfo: {
@@ -608,6 +673,8 @@ export interface components {
             label: string;
             /** Plain Label */
             plain_label: string;
+            /** Outcome Phrase */
+            outcome_phrase: string;
             /**
              * Role
              * @enum {string}
@@ -687,6 +754,21 @@ export interface components {
             /** Uncertain Suffix */
             uncertain_suffix: string;
         };
+        /** TrustText */
+        TrustText: {
+            /** Title */
+            title: string;
+            /** Reliable Min Auc */
+            reliable_min_auc: number;
+            /** Rule */
+            rule: string;
+            /** Reliable */
+            reliable: string;
+            /** Weak */
+            weak: string;
+            /** Footer */
+            footer: string;
+        };
         /** UncertaintyMetrics */
         UncertaintyMetrics: {
             /** Method */
@@ -727,6 +809,43 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /**
+         * WaterfallStep
+         * @description One step of the probability waterfall: `from_p` -> `to_p` after adding this factor.
+         */
+        WaterfallStep: {
+            /** Feature */
+            feature: string | null;
+            /** Label */
+            label: string;
+            /** Value Display */
+            value_display: string;
+            /** From P */
+            from_p: number;
+            /** To P */
+            to_p: number;
+        };
+        /** WaterfallText */
+        WaterfallText: {
+            /** Title */
+            title: string;
+            /** Start Label */
+            start_label: string;
+            /** End Label */
+            end_label: string;
+            /** Baseline Caption */
+            baseline_caption: string;
+            /** Order Caption */
+            order_caption: string;
+            /** Points */
+            points: string;
+            /** Cutoff Tick */
+            cutoff_tick: string;
+            /** Technical Title */
+            technical_title: string;
+            /** Technical Line */
+            technical_line: string;
         };
     };
     responses: never;
