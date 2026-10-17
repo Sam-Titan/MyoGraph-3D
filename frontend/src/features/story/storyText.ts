@@ -79,7 +79,9 @@ function fill(name: string, arg: string | undefined, step: StoryStep, ctx: Story
       return target(ctx, id)?.where ?? null
     case 'factors_up':
     case 'factors_down': {
-      const labels = highlightedFactors(step, ctx, Number(arg)).map((c) => c.label)
+      const labels = highlightedFactors(step, ctx, Number(arg)).map(
+        (c) => `${c.label}: ${c.display_value}`,
+      )
       return labels.length > 0 ? joinList(labels) : null
     }
     default:

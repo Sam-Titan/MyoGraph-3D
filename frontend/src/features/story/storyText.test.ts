@@ -100,7 +100,7 @@ describe('rendering', () => {
         { text: 'Raised it: {factors_up:3}.', when: [] },
       ],
     })
-    expect(renderStep(up, ctx(null))).toEqual(['Base.', 'Raised it: Age and T inversion.'])
+    expect(renderStep(up, ctx(null))).toEqual(['Base.', 'Raised it: Age: 70 and T inversion: Yes.'])
     const down = step({
       highlight: { target: 'CAD', direction: 'down', top: 3 },
       parts: [
@@ -108,7 +108,7 @@ describe('rendering', () => {
         { text: 'Lowered it: {factors_down:3}.', when: [] },
       ],
     })
-    expect(renderStep(down, ctx(null))).toEqual(['Base.', 'Lowered it: Chest pain type.'])
+    expect(renderStep(down, ctx(null))).toEqual(['Base.', 'Lowered it: Chest pain type: None.'])
     expect(highlightedFactors(down, ctx(null)).map((c) => c.id)).toEqual(['b'])
   })
 

@@ -25,8 +25,14 @@ async function loadStories(page: Page): Promise<Story[]> {
   return (await res.json()).stories
 }
 
-/** Every percentage the API gives for this hold-out patient (probabilities and thresholds). */
-async function allowedPercents(page: Page, presetId: string): Promise<Set<string>> {
+/**
+ * Every percentage the API gives for this hold-out patient (probabilities and thresholds), plus the
+ * "label: display_value" strings of its contributions, which factor tokens print verbatim.
+ */
+async function allowedPercents(
+  page: Page,
+  presetId: string,
+): Promise<{ percents: Set<string>; factors: string[] }> {
   const presets = await (await page.request.get('/api/presets')).json()
   const preset = presets.find((p: { id: string }) => p.id === presetId)
   const res = await page.request.post('/api/predict', { data: { values: preset.values } })
@@ -36,7 +42,12 @@ async function allowedPercents(page: Page, presetId: string): Promise<Set<string
     out.add(pct(t.probability))
     out.add(pct(t.threshold))
   }
-  return out
+  const factors = new Set<string>()
+  for (const e of Object.values(body.explanations) as {
+    contributions: { label: string; display_value: string }[]
+  }[])
+    for (const c of e.contributions) factors.add(`${c.label}: ${c.display_value}`)
+  return { percents: out, factors: [...factors].sort((a, b) => b.length - a.length) }
 }
 
 const card = (page: Page) => page.locator('[data-story-card]')
@@ -64,7 +75,7 @@ test('plays every story end to end', async ({ page }) => {
   const before = await presetLabel(page)
 
   for (const story of stories) {
-    const allowed = await allowedPercents(page, story.preset)
+    const { percents: allowed, factors } = await allowedPercents(page, story.preset)
     await openAndStart(page, story.id)
     await expect(text(page)).not.toHaveText('Loading the estimate…', { timeout: 30_000 })
     let revealed = false
@@ -75,8 +86,11 @@ test('plays every story end to end', async ({ page }) => {
       const body = (await text(page).innerText()).trim()
       expect(body.length, `${story.id}/${step.id} is empty`).toBeGreaterThan(20)
       expect(body, `${story.id}/${step.id} has an unfilled token`).not.toMatch(/[{}]|undefined|NaN/)
-      // Every number in the text is one the API returned for this patient.
-      for (const m of body.match(/\d+%/g) ?? [])
+      // Every number in the text is one the API returned for this patient (factor values are
+      // checked by exact string, then removed so their own digits are not read as percentages).
+      let rest = body
+      for (const f of factors) rest = rest.split(f).join('')
+      for (const m of rest.match(/\d+\s?%/g) ?? [])
         expect(allowed.has(m), `${story.id}/${step.id}: ${m} is not an API number`).toBe(true)
 
       // Camera: the step's target is the selected vessel (the overall target has no chip).

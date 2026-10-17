@@ -91,15 +91,15 @@ stories:
           - text: This is a model estimate, not a diagnosis.
 
   - id: arteries-differ
-    title: When an artery is missed
-    blurb: Three arteries, three estimates, and where an estimate falls on the other side of its threshold.
+    title: Three arteries, one patient
+    blurb: Three arteries, three estimates, then the angiogram.
     preset: 3-vessel
     steps:
       - id: intro
         camera: {target: CAD}
         parts:
           - text: >-
-              This patient also had an angiogram, but its result stays hidden for now. First, what did the model
+              This patient had an angiogram, but its result stays hidden for now. First, what did the model
               estimate for each artery?
       - id: first-artery
         camera: {target: LAD}

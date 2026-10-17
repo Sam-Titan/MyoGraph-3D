@@ -322,13 +322,13 @@ Nothing else hard-codes feature or vessel lists.
   `GET /api/stories`): `stories[{id, title, blurb, preset, steps[{id, camera?{target}, highlight?{target, direction
   up|down, top}, reveal_truth, parts[{text, when[]}]}]}]`. `preset` must be a hold-out preset; targets are target ids
   (the browser maps them to mesh nodes through `/api/features`). Four stories: a low estimate (no-cad), one artery
-  stands out (lad-only), when an artery is missed (3-vessel), when the model is confidently wrong (hard-case).
+  stands out (lad-only), three arteries, one patient (3-vessel), when the model is confidently wrong (hard-case).
 - **Text rules (enforced):** no digits or `%` (every number is a token filled from the API at runtime); a part that
   states an outcome or comparison (agree, miss, above/below, far, well, wrong, ...) needs a `when`; a step keeps one
   part with no `when` and no factor token; `{truth:ID}` only on a `reveal_truth` step; no ranking of arteries; no
   clinical advice. Tokens: `{p:ID}`, `{thr:ID}`, `{truth:ID}` ("narrowing (stenosis) found" / "no narrowing found"),
   `{name:ID}`, `{plain:ID}`, `{where:ID}`, `{factors_up:N}`, `{factors_down:N}` (up to N signed factors of the
-  highlight target, joined; a part whose list is empty is skipped). Conditions: `above_threshold`, `below_threshold`,
+  highlight target, each as `label: value` (the API `display_value`), joined; a part whose list is empty is skipped). Conditions: `above_threshold`, `below_threshold`,
   `well_above_threshold`, `well_below_threshold` (0.25 beyond the threshold), `agrees`, `disagrees` (model verdict vs real
   result), `all_agree`, `any_disagrees`.
 - **Player** (`frontend/src/features/story`): a card under the heart with Back / Next (Finish) / Exit, arrow keys and Esc;
