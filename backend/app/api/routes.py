@@ -2,6 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
+from app.benchmark_schema import BenchmarkResponse
 from app.core.config import groq_settings, model_version
 from app.schemas import (
     FeaturesResponse,
@@ -114,3 +115,9 @@ def summary(body: SummaryRequest, predictor: Pred) -> SummaryResponse:
 @router.get("/metrics", response_model=MetricsResponse)
 def metrics(predictor: Pred) -> MetricsResponse:
     return predictor.metrics
+
+
+@router.get("/benchmark", response_model=BenchmarkResponse)
+def benchmark(predictor: Pred) -> BenchmarkResponse:
+    """Precomputed by `make benchmark`; nothing is trained at request time."""
+    return predictor.benchmark

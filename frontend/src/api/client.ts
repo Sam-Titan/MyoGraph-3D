@@ -17,6 +17,8 @@ export type DisplayConfig = Schemas['DisplayConfig']
 export type SummaryRequest = Schemas['SummaryRequest']
 export type SummaryResponse = Schemas['SummaryResponse']
 export type MetricsResponse = Schemas['MetricsResponse']
+export type BenchmarkResponse = Schemas['BenchmarkResponse']
+export type BenchCell = Schemas['BenchCell']
 export type Stories = Schemas['Stories']
 export type Story = Schemas['Story']
 export type StoryStep = Schemas['Step']
@@ -49,6 +51,8 @@ export const getFeatures = (signal?: AbortSignal) =>
 export const getPresets = (signal?: AbortSignal) => apiFetch<Preset[]>('/presets', { signal })
 export const getStories = (signal?: AbortSignal) => apiFetch<Stories>('/stories', { signal })
 export const getDisplay = (signal?: AbortSignal) => apiFetch<DisplayConfig>('/display', { signal })
+export const getBenchmark = (signal?: AbortSignal) =>
+  apiFetch<BenchmarkResponse>('/benchmark', { signal })
 export const getMetrics = (signal?: AbortSignal) =>
   apiFetch<MetricsResponse>('/metrics', { signal })
 

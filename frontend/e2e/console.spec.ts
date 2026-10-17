@@ -5,7 +5,7 @@ test('no console errors or warnings at load, across tabs and during a story', as
   const c = watchConsole(page)
   await page.goto('/')
   await waitReady(page)
-  for (const name of ['Model performance', 'About and method', 'Patient workspace']) {
+  for (const name of ['Model performance', 'Benchmark', 'About and method', 'Patient workspace']) {
     await page.getByRole('tab', { name }).click()
     await page.waitForTimeout(1200)
   }

@@ -11,6 +11,7 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
+from app.benchmark_schema import BenchmarkResponse
 from app.core.config import ARTIFACTS_DIR, model_version
 from app.schemas import (
     BreakdownRow,
@@ -112,6 +113,7 @@ class Predictor:
             stability=_read("stability.json"),
             excluded_inputs=list(self.schema.excluded_from_inputs),
         )
+        self.benchmark = BenchmarkResponse(**_read("benchmark.json"))
         self.features = self._build_features()
         self._by_id = {f.id: f for f in self.schema.features}
 

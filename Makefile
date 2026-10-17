@@ -2,7 +2,7 @@ WEB_PORT ?= 5180
 API_PORT ?= 8010
 export WEB_PORT API_PORT
 
-.PHONY: setup dev dev-api dev-web prepare train stability assets types lint fmt test check docker screenshots e2e report
+.PHONY: setup dev dev-api dev-web prepare train stability benchmark assets types lint fmt test check docker screenshots e2e report
 
 setup:
 	cd backend && uv sync --extra assets
@@ -25,6 +25,10 @@ train: prepare
 
 stability:
 	cd backend && uv run python -m ml.stability
+
+# Same-protocol model comparison and feature-group ablation -> backend/artifacts/benchmark.json.
+benchmark:
+	cd backend && PYTHONPATH=. uv run python ../scripts/benchmark.py
 
 assets:
 	cd backend && uv run python ../scripts/build_heart_glb.py

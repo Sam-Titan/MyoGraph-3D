@@ -114,6 +114,15 @@ const VIEWS = [
     },
   },
   {
+    name: 'benchmark',
+    fullPage: true,
+    run: async (page) => {
+      await domClick(page.getByRole('tab', { name: 'Benchmark' }))
+      await page.getByTestId('takeaway').first().waitFor({ timeout: 30_000 })
+      await page.waitForTimeout(500)
+    },
+  },
+  {
     name: 'about',
     fullPage: true,
     run: async (page) => {
@@ -171,7 +180,7 @@ for (const vp of VIEWPORTS) {
 
 // DOM probe (Phase 14.5): no page-level sideways scroll, and the disclaimer stays pinned to the top
 // after scrolling to the bottom, on every tab at the two phone widths.
-const TAB_NAMES = ['Patient workspace', 'Model performance', 'About and method']
+const TAB_NAMES = ['Patient workspace', 'Model performance', 'Benchmark', 'About and method']
 const failures = []
 for (const vp of VIEWPORTS.filter((v) => v.mobile)) {
   const ctx = await browser.newContext({

@@ -160,6 +160,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/benchmark": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Benchmark
+         * @description Precomputed by `make benchmark`; nothing is trained at request time.
+         */
+        get: operations["benchmark_api_benchmark_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -170,6 +190,82 @@ export interface components {
             line1: string;
             /** Line2 */
             line2: string;
+        };
+        /** BenchCell */
+        BenchCell: {
+            cv: components["schemas"]["CvValues"];
+            holdout: components["schemas"]["MetricValues"];
+            vs_reference: components["schemas"]["PairedMetrics"];
+        };
+        /** BenchFeatureSet */
+        BenchFeatureSet: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /** Drop Groups */
+            drop_groups: string[];
+            /** Dropped Columns */
+            dropped_columns: string[];
+            /** N Columns */
+            n_columns: number;
+        };
+        /** BenchModelInfo */
+        BenchModelInfo: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "skipped";
+            /** Note */
+            note: string;
+        };
+        /** BenchProtocol */
+        BenchProtocol: {
+            /** Seed */
+            seed: number;
+            /** Cv */
+            cv: string;
+            /** N Folds */
+            n_folds: number;
+            /** N Train */
+            n_train: number;
+            /** N Test */
+            n_test: number;
+            /** Calibration */
+            calibration: string;
+            /** Threshold */
+            threshold: string;
+            /** Paired Test */
+            paired_test: string;
+            /** Confidence Level */
+            confidence_level: number;
+        };
+        /** BenchmarkResponse */
+        BenchmarkResponse: {
+            protocol: components["schemas"]["BenchProtocol"];
+            /** Reference Model */
+            reference_model: string;
+            /** Models */
+            models: components["schemas"]["BenchModelInfo"][];
+            /** Feature Sets */
+            feature_sets: components["schemas"]["BenchFeatureSet"][];
+            /** Comparison */
+            comparison: {
+                [key: string]: {
+                    [key: string]: components["schemas"]["BenchCell"];
+                };
+            };
+            /** Ablation */
+            ablation: {
+                [key: string]: {
+                    [key: string]: components["schemas"]["BenchCell"];
+                };
+            };
         };
         /** BreakdownRow */
         BreakdownRow: {
@@ -260,6 +356,12 @@ export interface components {
             tuned: {
                 [key: string]: components["schemas"]["MetricStat"];
             };
+        };
+        /** CvValues */
+        CvValues: {
+            roc_auc: components["schemas"]["MeanStd"];
+            brier: components["schemas"]["MeanStd"];
+            recall: components["schemas"]["MeanStd"];
         };
         /** DisplayConfig */
         DisplayConfig: {
@@ -422,12 +524,28 @@ export interface components {
                 [key: string]: components["schemas"]["TargetRange"];
             };
         };
+        /** MeanStd */
+        MeanStd: {
+            /** Mean */
+            mean: number;
+            /** Std */
+            std: number;
+        };
         /** MetricStat */
         MetricStat: {
             /** Mean */
             mean: number;
             /** Std */
             std: number;
+        };
+        /** MetricValues */
+        MetricValues: {
+            /** Roc Auc */
+            roc_auc: number;
+            /** Brier */
+            brier: number;
+            /** Recall */
+            recall: number;
         };
         /** MetricsResponse */
         MetricsResponse: {
@@ -459,6 +577,30 @@ export interface components {
             value: string;
             /** Label */
             label: string;
+        };
+        /** PairedMetrics */
+        PairedMetrics: {
+            roc_auc: components["schemas"]["PairedTest"];
+            brier: components["schemas"]["PairedTest"];
+            recall: components["schemas"]["PairedTest"];
+        };
+        /**
+         * PairedTest
+         * @description Per-fold difference (this minus the reference) with the Nadeau-Bengio corrected CI.
+         */
+        PairedTest: {
+            /** Mean Diff */
+            mean_diff: number;
+            /** Std Diff */
+            std_diff: number;
+            /** Ci Lo */
+            ci_lo: number;
+            /** Ci Hi */
+            ci_hi: number;
+            /** P */
+            p: number;
+            /** Within Noise */
+            within_noise: boolean;
         };
         /** Part */
         Part: {
@@ -1073,6 +1215,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MetricsResponse"];
+                };
+            };
+        };
+    };
+    benchmark_api_benchmark_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BenchmarkResponse"];
                 };
             };
         };

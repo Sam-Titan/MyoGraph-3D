@@ -1,0 +1,1438 @@
+{
+  "ablation": {
+    "CAD": {
+      "all": {
+        "cv": {
+          "brier": {
+            "mean": 0.085264,
+            "std": 0.016299
+          },
+          "recall": {
+            "mean": 0.903641,
+            "std": 0.071212
+          },
+          "roc_auc": {
+            "mean": 0.932149,
+            "std": 0.029722
+          }
+        },
+        "holdout": {
+          "brier": 0.174115,
+          "recall": 0.772727,
+          "roc_auc": 0.823529
+        },
+        "vs_reference": {
+          "brier": {
+            "ci_hi": 0.0,
+            "ci_lo": 0.0,
+            "mean_diff": 0.0,
+            "p": 1.0,
+            "std_diff": 0.0,
+            "within_noise": true
+          },
+          "recall": {
+            "ci_hi": 0.0,
+            "ci_lo": 0.0,
+            "mean_diff": 0.0,
+            "p": 1.0,
+            "std_diff": 0.0,
+            "within_noise": true
+          },
+          "roc_auc": {
+            "ci_hi": 0.0,
+            "ci_lo": 0.0,
+            "mean_diff": 0.0,
+            "p": 1.0,
+            "std_diff": 0.0,
+            "within_noise": true
+          }
+        }
+      },
+      "no_ecg": {
+        "cv": {
+          "brier": {
+            "mean": 0.090406,
+            "std": 0.016521
+          },
+          "recall": {
+            "mean": 0.874566,
+            "std": 0.067971
+          },
+          "roc_auc": {
+            "mean": 0.924122,
+            "std": 0.028282
+          }
+        },
+        "holdout": {
+          "brier": 0.181707,
+          "recall": 0.795455,
+          "roc_auc": 0.81016
+        },
+        "vs_reference": {
+          "brier": {
+            "ci_hi": 0.012266,
+            "ci_lo": -0.001981,
+            "mean_diff": 0.005142,
+            "p": 0.143864,
+            "std_diff": 0.005902,
+            "within_noise": true
+          },
+          "recall": {
+            "ci_hi": 0.022499,
+            "ci_lo": -0.080651,
+            "mean_diff": -0.029076,
+            "p": 0.246635,
+            "std_diff": 0.042732,
+            "within_noise": true
+          },
+          "roc_auc": {
+            "ci_hi": 0.001361,
+            "ci_lo": -0.017415,
+            "mean_diff": -0.008027,
+            "p": 0.088002,
+            "std_diff": 0.007778,
+            "within_noise": true
+          }
+        }
+      },
+      "no_ecg_echo": {
+        "cv": {
+          "brier": {
+            "mean": 0.098028,
+            "std": 0.018752
+          },
+          "recall": {
+            "mean": 0.888179,
+            "std": 0.080381
+          },
+          "roc_auc": {
+            "mean": 0.903501,
+            "std": 0.034324
+          }
+        },
+        "holdout": {
+          "brier": 0.194072,
+          "recall": 0.659091,
+          "roc_auc": 0.795455
+        },
+        "vs_reference": {
+          "brier": {
+            "ci_hi": 0.024808,
+            "ci_lo": 0.000721,
+            "mean_diff": 0.012765,
+            "p": 0.039289,
+            "std_diff": 0.009978,
+            "within_noise": false
+          },
+          "recall": {
+            "ci_hi": 0.040988,
+            "ci_lo": -0.071913,
+            "mean_diff": -0.015462,
+            "p": 0.566241,
+            "std_diff": 0.046772,
+            "within_noise": true
+          },
+          "roc_auc": {
+            "ci_hi": -0.004792,
+            "ci_lo": -0.052503,
+            "mean_diff": -0.028647,
+            "p": 0.021996,
+            "std_diff": 0.019765,
+            "within_noise": false
+          }
+        }
+      },
+      "no_echo": {
+        "cv": {
+          "brier": {
+            "mean": 0.09169,
+            "std": 0.021417
+          },
+          "recall": {
+            "mean": 0.892101,
+            "std": 0.066992
+          },
+          "roc_auc": {
+            "mean": 0.917575,
+            "std": 0.032811
+          }
+        },
+        "holdout": {
+          "brier": 0.192936,
+          "recall": 0.704545,
+          "roc_auc": 0.790107
+        },
+        "vs_reference": {
+          "brier": {
+            "ci_hi": 0.019707,
+            "ci_lo": -0.006853,
+            "mean_diff": 0.006427,
+            "p": 0.316888,
+            "std_diff": 0.011003,
+            "within_noise": true
+          },
+          "recall": {
+            "ci_hi": 0.039165,
+            "ci_lo": -0.062246,
+            "mean_diff": -0.011541,
+            "p": 0.632994,
+            "std_diff": 0.042011,
+            "within_noise": true
+          },
+          "roc_auc": {
+            "ci_hi": -0.001271,
+            "ci_lo": -0.027877,
+            "mean_diff": -0.014574,
+            "p": 0.033986,
+            "std_diff": 0.011022,
+            "within_noise": false
+          }
+        }
+      }
+    },
+    "LAD": {
+      "all": {
+        "cv": {
+          "brier": {
+            "mean": 0.161236,
+            "std": 0.02229
+          },
+          "recall": {
+            "mean": 0.83399,
+            "std": 0.140049
+          },
+          "roc_auc": {
+            "mean": 0.835234,
+            "std": 0.053601
+          }
+        },
+        "holdout": {
+          "brier": 0.182951,
+          "recall": 0.823529,
+          "roc_auc": 0.803922
+        },
+        "vs_reference": {
+          "brier": {
+            "ci_hi": 0.0,
+            "ci_lo": 0.0,
+            "mean_diff": 0.0,
+            "p": 1.0,
+            "std_diff": 0.0,
+            "within_noise": true
+          },
+          "recall": {
+            "ci_hi": 0.0,
+            "ci_lo": 0.0,
+            "mean_diff": 0.0,
+            "p": 1.0,
+            "std_diff": 0.0,
+            "within_noise": true
+          },
+          "roc_auc": {
+            "ci_hi": 0.0,
+            "ci_lo": 0.0,
+            "mean_diff": 0.0,
+            "p": 1.0,
+            "std_diff": 0.0,
+            "within_noise": true
+          }
+        }
+      },
+      "no_ecg": {
+        "cv": {
+          "brier": {
+            "mean": 0.163341,
+            "std": 0.026318
+          },
+          "recall": {
+            "mean": 0.819951,
+            "std": 0.135675
+          },
+          "roc_auc": {
+            "mean": 0.834572,
+            "std": 0.06212
+          }
+        },
+        "holdout": {
+          "brier": 0.18425,
+          "recall": 0.823529,
+          "roc_auc": 0.798475
+        },
+        "vs_reference": {
+          "brier": {
+            "ci_hi": 0.009349,
+            "ci_lo": -0.005141,
+            "mean_diff": 0.002104,
+            "p": 0.543358,
+            "std_diff": 0.006003,
+            "within_noise": true
+          },
+          "recall": {
+            "ci_hi": 0.047786,
+            "ci_lo": -0.075865,
+            "mean_diff": -0.014039,
+            "p": 0.633766,
+            "std_diff": 0.051225,
+            "within_noise": true
+          },
+          "roc_auc": {
+            "ci_hi": 0.014611,
+            "ci_lo": -0.015934,
+            "mean_diff": -0.000662,
+            "p": 0.927293,
+            "std_diff": 0.012654,
+            "within_noise": true
+          }
+        }
+      },
+      "no_ecg_echo": {
+        "cv": {
+          "brier": {
+            "mean": 0.185419,
+            "std": 0.023195
+          },
+          "recall": {
+            "mean": 0.794499,
+            "std": 0.104923
+          },
+          "roc_auc": {
+            "mean": 0.783827,
+            "std": 0.068312
+          }
+        },
+        "holdout": {
+          "brier": 0.200611,
+          "recall": 0.676471,
+          "roc_auc": 0.762527
+        },
+        "vs_reference": {
+          "brier": {
+            "ci_hi": 0.037322,
+            "ci_lo": 0.011043,
+            "mean_diff": 0.024183,
+            "p": 0.001459,
+            "std_diff": 0.010886,
+            "within_noise": false
+          },
+          "recall": {
+            "ci_hi": 0.100491,
+            "ci_lo": -0.179473,
+            "mean_diff": -0.039491,
+            "p": 0.55481,
+            "std_diff": 0.115981,
+            "within_noise": true
+          },
+          "roc_auc": {
+            "ci_hi": -0.006986,
+            "ci_lo": -0.095827,
+            "mean_diff": -0.051407,
+            "p": 0.026363,
+            "std_diff": 0.036805,
+            "within_noise": false
+          }
+        }
+      },
+      "no_echo": {
+        "cv": {
+          "brier": {
+            "mean": 0.175073,
+            "std": 0.02311
+          },
+          "recall": {
+            "mean": 0.864943,
+            "std": 0.102504
+          },
+          "roc_auc": {
+            "mean": 0.799898,
+            "std": 0.060037
+          }
+        },
+        "holdout": {
+          "brier": 0.202022,
+          "recall": 0.705882,
+          "roc_auc": 0.754902
+        },
+        "vs_reference": {
+          "brier": {
+            "ci_hi": 0.027546,
+            "ci_lo": 0.000128,
+            "mean_diff": 0.013837,
+            "p": 0.048173,
+            "std_diff": 0.011359,
+            "within_noise": false
+          },
+          "recall": {
+            "ci_hi": 0.155358,
+            "ci_lo": -0.093454,
+            "mean_diff": 0.030952,
+            "p": 0.601971,
+            "std_diff": 0.103076,
+            "within_noise": true
+          },
+          "roc_auc": {
+            "ci_hi": 0.004884,
+            "ci_lo": -0.075554,
+            "mean_diff": -0.035335,
+            "p": 0.080451,
+            "std_diff": 0.033323,
+            "within_noise": true
+          }
+        }
+      }
+    },
+    "LCX": {
+      "all": {
+        "cv": {
+          "brier": {
+            "mean": 0.203152,
+            "std": 0.022465
+          },
+          "recall": {
+            "mean": 0.689864,
+            "std": 0.120252
+          },
+          "roc_auc": {
+            "mean": 0.729142,
+            "std": 0.080139
+          }
+        },
+        "holdout": {
+          "brier": 0.203633,
+          "recall": 0.62963,
+          "roc_auc": 0.783224
+        },
+        "vs_reference": {
+          "brier": {
+            "ci_hi": 0.0,
+            "ci_lo": 0.0,
+            "mean_diff": 0.0,
+            "p": 1.0,
+            "std_diff": 0.0,
+            "within_noise": true
+          },
+          "recall": {
+            "ci_hi": 0.0,
+            "ci_lo": 0.0,
+            "mean_diff": 0.0,
+            "p": 1.0,
+            "std_diff": 0.0,
+            "within_noise": true
+          },
+          "roc_auc": {
+            "ci_hi": 0.0,
+            "ci_lo": 0.0,
+            "mean_diff": 0.0,
+            "p": 1.0,
+            "std_diff": 0.0,
+            "within_noise": true
+          }
+        }
+      },
+      "no_ecg": {
+        "cv": {
+          "brier": {
+            "mean": 0.202646,
+            "std": 0.019727
+          },
+          "recall": {
+            "mean": 0.685185,
+            "std": 0.111586
+          },
+          "roc_auc": {
+            "mean": 0.731897,
+            "std": 0.075148
+          }
+        },
+        "holdout": {
+          "brier": 0.203946,
+          "recall": 0.777778,
+          "roc_auc": 0.785403
+        },
+        "vs_reference": {
+          "brier": {
+            "ci_hi": 0.006622,
+            "ci_lo": -0.007635,
+            "mean_diff": -0.000506,
+            "p": 0.881096,
+            "std_diff": 0.005906,
+            "within_noise": true
+          },
+          "recall": {
+            "ci_hi": 0.125718,
+            "ci_lo": -0.135075,
+            "mean_diff": -0.004678,
+            "p": 0.939752,
+            "std_diff": 0.108039,
+            "within_noise": true
+          },
+          "roc_auc": {
+            "ci_hi": 0.032792,
+            "ci_lo": -0.027282,
+            "mean_diff": 0.002755,
+            "p": 0.846871,
+            "std_diff": 0.024887,
+            "within_noise": true
+          }
+        }
+      },
+      "no_ecg_echo": {
+        "cv": {
+          "brier": {
+            "mean": 0.201058,
+            "std": 0.02121
+          },
+          "recall": {
+            "mean": 0.721637,
+            "std": 0.100898
+          },
+          "roc_auc": {
+            "mean": 0.739721,
+            "std": 0.073063
+          }
+        },
+        "holdout": {
+          "brier": 0.209918,
+          "recall": 0.740741,
+          "roc_auc": 0.784314
+        },
+        "vs_reference": {
+          "brier": {
+            "ci_hi": 0.007288,
+            "ci_lo": -0.011477,
+            "mean_diff": -0.002095,
+            "p": 0.639462,
+            "std_diff": 0.007774,
+            "within_noise": true
+          },
+          "recall": {
+            "ci_hi": 0.185925,
+            "ci_lo": -0.122377,
+            "mean_diff": 0.031774,
+            "p": 0.665179,
+            "std_diff": 0.127721,
+            "within_noise": true
+          },
+          "roc_auc": {
+            "ci_hi": 0.048362,
+            "ci_lo": -0.027206,
+            "mean_diff": 0.010578,
+            "p": 0.557788,
+            "std_diff": 0.031306,
+            "within_noise": true
+          }
+        }
+      },
+      "no_echo": {
+        "cv": {
+          "brier": {
+            "mean": 0.20113,
+            "std": 0.020566
+          },
+          "recall": {
+            "mean": 0.747563,
+            "std": 0.112535
+          },
+          "roc_auc": {
+            "mean": 0.741995,
+            "std": 0.077795
+          }
+        },
+        "holdout": {
+          "brier": 0.211986,
+          "recall": 0.777778,
+          "roc_auc": 0.776688
+        },
+        "vs_reference": {
+          "brier": {
+            "ci_hi": 0.006372,
+            "ci_lo": -0.010416,
+            "mean_diff": -0.002022,
+            "p": 0.613486,
+            "std_diff": 0.006955,
+            "within_noise": true
+          },
+          "recall": {
+            "ci_hi": 0.152399,
+            "ci_lo": -0.036999,
+            "mean_diff": 0.0577,
+            "p": 0.212336,
+            "std_diff": 0.078462,
+            "within_noise": true
+          },
+          "roc_auc": {
+            "ci_hi": 0.04526,
+            "ci_lo": -0.019555,
+            "mean_diff": 0.012853,
+            "p": 0.409301,
+            "std_diff": 0.026851,
+            "within_noise": true
+          }
+        }
+      }
+    },
+    "RCA": {
+      "all": {
+        "cv": {
+          "brier": {
+            "mean": 0.216089,
+            "std": 0.01105
+          },
+          "recall": {
+            "mean": 0.735283,
+            "std": 0.127668
+          },
+          "roc_auc": {
+            "mean": 0.698057,
+            "std": 0.058362
+          }
+        },
+        "holdout": {
+          "brier": 0.204515,
+          "recall": 0.5,
+          "roc_auc": 0.694639
+        },
+        "vs_reference": {
+          "brier": {
+            "ci_hi": 0.0,
+            "ci_lo": 0.0,
+            "mean_diff": 0.0,
+            "p": 1.0,
+            "std_diff": 0.0,
+            "within_noise": true
+          },
+          "recall": {
+            "ci_hi": 0.0,
+            "ci_lo": 0.0,
+            "mean_diff": 0.0,
+            "p": 1.0,
+            "std_diff": 0.0,
+            "within_noise": true
+          },
+          "roc_auc": {
+            "ci_hi": 0.0,
+            "ci_lo": 0.0,
+            "mean_diff": 0.0,
+            "p": 1.0,
+            "std_diff": 0.0,
+            "within_noise": true
+          }
+        }
+      },
+      "no_ecg": {
+        "cv": {
+          "brier": {
+            "mean": 0.215562,
+            "std": 0.009476
+          },
+          "recall": {
+            "mean": 0.723782,
+            "std": 0.124706
+          },
+          "roc_auc": {
+            "mean": 0.697459,
+            "std": 0.053983
+          }
+        },
+        "holdout": {
+          "brier": 0.208638,
+          "recall": 0.727273,
+          "roc_auc": 0.675991
+        },
+        "vs_reference": {
+          "brier": {
+            "ci_hi": 0.004318,
+            "ci_lo": -0.005372,
+            "mean_diff": -0.000527,
+            "p": 0.818975,
+            "std_diff": 0.004015,
+            "within_noise": true
+          },
+          "recall": {
+            "ci_hi": 0.08848,
+            "ci_lo": -0.111482,
+            "mean_diff": -0.011501,
+            "p": 0.808708,
+            "std_diff": 0.082839,
+            "within_noise": true
+          },
+          "roc_auc": {
+            "ci_hi": 0.02155,
+            "ci_lo": -0.022745,
+            "mean_diff": -0.000598,
+            "p": 0.954654,
+            "std_diff": 0.01835,
+            "within_noise": true
+          }
+        }
+      },
+      "no_ecg_echo": {
+        "cv": {
+          "brier": {
+            "mean": 0.216283,
+            "std": 0.010332
+          },
+          "recall": {
+            "mean": 0.720468,
+            "std": 0.128545
+          },
+          "roc_auc": {
+            "mean": 0.695679,
+            "std": 0.056735
+          }
+        },
+        "holdout": {
+          "brier": 0.207597,
+          "recall": 0.863636,
+          "roc_auc": 0.689977
+        },
+        "vs_reference": {
+          "brier": {
+            "ci_hi": 0.006049,
+            "ci_lo": -0.00566,
+            "mean_diff": 0.000195,
+            "p": 0.944165,
+            "std_diff": 0.004851,
+            "within_noise": true
+          },
+          "recall": {
+            "ci_hi": 0.031669,
+            "ci_lo": -0.061299,
+            "mean_diff": -0.014815,
+            "p": 0.505409,
+            "std_diff": 0.038514,
+            "within_noise": true
+          },
+          "roc_auc": {
+            "ci_hi": 0.03038,
+            "ci_lo": -0.035136,
+            "mean_diff": -0.002378,
+            "p": 0.878487,
+            "std_diff": 0.027142,
+            "within_noise": true
+          }
+        }
+      },
+      "no_echo": {
+        "cv": {
+          "brier": {
+            "mean": 0.216247,
+            "std": 0.010005
+          },
+          "recall": {
+            "mean": 0.71345,
+            "std": 0.126308
+          },
+          "roc_auc": {
+            "mean": 0.695244,
+            "std": 0.053105
+          }
+        },
+        "holdout": {
+          "brier": 0.203265,
+          "recall": 0.590909,
+          "roc_auc": 0.708625
+        },
+        "vs_reference": {
+          "brier": {
+            "ci_hi": 0.004458,
+            "ci_lo": -0.004141,
+            "mean_diff": 0.000158,
+            "p": 0.938174,
+            "std_diff": 0.003562,
+            "within_noise": true
+          },
+          "recall": {
+            "ci_hi": 0.078055,
+            "ci_lo": -0.121719,
+            "mean_diff": -0.021832,
+            "p": 0.646438,
+            "std_diff": 0.082761,
+            "within_noise": true
+          },
+          "roc_auc": {
+            "ci_hi": 0.01565,
+            "ci_lo": -0.021277,
+            "mean_diff": -0.002814,
+            "p": 0.748629,
+            "std_diff": 0.015298,
+            "within_noise": true
+          }
+        }
+      }
+    }
+  },
+  "comparison": {
+    "CAD": {
+      "logreg": {
+        "cv": {
+          "brier": {
+            "mean": 0.103648,
+            "std": 0.012559
+          },
+          "recall": {
+            "mean": 0.850924,
+            "std": 0.062139
+          },
+          "roc_auc": {
+            "mean": 0.913117,
+            "std": 0.030246
+          }
+        },
+        "holdout": {
+          "brier": 0.130159,
+          "recall": 0.772727,
+          "roc_auc": 0.895722
+        },
+        "vs_reference": {
+          "brier": {
+            "ci_hi": 0.040768,
+            "ci_lo": -0.004,
+            "mean_diff": 0.018384,
+            "p": 0.099968,
+            "std_diff": 0.018546,
+            "within_noise": true
+          },
+          "recall": {
+            "ci_hi": 0.048075,
+            "ci_lo": -0.153509,
+            "mean_diff": -0.052717,
+            "p": 0.280828,
+            "std_diff": 0.083511,
+            "within_noise": true
+          },
+          "roc_auc": {
+            "ci_hi": 0.019478,
+            "ci_lo": -0.057541,
+            "mean_diff": -0.019032,
+            "p": 0.307106,
+            "std_diff": 0.031907,
+            "within_noise": true
+          }
+        }
+      },
+      "rf": {
+        "cv": {
+          "brier": {
+            "mean": 0.076817,
+            "std": 0.0188
+          },
+          "recall": {
+            "mean": 0.899552,
+            "std": 0.07557
+          },
+          "roc_auc": {
+            "mean": 0.944434,
+            "std": 0.027727
+          }
+        },
+        "holdout": {
+          "brier": 0.164816,
+          "recall": 0.772727,
+          "roc_auc": 0.840909
+        },
+        "vs_reference": {
+          "brier": {
+            "ci_hi": 0.00685,
+            "ci_lo": -0.023743,
+            "mean_diff": -0.008447,
+            "p": 0.256014,
+            "std_diff": 0.012674,
+            "within_noise": true
+          },
+          "recall": {
+            "ci_hi": 0.072899,
+            "ci_lo": -0.081078,
+            "mean_diff": -0.00409,
+            "p": 0.91091,
+            "std_diff": 0.063788,
+            "within_noise": true
+          },
+          "roc_auc": {
+            "ci_hi": 0.033577,
+            "ci_lo": -0.009007,
+            "mean_diff": 0.012285,
+            "p": 0.236259,
+            "std_diff": 0.017641,
+            "within_noise": true
+          }
+        }
+      },
+      "xgb": {
+        "cv": {
+          "brier": {
+            "mean": 0.085264,
+            "std": 0.016299
+          },
+          "recall": {
+            "mean": 0.903641,
+            "std": 0.071212
+          },
+          "roc_auc": {
+            "mean": 0.932149,
+            "std": 0.029722
+          }
+        },
+        "holdout": {
+          "brier": 0.174115,
+          "recall": 0.772727,
+          "roc_auc": 0.823529
+        },
+        "vs_reference": {
+          "brier": {
+            "ci_hi": 0.0,
+            "ci_lo": 0.0,
+            "mean_diff": 0.0,
+            "p": 1.0,
+            "std_diff": 0.0,
+            "within_noise": true
+          },
+          "recall": {
+            "ci_hi": 0.0,
+            "ci_lo": 0.0,
+            "mean_diff": 0.0,
+            "p": 1.0,
+            "std_diff": 0.0,
+            "within_noise": true
+          },
+          "roc_auc": {
+            "ci_hi": 0.0,
+            "ci_lo": 0.0,
+            "mean_diff": 0.0,
+            "p": 1.0,
+            "std_diff": 0.0,
+            "within_noise": true
+          }
+        }
+      }
+    },
+    "LAD": {
+      "logreg": {
+        "cv": {
+          "brier": {
+            "mean": 0.171068,
+            "std": 0.016215
+          },
+          "recall": {
+            "mean": 0.783908,
+            "std": 0.129632
+          },
+          "roc_auc": {
+            "mean": 0.819433,
+            "std": 0.045669
+          }
+        },
+        "holdout": {
+          "brier": 0.181132,
+          "recall": 0.705882,
+          "roc_auc": 0.793028
+        },
+        "vs_reference": {
+          "brier": {
+            "ci_hi": 0.028658,
+            "ci_lo": -0.008995,
+            "mean_diff": 0.009832,
+            "p": 0.281534,
+            "std_diff": 0.015599,
+            "within_noise": true
+          },
+          "recall": {
+            "ci_hi": 0.109688,
+            "ci_lo": -0.209852,
+            "mean_diff": -0.050082,
+            "p": 0.512328,
+            "std_diff": 0.132376,
+            "within_noise": true
+          },
+          "roc_auc": {
+            "ci_hi": 0.020243,
+            "ci_lo": -0.051843,
+            "mean_diff": -0.0158,
+            "p": 0.363052,
+            "std_diff": 0.029863,
+            "within_noise": true
+          }
+        }
+      },
+      "rf": {
+        "cv": {
+          "brier": {
+            "mean": 0.145871,
+            "std": 0.022858
+          },
+          "recall": {
+            "mean": 0.881199,
+            "std": 0.07936
+          },
+          "roc_auc": {
+            "mean": 0.86397,
+            "std": 0.049565
+          }
+        },
+        "holdout": {
+          "brier": 0.178128,
+          "recall": 0.794118,
+          "roc_auc": 0.821351
+        },
+        "vs_reference": {
+          "brier": {
+            "ci_hi": -0.003725,
+            "ci_lo": -0.027006,
+            "mean_diff": -0.015365,
+            "p": 0.013338,
+            "std_diff": 0.009645,
+            "within_noise": false
+          },
+          "recall": {
+            "ci_hi": 0.171898,
+            "ci_lo": -0.077481,
+            "mean_diff": 0.047209,
+            "p": 0.430364,
+            "std_diff": 0.103311,
+            "within_noise": true
+          },
+          "roc_auc": {
+            "ci_hi": 0.055864,
+            "ci_lo": 0.001608,
+            "mean_diff": 0.028736,
+            "p": 0.039388,
+            "std_diff": 0.022477,
+            "within_noise": false
+          }
+        }
+      },
+      "xgb": {
+        "cv": {
+          "brier": {
+            "mean": 0.161236,
+            "std": 0.02229
+          },
+          "recall": {
+            "mean": 0.83399,
+            "std": 0.140049
+          },
+          "roc_auc": {
+            "mean": 0.835234,
+            "std": 0.053601
+          }
+        },
+        "holdout": {
+          "brier": 0.182951,
+          "recall": 0.823529,
+          "roc_auc": 0.803922
+        },
+        "vs_reference": {
+          "brier": {
+            "ci_hi": 0.0,
+            "ci_lo": 0.0,
+            "mean_diff": 0.0,
+            "p": 1.0,
+            "std_diff": 0.0,
+            "within_noise": true
+          },
+          "recall": {
+            "ci_hi": 0.0,
+            "ci_lo": 0.0,
+            "mean_diff": 0.0,
+            "p": 1.0,
+            "std_diff": 0.0,
+            "within_noise": true
+          },
+          "roc_auc": {
+            "ci_hi": 0.0,
+            "ci_lo": 0.0,
+            "mean_diff": 0.0,
+            "p": 1.0,
+            "std_diff": 0.0,
+            "within_noise": true
+          }
+        }
+      }
+    },
+    "LCX": {
+      "logreg": {
+        "cv": {
+          "brier": {
+            "mean": 0.224477,
+            "std": 0.016123
+          },
+          "recall": {
+            "mean": 0.697076,
+            "std": 0.192017
+          },
+          "roc_auc": {
+            "mean": 0.652294,
+            "std": 0.082688
+          }
+        },
+        "holdout": {
+          "brier": 0.229389,
+          "recall": 0.481481,
+          "roc_auc": 0.687364
+        },
+        "vs_reference": {
+          "brier": {
+            "ci_hi": 0.047869,
+            "ci_lo": -0.00522,
+            "mean_diff": 0.021325,
+            "p": 0.106889,
+            "std_diff": 0.021993,
+            "within_noise": true
+          },
+          "recall": {
+            "ci_hi": 0.290521,
+            "ci_lo": -0.276097,
+            "mean_diff": 0.007212,
+            "p": 0.957227,
+            "std_diff": 0.234734,
+            "within_noise": true
+          },
+          "roc_auc": {
+            "ci_hi": 0.038538,
+            "ci_lo": -0.192235,
+            "mean_diff": -0.076849,
+            "p": 0.175092,
+            "std_diff": 0.095603,
+            "within_noise": true
+          }
+        }
+      },
+      "rf": {
+        "cv": {
+          "brier": {
+            "mean": 0.204907,
+            "std": 0.021282
+          },
+          "recall": {
+            "mean": 0.717349,
+            "std": 0.087933
+          },
+          "roc_auc": {
+            "mean": 0.731332,
+            "std": 0.076393
+          }
+        },
+        "holdout": {
+          "brier": 0.204372,
+          "recall": 0.62963,
+          "roc_auc": 0.752723
+        },
+        "vs_reference": {
+          "brier": {
+            "ci_hi": 0.01093,
+            "ci_lo": -0.007421,
+            "mean_diff": 0.001755,
+            "p": 0.687919,
+            "std_diff": 0.007602,
+            "within_noise": true
+          },
+          "recall": {
+            "ci_hi": 0.185466,
+            "ci_lo": -0.130496,
+            "mean_diff": 0.027485,
+            "p": 0.714628,
+            "std_diff": 0.130894,
+            "within_noise": true
+          },
+          "roc_auc": {
+            "ci_hi": 0.038664,
+            "ci_lo": -0.034285,
+            "mean_diff": 0.00219,
+            "p": 0.899378,
+            "std_diff": 0.030221,
+            "within_noise": true
+          }
+        }
+      },
+      "xgb": {
+        "cv": {
+          "brier": {
+            "mean": 0.203152,
+            "std": 0.022465
+          },
+          "recall": {
+            "mean": 0.689864,
+            "std": 0.120252
+          },
+          "roc_auc": {
+            "mean": 0.729142,
+            "std": 0.080139
+          }
+        },
+        "holdout": {
+          "brier": 0.203633,
+          "recall": 0.62963,
+          "roc_auc": 0.783224
+        },
+        "vs_reference": {
+          "brier": {
+            "ci_hi": 0.0,
+            "ci_lo": 0.0,
+            "mean_diff": 0.0,
+            "p": 1.0,
+            "std_diff": 0.0,
+            "within_noise": true
+          },
+          "recall": {
+            "ci_hi": 0.0,
+            "ci_lo": 0.0,
+            "mean_diff": 0.0,
+            "p": 1.0,
+            "std_diff": 0.0,
+            "within_noise": true
+          },
+          "roc_auc": {
+            "ci_hi": 0.0,
+            "ci_lo": 0.0,
+            "mean_diff": 0.0,
+            "p": 1.0,
+            "std_diff": 0.0,
+            "within_noise": true
+          }
+        }
+      }
+    },
+    "RCA": {
+      "logreg": {
+        "cv": {
+          "brier": {
+            "mean": 0.21466,
+            "std": 0.015364
+          },
+          "recall": {
+            "mean": 0.718908,
+            "std": 0.132692
+          },
+          "roc_auc": {
+            "mean": 0.697414,
+            "std": 0.066207
+          }
+        },
+        "holdout": {
+          "brier": 0.205811,
+          "recall": 0.545455,
+          "roc_auc": 0.681818
+        },
+        "vs_reference": {
+          "brier": {
+            "ci_hi": 0.010876,
+            "ci_lo": -0.013733,
+            "mean_diff": -0.001429,
+            "p": 0.806954,
+            "std_diff": 0.010195,
+            "within_noise": true
+          },
+          "recall": {
+            "ci_hi": 0.167731,
+            "ci_lo": -0.20048,
+            "mean_diff": -0.016374,
+            "p": 0.851455,
+            "std_diff": 0.152539,
+            "within_noise": true
+          },
+          "roc_auc": {
+            "ci_hi": 0.046534,
+            "ci_lo": -0.04782,
+            "mean_diff": -0.000643,
+            "p": 0.977082,
+            "std_diff": 0.039088,
+            "within_noise": true
+          }
+        }
+      },
+      "rf": {
+        "cv": {
+          "brier": {
+            "mean": 0.209332,
+            "std": 0.016109
+          },
+          "recall": {
+            "mean": 0.793372,
+            "std": 0.137918
+          },
+          "roc_auc": {
+            "mean": 0.728012,
+            "std": 0.06486
+          }
+        },
+        "holdout": {
+          "brier": 0.205061,
+          "recall": 0.454545,
+          "roc_auc": 0.693473
+        },
+        "vs_reference": {
+          "brier": {
+            "ci_hi": 0.004095,
+            "ci_lo": -0.017608,
+            "mean_diff": -0.006756,
+            "p": 0.203044,
+            "std_diff": 0.008991,
+            "within_noise": true
+          },
+          "recall": {
+            "ci_hi": 0.183187,
+            "ci_lo": -0.067008,
+            "mean_diff": 0.05809,
+            "p": 0.336182,
+            "std_diff": 0.103649,
+            "within_noise": true
+          },
+          "roc_auc": {
+            "ci_hi": 0.062233,
+            "ci_lo": -0.002324,
+            "mean_diff": 0.029955,
+            "p": 0.06644,
+            "std_diff": 0.026744,
+            "within_noise": true
+          }
+        }
+      },
+      "xgb": {
+        "cv": {
+          "brier": {
+            "mean": 0.216089,
+            "std": 0.01105
+          },
+          "recall": {
+            "mean": 0.735283,
+            "std": 0.127668
+          },
+          "roc_auc": {
+            "mean": 0.698057,
+            "std": 0.058362
+          }
+        },
+        "holdout": {
+          "brier": 0.204515,
+          "recall": 0.5,
+          "roc_auc": 0.694639
+        },
+        "vs_reference": {
+          "brier": {
+            "ci_hi": 0.0,
+            "ci_lo": 0.0,
+            "mean_diff": 0.0,
+            "p": 1.0,
+            "std_diff": 0.0,
+            "within_noise": true
+          },
+          "recall": {
+            "ci_hi": 0.0,
+            "ci_lo": 0.0,
+            "mean_diff": 0.0,
+            "p": 1.0,
+            "std_diff": 0.0,
+            "within_noise": true
+          },
+          "roc_auc": {
+            "ci_hi": 0.0,
+            "ci_lo": 0.0,
+            "mean_diff": 0.0,
+            "p": 1.0,
+            "std_diff": 0.0,
+            "within_noise": true
+          }
+        }
+      }
+    }
+  },
+  "feature_sets": [
+    {
+      "drop_groups": [],
+      "dropped_columns": [],
+      "id": "all",
+      "label": "All features",
+      "n_columns": 55
+    },
+    {
+      "drop_groups": [
+        "ecg"
+      ],
+      "dropped_columns": [
+        "q_wave",
+        "st_elevation",
+        "st_depression",
+        "t_inversion",
+        "lvh",
+        "poor_r_progression",
+        "bbb_lbbb",
+        "bbb_rbbb"
+      ],
+      "id": "no_ecg",
+      "label": "Without ECG",
+      "n_columns": 47
+    },
+    {
+      "drop_groups": [
+        "echo"
+      ],
+      "dropped_columns": [
+        "ef_tte",
+        "region_rwma",
+        "vhd"
+      ],
+      "id": "no_echo",
+      "label": "Without echocardiography",
+      "n_columns": 52
+    },
+    {
+      "drop_groups": [
+        "ecg",
+        "echo"
+      ],
+      "dropped_columns": [
+        "q_wave",
+        "st_elevation",
+        "st_depression",
+        "t_inversion",
+        "lvh",
+        "poor_r_progression",
+        "bbb_lbbb",
+        "bbb_rbbb",
+        "ef_tte",
+        "region_rwma",
+        "vhd"
+      ],
+      "id": "no_ecg_echo",
+      "label": "Without ECG and echocardiography",
+      "n_columns": 44
+    }
+  ],
+  "models": [
+    {
+      "id": "logreg",
+      "label": "Logistic regression",
+      "note": "",
+      "status": "ok"
+    },
+    {
+      "id": "rf",
+      "label": "Random forest",
+      "note": "",
+      "status": "ok"
+    },
+    {
+      "id": "xgb",
+      "label": "XGBoost",
+      "note": "",
+      "status": "ok"
+    },
+    {
+      "id": "tabpfn",
+      "label": "TabPFN",
+      "note": "the package is not installed (offline-only model). Optional and offline only. TabPFN needs PyTorch, which is never installed in the API image. Check the licence of the pretrained weights before using or redistributing results.",
+      "status": "skipped"
+    }
+  ],
+  "protocol": {
+    "calibration": "Platt scaling on out-of-fold scores",
+    "confidence_level": 0.95,
+    "cv": "5x3 repeated stratified, train patients only",
+    "n_folds": 15,
+    "n_test": 61,
+    "n_train": 242,
+    "paired_test": "Nadeau-Bengio corrected resampled t-test",
+    "seed": 42,
+    "threshold": "Youden's J on out-of-fold calibrated probabilities"
+  },
+  "reference_model": "xgb"
+}

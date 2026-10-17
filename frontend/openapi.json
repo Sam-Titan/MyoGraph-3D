@@ -231,6 +231,25 @@
           }
         }
       }
+    },
+    "/api/benchmark": {
+      "get": {
+        "summary": "Benchmark",
+        "description": "Precomputed by `make benchmark`; nothing is trained at request time.",
+        "operationId": "benchmark_api_benchmark_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BenchmarkResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -253,6 +272,205 @@
           "line2"
         ],
         "title": "BaseRateNote"
+      },
+      "BenchCell": {
+        "properties": {
+          "cv": {
+            "$ref": "#/components/schemas/CvValues"
+          },
+          "holdout": {
+            "$ref": "#/components/schemas/MetricValues"
+          },
+          "vs_reference": {
+            "$ref": "#/components/schemas/PairedMetrics"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cv",
+          "holdout",
+          "vs_reference"
+        ],
+        "title": "BenchCell"
+      },
+      "BenchFeatureSet": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "drop_groups": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Drop Groups"
+          },
+          "dropped_columns": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Dropped Columns"
+          },
+          "n_columns": {
+            "type": "integer",
+            "title": "N Columns"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "drop_groups",
+          "dropped_columns",
+          "n_columns"
+        ],
+        "title": "BenchFeatureSet"
+      },
+      "BenchModelInfo": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "skipped"
+            ],
+            "title": "Status"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "status",
+          "note"
+        ],
+        "title": "BenchModelInfo"
+      },
+      "BenchProtocol": {
+        "properties": {
+          "seed": {
+            "type": "integer",
+            "title": "Seed"
+          },
+          "cv": {
+            "type": "string",
+            "title": "Cv"
+          },
+          "n_folds": {
+            "type": "integer",
+            "title": "N Folds"
+          },
+          "n_train": {
+            "type": "integer",
+            "title": "N Train"
+          },
+          "n_test": {
+            "type": "integer",
+            "title": "N Test"
+          },
+          "calibration": {
+            "type": "string",
+            "title": "Calibration"
+          },
+          "threshold": {
+            "type": "string",
+            "title": "Threshold"
+          },
+          "paired_test": {
+            "type": "string",
+            "title": "Paired Test"
+          },
+          "confidence_level": {
+            "type": "number",
+            "title": "Confidence Level"
+          }
+        },
+        "type": "object",
+        "required": [
+          "seed",
+          "cv",
+          "n_folds",
+          "n_train",
+          "n_test",
+          "calibration",
+          "threshold",
+          "paired_test",
+          "confidence_level"
+        ],
+        "title": "BenchProtocol"
+      },
+      "BenchmarkResponse": {
+        "properties": {
+          "protocol": {
+            "$ref": "#/components/schemas/BenchProtocol"
+          },
+          "reference_model": {
+            "type": "string",
+            "title": "Reference Model"
+          },
+          "models": {
+            "items": {
+              "$ref": "#/components/schemas/BenchModelInfo"
+            },
+            "type": "array",
+            "title": "Models"
+          },
+          "feature_sets": {
+            "items": {
+              "$ref": "#/components/schemas/BenchFeatureSet"
+            },
+            "type": "array",
+            "title": "Feature Sets"
+          },
+          "comparison": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "$ref": "#/components/schemas/BenchCell"
+              },
+              "type": "object"
+            },
+            "type": "object",
+            "title": "Comparison"
+          },
+          "ablation": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "$ref": "#/components/schemas/BenchCell"
+              },
+              "type": "object"
+            },
+            "type": "object",
+            "title": "Ablation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "protocol",
+          "reference_model",
+          "models",
+          "feature_sets",
+          "comparison",
+          "ablation"
+        ],
+        "title": "BenchmarkResponse"
       },
       "BreakdownRow": {
         "properties": {
@@ -508,6 +726,26 @@
           "tuned"
         ],
         "title": "CvMetrics"
+      },
+      "CvValues": {
+        "properties": {
+          "roc_auc": {
+            "$ref": "#/components/schemas/MeanStd"
+          },
+          "brier": {
+            "$ref": "#/components/schemas/MeanStd"
+          },
+          "recall": {
+            "$ref": "#/components/schemas/MeanStd"
+          }
+        },
+        "type": "object",
+        "required": [
+          "roc_auc",
+          "brier",
+          "recall"
+        ],
+        "title": "CvValues"
       },
       "DisplayConfig": {
         "properties": {
@@ -964,6 +1202,24 @@
         "title": "IntervalsResponse",
         "description": "Ranges for every target. A separate call so /api/predict keeps its latency budget."
       },
+      "MeanStd": {
+        "properties": {
+          "mean": {
+            "type": "number",
+            "title": "Mean"
+          },
+          "std": {
+            "type": "number",
+            "title": "Std"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mean",
+          "std"
+        ],
+        "title": "MeanStd"
+      },
       "MetricStat": {
         "properties": {
           "mean": {
@@ -981,6 +1237,29 @@
           "std"
         ],
         "title": "MetricStat"
+      },
+      "MetricValues": {
+        "properties": {
+          "roc_auc": {
+            "type": "number",
+            "title": "Roc Auc"
+          },
+          "brier": {
+            "type": "number",
+            "title": "Brier"
+          },
+          "recall": {
+            "type": "number",
+            "title": "Recall"
+          }
+        },
+        "type": "object",
+        "required": [
+          "roc_auc",
+          "brier",
+          "recall"
+        ],
+        "title": "MetricValues"
       },
       "MetricsResponse": {
         "properties": {
@@ -1068,6 +1347,65 @@
           "label"
         ],
         "title": "OptionInfo"
+      },
+      "PairedMetrics": {
+        "properties": {
+          "roc_auc": {
+            "$ref": "#/components/schemas/PairedTest"
+          },
+          "brier": {
+            "$ref": "#/components/schemas/PairedTest"
+          },
+          "recall": {
+            "$ref": "#/components/schemas/PairedTest"
+          }
+        },
+        "type": "object",
+        "required": [
+          "roc_auc",
+          "brier",
+          "recall"
+        ],
+        "title": "PairedMetrics"
+      },
+      "PairedTest": {
+        "properties": {
+          "mean_diff": {
+            "type": "number",
+            "title": "Mean Diff"
+          },
+          "std_diff": {
+            "type": "number",
+            "title": "Std Diff"
+          },
+          "ci_lo": {
+            "type": "number",
+            "title": "Ci Lo"
+          },
+          "ci_hi": {
+            "type": "number",
+            "title": "Ci Hi"
+          },
+          "p": {
+            "type": "number",
+            "title": "P"
+          },
+          "within_noise": {
+            "type": "boolean",
+            "title": "Within Noise"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mean_diff",
+          "std_diff",
+          "ci_lo",
+          "ci_hi",
+          "p",
+          "within_noise"
+        ],
+        "title": "PairedTest",
+        "description": "Per-fold difference (this minus the reference) with the Nadeau-Bengio corrected CI."
       },
       "Part": {
         "properties": {

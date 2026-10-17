@@ -1,6 +1,7 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import {
   ApiError,
+  getBenchmark,
   getDisplay,
   getFeatures,
   getHealth,
@@ -18,6 +19,7 @@ export const queryKeys = {
   features: ['features'] as const,
   presets: ['presets'] as const,
   metrics: ['metrics'] as const,
+  benchmark: ['benchmark'] as const,
   stories: ['stories'] as const,
   display: ['display'] as const,
   summary: (values: PredictRequest['values'], selected: string | null) =>
@@ -76,6 +78,15 @@ export function useMetrics() {
   return useQuery({
     queryKey: queryKeys.metrics,
     queryFn: ({ signal }) => getMetrics(signal),
+    staleTime: Number.POSITIVE_INFINITY,
+  })
+}
+
+// Precomputed by `make benchmark`: fixed for a given model version.
+export function useBenchmark() {
+  return useQuery({
+    queryKey: queryKeys.benchmark,
+    queryFn: ({ signal }) => getBenchmark(signal),
     staleTime: Number.POSITIVE_INFINITY,
   })
 }

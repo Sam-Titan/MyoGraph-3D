@@ -1,6 +1,7 @@
 import { Toaster } from 'sonner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { AboutPanel } from '@/features/about/AboutPanel'
+import { BenchmarkPanel } from '@/features/benchmark/BenchmarkPanel'
 import { DisclaimerBanner } from '@/features/layout/DisclaimerBanner'
 import { ErrorBoundary } from '@/features/layout/ErrorBoundary'
 import { HealthStatus } from '@/features/layout/HealthStatus'
@@ -15,6 +16,7 @@ import { type Tab, useAppStore } from '@/store/app'
 const TABS: { id: Tab; label: string }[] = [
   { id: 'workspace', label: 'Patient workspace' },
   { id: 'performance', label: 'Model performance' },
+  { id: 'benchmark', label: 'Benchmark' },
   { id: 'about', label: 'About and method' },
 ]
 
@@ -70,6 +72,9 @@ export function AppShell() {
         <TabsContent value="performance" keepMounted className={`${PANEL} overflow-y-auto`}>
           {/* Charts measure their container: mounting them while the tab is hidden gives 0x0 (Recharts warns). */}
           {tab === 'performance' && <PerformancePanel />}
+        </TabsContent>
+        <TabsContent value="benchmark" keepMounted className={`${PANEL} overflow-y-auto`}>
+          {tab === 'benchmark' && <BenchmarkPanel />}
         </TabsContent>
         <TabsContent value="about" keepMounted className={`${PANEL} overflow-y-auto`}>
           <AboutPanel />

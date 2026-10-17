@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import type { PredictRequest } from '@/api/client'
 
-export type Tab = 'workspace' | 'performance' | 'about'
+export type Tab = 'workspace' | 'performance' | 'benchmark' | 'about'
 
 interface AppState {
   tab: Tab
