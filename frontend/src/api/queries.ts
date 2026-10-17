@@ -26,6 +26,12 @@ export const queryKeys = {
   intervals: (values: PredictRequest['values']) => ['intervals', values] as const,
 }
 
+const LOADING_RETRY_MS = 3000
+
+/** The server answers 503 while the uncertainty ranges load: retry quietly, up to `max` times. */
+const retryWhileLoading = (max: number) => (count: number, err: Error) =>
+  err instanceof ApiError && err.status === 503 && count < max
+
 export function useHealth() {
   return useQuery({
     queryKey: queryKeys.health,
@@ -97,7 +103,8 @@ export function useSummary(values: PredictRequest['values'] | null, selected: st
       postSummary({ values: values ?? {}, selected_target: selected }, signal),
     enabled: false,
     staleTime: Number.POSITIVE_INFINITY,
-    retry: false,
+    retry: retryWhileLoading(5),
+    retryDelay: LOADING_RETRY_MS,
   })
 }
 
@@ -112,6 +119,7 @@ export function useIntervals(values: PredictRequest['values'] | null) {
     enabled: values !== null,
     placeholderData: keepPreviousData,
     staleTime: Number.POSITIVE_INFINITY,
-    retry: false,
+    retry: retryWhileLoading(150),
+    retryDelay: LOADING_RETRY_MS,
   })
 }

@@ -193,13 +193,13 @@ def template_summary(facts: dict[str, Any]) -> str:
     up, down = block["increasing"], block["decreasing"]
     if up and down:
         s.append(
-            f"For the estimate of {chosen['outcome']}, the factors that moved it up most were "
+            f"For the estimate of {chosen['outcome']}: the factors that moved it up most were "
             f"{_join(up)}, and those that moved it down most were {_join(down)}."
         )
     elif up or down:
         direction = "up" if up else "down"
         s.append(
-            f"For the estimate of {chosen['outcome']}, the factors that moved it {direction} most "
+            f"For the estimate of {chosen['outcome']}: the factors that moved it {direction} most "
             f"were {_join(up or down)}."
         )
     s.append(

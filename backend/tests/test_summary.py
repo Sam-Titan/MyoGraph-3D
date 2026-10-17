@@ -16,6 +16,7 @@ KEY = "gsk_test_secret_key_123"
 @pytest.fixture(scope="module")
 def client() -> Iterator[TestClient]:
     with TestClient(app) as c:
+        app.state.predictor.replicates_ready.wait(120)
         yield c
 
 
@@ -141,7 +142,7 @@ def test_template_names_selected_target(client: TestClient, values: dict[str, An
     p = client.app.state.predictor  # type: ignore[attr-defined]
     vessel = next(t for t in p.features.targets if t.role == "vessel")
     res = client.post("/api/summary", json={"values": values, "selected_target": vessel.id}).json()
-    assert f"For the estimate of {vessel.outcome_phrase}," in res["text"]
+    assert f"For the estimate of {vessel.outcome_phrase}:" in res["text"]
     assert "already been referred for an angiogram" in res["text"]
     assert res["text"].endswith(S.DISCLAIMER)
 

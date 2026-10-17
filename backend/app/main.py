@@ -19,7 +19,9 @@ DEV_ORIGINS = [f"http://{host}:{WEB_PORT}" for host in ("localhost", "127.0.0.1"
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    app.state.predictor = Predictor()
+    predictor = Predictor()
+    app.state.predictor = predictor
+    predictor.start_replicate_loading()
     yield
 
 

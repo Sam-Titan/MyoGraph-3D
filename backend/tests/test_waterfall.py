@@ -28,6 +28,7 @@ def _factors(logits: list[float]) -> list[Factor]:
 @pytest.fixture(scope="module")
 def client() -> Any:
     with TestClient(app) as c:
+        app.state.predictor.replicates_ready.wait(120)
         yield c
 
 

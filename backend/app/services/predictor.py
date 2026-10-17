@@ -77,6 +77,10 @@ def anatomy_nodes(path: Path = ANATOMY_PATH) -> dict[str, str]:
     return {n.target: n.name for n in load_anatomy(path).nodes if n.target}
 
 
+class RangesLoading(Exception):
+    """The bootstrap replicates are not loaded yet; callers answer 503 + Retry-After."""
+
+
 class Predictor:
     def __init__(self) -> None:
         self.schema: FeatureSchema = load_schema()
@@ -92,7 +96,9 @@ class Predictor:
         # LRU of interval results keyed by the validated inputs (like the summary cache).
         self._intervals_cache: OrderedDict[str, IntervalsResponse] = OrderedDict()
         self._intervals_lock = threading.Lock()
-        self.replicates = {t: ReplicateSet.load(replicate_path(t)) for t in self.schema.targets}
+        # Loaded by `start_replicate_loading` after startup: 800 boosters dominate the boot time.
+        self.replicates: dict[str, ReplicateSet] = {}
+        self.replicates_ready = threading.Event()
         self.thresholds = {t: float(calibration[t]["threshold"]) for t in self.schema.targets}
         nodes = anatomy_nodes()
         self.nodes = {t: nodes[t] for t in self.schema.targets}
@@ -108,6 +114,21 @@ class Predictor:
         )
         self.features = self._build_features()
         self._by_id = {f.id: f for f in self.schema.features}
+
+    # --- replicates ---------------------------------------------------------------------------
+    def start_replicate_loading(self) -> threading.Thread:
+        """Load the bootstrap replicates in a daemon thread; /api/predict never waits on them."""
+        thread = threading.Thread(target=self.load_replicates, name="replicates", daemon=True)
+        thread.start()
+        return thread
+
+    def load_replicates(self) -> None:
+        """Blocking load. No lock is held: the finished dict is published in one assignment."""
+        t0 = time.perf_counter()
+        loaded = {t: ReplicateSet.load(replicate_path(t)) for t in self.schema.targets}
+        self.replicates = loaded
+        self.replicates_ready.set()
+        logger.info("replicates loaded in %.1f s", time.perf_counter() - t0)
 
     # --- features -----------------------------------------------------------------------------
     def _build_features(self) -> FeaturesResponse:
@@ -224,6 +245,8 @@ class Predictor:
 
         Cached per input (LRU); `/api/summary` reuses it, so a summary after the live call is free.
         """
+        if not self.replicates_ready.is_set():
+            raise RangesLoading
         key = json.dumps(values, sort_keys=True, default=str)
         with self._intervals_lock:
             hit = self._intervals_cache.get(key)

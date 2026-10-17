@@ -37,6 +37,7 @@ INTERVALS_BUDGET_MS = 250.0
 @pytest.fixture(scope="module")
 def client() -> Iterator[TestClient]:
     with TestClient(app) as c:
+        app.state.predictor.replicates_ready.wait(120)
         yield c
 
 

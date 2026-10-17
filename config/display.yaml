@@ -45,12 +45,12 @@ dots:
   legend_ring: "Estimate"
 
 performance:
-  roc_auc: "Shown one patient who has {outcome} and one who doesn't, the model gives the higher estimate to the right one about {cv} times out of 100 (cross-validated on the training patients; {holdout} out of 100 on the hold-out patients)."
+  roc_auc: "Shown two patients, one who has {outcome} and one who doesn't, the model gives the higher estimate to the right one about {cv} times out of 100 (cross-validated on the training patients; {holdout} out of 100 on the hold-out patients)."
   metric_example: "Example for {target}, hold-out set of {n_test} patients:"
   brier: "Brier {value}: the average squared gap between the estimate and what happened, from 0 (perfect) to 1. Lower is better; always giving the hold-out average share of {prev} would score about {ref}."
   accuracy: "Accuracy {value}: {v100} of 100 patients were labelled correctly. Always picking the commoner group would already get {majority} of 100."
   precision: "Precision {value}: of 100 patients the model put above its cut-off, about {v100} really had {outcome}."
-  recall: "Recall {value}: of 100 patients who really had {outcome}, the model put about {v100} above its cut-off."
+  recall: "Recall {value}: the model put about {v100} of 100 patients who really had {outcome} above its cut-off."
   f1: "F1 {value}: one number that balances precision and recall; 1 is perfect."
 
 # Reliability tiers use the cross-validated ROC-AUC of each target.

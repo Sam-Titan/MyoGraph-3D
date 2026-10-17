@@ -52,7 +52,6 @@ export function metricLines(
   const outcome = target.outcome_phrase
   const p = display.performance
   return [
-    { key: 'roc_auc', text: rocAucLine(display, m, target) },
     {
       key: 'brier',
       text: fillText(p.brier, {

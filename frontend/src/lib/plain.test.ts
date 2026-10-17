@@ -55,15 +55,21 @@ describe('plain wording numbers', () => {
   it('uses the dataset prevalence of the chosen target, not CAD', () => {
     expect(datasetPrevalence(metrics, 'CAD')).toBe(71)
     expect(datasetPrevalence(metrics, 'RCA')).toBe(38)
-    const [line] = baseRateLines(display, metrics, target('RCA', 'a narrowing in the RCA'))
-    expect(line).toBe('303 patients, 38 in 100 had a narrowing in the RCA.')
+    const [line] = baseRateLines(
+      display,
+      metrics,
+      target('RCA', 'a narrowing in the RCA, the right coronary artery'),
+    )
+    expect(line).toBe(
+      '303 patients, 38 in 100 had a narrowing in the RCA, the right coronary artery.',
+    )
   })
 
   it('fills metric sentences from the hold-out numbers', () => {
     const lines = Object.fromEntries(
       metricLines(display, metrics, target('CAD', 'CAD'), 'tuned').map((l) => [l.key, l.text]),
     )
-    expect(lines.roc_auc).toBe('ROC 93/82 for CAD')
+    expect(lines.roc_auc).toBeUndefined() // lives in the headline strip only
     expect(lines.accuracy).toBe('Acc 0.74 74 72')
     expect(lines.recall).toBe('Rec 0.77 77 CAD')
     expect(lines.brier).toBe('Brier 0.17 vs 0.20 at 72%')
