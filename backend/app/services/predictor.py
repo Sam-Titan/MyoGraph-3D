@@ -120,6 +120,7 @@ class Predictor:
             group=f.group,
             kind=f.kind,
             unit=f.unit,
+            unit_singular=f.unit_singular,
             reference=RangeInfo(low=f.reference.low, high=f.reference.high)
             if f.reference
             else None,
@@ -147,7 +148,9 @@ class Predictor:
             return "Yes" if v else "No"
         if not f.unit:
             return _num(v)
-        return f"{_num(v)}{f.unit}" if f.unit == "%" else f"{_num(v)} {f.unit}"
+        if f.unit == "%":
+            return f"{_num(v)}%"
+        return f"{_num(v)} {f.unit_singular if v == 1 and f.unit_singular else f.unit}"
 
     def predict(self, values: Mapping[str, InputValue]) -> PredictResponse:
         t0 = time.perf_counter()
@@ -219,6 +222,7 @@ class Predictor:
                     kind=f.kind,
                     value=v,
                     unit=f.unit,
+                    unit_singular=f.unit_singular,
                     reference=RangeInfo(low=f.reference.low, high=f.reference.high)
                     if f.reference
                     else None,

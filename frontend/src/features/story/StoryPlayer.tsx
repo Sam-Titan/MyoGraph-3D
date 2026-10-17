@@ -1,6 +1,6 @@
 import { X } from 'lucide-react'
 import { useEffect, useMemo, useRef } from 'react'
-import { useFeatures, usePredict, usePresets, useStories } from '@/api/queries'
+import { useFeatures, useMetrics, usePredict, usePresets, useStories } from '@/api/queries'
 import { Button } from '@/components/ui/button'
 import { focusTarget } from '@/features/heart3d/useViewState'
 import { cn } from '@/lib/utils'
@@ -16,7 +16,9 @@ import { useStory } from './useStory'
  */
 export function StoryPlayer() {
   const active = useStory((s) => s.active)
-  const stories = useStories().data?.stories
+  const storiesData = useStories().data
+  const stories = storiesData?.stories
+  const split = useMetrics().data?.split
   const story = stories?.find((s) => s.id === active?.id)
   const preset = usePresets().data?.find((p) => p.id === story?.preset)
   const targets = useFeatures().data?.targets
@@ -29,10 +31,16 @@ export function StoryPlayer() {
 
   const ctx: StoryContext | null = useMemo(
     () =>
-      predict.data && targets && preset
-        ? { targets, response: predict.data, truth: preset.truth }
+      predict.data && targets && preset && storiesData && split
+        ? {
+            targets,
+            response: predict.data,
+            truth: preset.truth,
+            factorNote: storiesData.factor_note,
+            patients: split.n_train + split.n_test,
+          }
         : null,
-    [predict.data, targets, preset],
+    [predict.data, targets, preset, storiesData, split],
   )
 
   const go = (to: number) => {

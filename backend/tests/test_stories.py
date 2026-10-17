@@ -52,6 +52,7 @@ def test_no_digits_or_percent_in_any_text() -> None:
         lambda p: p.update(text="Estimate {p:CAD}.", when=["nonsense:CAD"]),
         lambda p: p.update(text="Reasons {factors_up:3}."),
         lambda p: p.update(text="Estimate {p:CAD"),
+        lambda p: p.update(text="Seen in {n_patients:CAD} people."),
     ],
 )
 def test_text_rules_reject(mutate) -> None:  # noqa: ANN001
@@ -59,6 +60,20 @@ def test_text_rules_reject(mutate) -> None:  # noqa: ANN001
     mutate(_first_text(raw))
     with pytest.raises(ValueError):
         _check(raw)
+
+
+@pytest.mark.parametrize(
+    "note", ["Found in 303 patients.", "Found in {p:CAD} patients.", "The model is wrong."]
+)
+def test_factor_note_rules(note: str) -> None:
+    raw = copy.deepcopy(RAW)
+    raw["factor_note"] = note
+    with pytest.raises(ValueError):
+        _check(raw)
+
+
+def test_factor_note_uses_the_dataset_size_token() -> None:
+    assert "{n_patients}" in RAW["factor_note"]
 
 
 def test_unknown_preset_and_target_rejected() -> None:

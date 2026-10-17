@@ -55,6 +55,7 @@ class FeatureInfo(BaseModel):
     group: str
     kind: Literal["number", "binary", "category", "composite", "derived"]
     unit: str | None = None
+    unit_singular: str | None = None
     input: InputBoundsInfo | None = None
     options: list[OptionInfo] = []
     reference: RangeInfo | None = None
@@ -108,6 +109,7 @@ class BreakdownRow(BaseModel):
     kind: Literal["number", "derived", "binary"]
     value: float
     unit: str | None = None
+    unit_singular: str | None = None
     reference: RangeInfo | None = None
     status: Literal["low", "normal", "high"] | None = None
     outside_training_range: bool

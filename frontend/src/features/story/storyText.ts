@@ -9,9 +9,14 @@ export interface StoryContext {
   response: PredictResponse
   /** The preset's real catheterisation result; only read once the step reveals it. */
   truth: Record<string, boolean> | null
+  /** stories.yaml `factor_note`: closes every step that lists factors. */
+  factorNote: string
+  /** Whole dataset size (train + hold-out), for `{n_patients}`. */
+  patients: number
 }
 
 const TOKEN = /\{(\w+)(?::(\w+))?\}/g
+const FACTOR_TOKEN = /\{factors_(up|down):/
 
 const target = (ctx: StoryContext, id: string): TargetInfo | undefined =>
   ctx.targets.find((t) => t.id === id)
@@ -71,6 +76,8 @@ function fill(name: string, arg: string | undefined, step: StoryStep, ctx: Story
       if (real === undefined) return null
       return real ? 'narrowing (stenosis) found' : 'no narrowing found'
     }
+    case 'n_patients':
+      return String(ctx.patients)
     case 'name':
       return target(ctx, id)?.id ?? null
     case 'plain':
@@ -103,8 +110,15 @@ export function renderPart(part: StoryPart, step: StoryStep, ctx: StoryContext):
 
 /** The step's sentences, in order, for the current prediction. Never empty for a valid story. */
 export function renderStep(step: StoryStep, ctx: StoryContext): string[] {
-  return step.parts.flatMap((p) => {
+  let listsFactors = false
+  const sentences = step.parts.flatMap((p) => {
     const text = renderPart(p, step, ctx)
+    if (text !== null && FACTOR_TOKEN.test(p.text)) listsFactors = true
     return text === null ? [] : [text]
   })
+  if (listsFactors)
+    sentences.push(
+      ctx.factorNote.replace(TOKEN, (_all, name: string) => fill(name, undefined, step, ctx) ?? ''),
+    )
+  return sentences
 }

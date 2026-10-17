@@ -217,6 +217,17 @@
             ],
             "title": "Unit"
           },
+          "unit_singular": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit Singular"
+          },
           "reference": {
             "anyOf": [
               {
@@ -458,6 +469,17 @@
               }
             ],
             "title": "Unit"
+          },
+          "unit_singular": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit Singular"
           },
           "input": {
             "anyOf": [
@@ -1159,6 +1181,11 @@
       },
       "Stories": {
         "properties": {
+          "factor_note": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Factor Note"
+          },
           "stories": {
             "items": {
               "$ref": "#/components/schemas/Story"
@@ -1171,6 +1198,7 @@
         "additionalProperties": false,
         "type": "object",
         "required": [
+          "factor_note",
           "stories"
         ],
         "title": "Stories"

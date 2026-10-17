@@ -327,10 +327,14 @@ Nothing else hard-codes feature or vessel lists.
   states an outcome or comparison (agree, miss, above/below, far, well, wrong, ...) needs a `when`; a step keeps one
   part with no `when` and no factor token; `{truth:ID}` only on a `reveal_truth` step; no ranking of arteries; no
   clinical advice. Tokens: `{p:ID}`, `{thr:ID}`, `{truth:ID}` ("narrowing (stenosis) found" / "no narrowing found"),
-  `{name:ID}`, `{plain:ID}`, `{where:ID}`, `{factors_up:N}`, `{factors_down:N}` (up to N signed factors of the
+  `{name:ID}`, `{plain:ID}`, `{where:ID}`, `{n_patients}` (dataset size, `factor_note` only), `{factors_up:N}`, `{factors_down:N}` (up to N signed factors of the
   highlight target, each as `label: value` (the API `display_value`), joined; a part whose list is empty is skipped). Conditions: `above_threshold`, `below_threshold`,
   `well_above_threshold`, `well_below_threshold` (0.25 beyond the threshold), `agrees`, `disagrees` (model verdict vs real
   result), `all_agree`, `any_disagrees`.
+- **`factor_note`** (top-level key of `stories.yaml`, same text rules): one closing sentence appended to every step that
+  renders a `{factors_*}` list.
+- **`unit_singular`** (optional, `features.yaml`, needs `unit`): unit text used when the value is exactly 1 (Region RWMA:
+  `regions` / `region`); exposed on `/api/features` and `breakdown` rows.
 - **Player** (`frontend/src/features/story`): a card under the heart with Back / Next (Finish) / Exit, arrow keys and Esc;
   offered once per browser as a toast ("See how it works · 1 min", `localStorage` key `myograph.story-seen`),
   replayable from the header button "How it works". Starting loads the story's hold-out patient into the form

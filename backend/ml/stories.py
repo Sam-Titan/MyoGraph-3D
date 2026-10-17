@@ -22,6 +22,8 @@ STORIES_PATH = CONFIG_DIR / "stories.yaml"
 TARGET_TOKENS = {"p", "thr", "truth", "name", "plain", "where"}
 #: Tokens that take a count (1-5): up to N factors, joined as a list.
 FACTOR_TOKENS = {"factors_up": "up", "factors_down": "down"}
+#: Tokens that take no argument.
+GLOBAL_TOKENS = {"n_patients"}
 #: Conditions that take a target id / need no argument.
 TARGET_CONDITIONS = {
     "above_threshold",
@@ -87,6 +89,8 @@ class Story(_Strict):
 
 
 class Stories(_Strict):
+    #: Closing sentence of every step that lists factors; tokens only, no digits.
+    factor_note: str = Field(min_length=1)
     stories: list[Story] = Field(min_length=1)
 
     @model_validator(mode="after")
@@ -105,6 +109,12 @@ def _split_condition(cond: str) -> tuple[str, str | None]:
 def validate_stories(stories: Stories, schema: FeatureSchema, preset_ids: set[str]) -> None:
     """Cross-checks against targets and presets, plus the text rules. Raises ValueError."""
     targets = set(schema.targets)
+    note = _TOKEN.sub("", stories.factor_note)
+    if _UNSAFE.search(note) or _OUTCOME_WORDS.search(note):
+        raise ValueError(f"factor_note: digits, % or outcome wording: {stories.factor_note!r}")
+    for name, arg in _TOKEN.findall(stories.factor_note):
+        if name not in GLOBAL_TOKENS or arg:
+            raise ValueError(f"factor_note: token {{{name}}} not allowed here")
 
     def need_target(where: str, tid: str | None) -> None:
         if tid not in targets:
@@ -140,6 +150,8 @@ def validate_stories(stories: Stories, schema: FeatureSchema, preset_ids: set[st
                             raise ValueError(f"{where}: {{{name}}} needs a count 1-5")
                         if hl is None or hl.direction != FACTOR_TOKENS[name]:
                             raise ValueError(f"{where}: {{{name}}} needs a matching highlight")
+                    elif name in GLOBAL_TOKENS and not arg:
+                        continue
                     else:
                         raise ValueError(f"{where}: unknown token {{{name}}}")
                 if re.sub(_TOKEN, "", part.text).count("{") or "}" in re.sub(_TOKEN, "", part.text):

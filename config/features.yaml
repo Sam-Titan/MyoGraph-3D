@@ -144,7 +144,7 @@ features:
 
   # ---------------- Echocardiography ----------------
   - { id: ef_tte,      column: "EF-TTE",      label: "Ejection fraction (TTE)",          group: echo, kind: number, unit: "%",          input: { min: 5, max: 80, step: 1 }, reference: { low: 50, high: 75 } }
-  - { id: region_rwma, column: "Region RWMA", label: "Regions with wall-motion abnormality", group: echo, kind: number, unit: "regions (0–4)", input: { min: 0, max: 4, step: 1 }, reference: { low: 0, high: 0 } }
+  - { id: region_rwma, column: "Region RWMA", label: "Regions with wall-motion abnormality", group: echo, kind: number, unit: "regions", unit_singular: "region", input: { min: 0, max: 4, step: 1 }, reference: { low: 0, high: 0 } }
   - id: vhd
     column: VHD
     label: "Valvular heart disease"

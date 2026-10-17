@@ -147,6 +147,8 @@ export interface components {
             value: number;
             /** Unit */
             unit?: string | null;
+            /** Unit Singular */
+            unit_singular?: string | null;
             reference?: components["schemas"]["RangeInfo"] | null;
             /** Status */
             status?: ("low" | "normal" | "high") | null;
@@ -233,6 +235,8 @@ export interface components {
             kind: "number" | "binary" | "category" | "composite" | "derived";
             /** Unit */
             unit?: string | null;
+            /** Unit Singular */
+            unit_singular?: string | null;
             input?: components["schemas"]["InputBoundsInfo"] | null;
             /**
              * Options
@@ -478,6 +482,8 @@ export interface components {
         };
         /** Stories */
         Stories: {
+            /** Factor Note */
+            factor_note: string;
             /** Stories */
             stories: components["schemas"]["Story"][];
         };

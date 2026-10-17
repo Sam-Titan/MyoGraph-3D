@@ -15,8 +15,14 @@
 # Tokens   {p:ID} probability   {thr:ID} decision threshold   {truth:ID} "narrowing (stenosis) found" / "no narrowing found"
 #          {name:ID} target id   {plain:ID} plain name   {where:ID} where it runs (anatomy.yaml)
 #          {factors_up:N} / {factors_down:N}  up to N factors (of `highlight.target`) that raised / lowered the estimate
+#          {n_patients}  size of the whole dataset (train + hold-out); only used in `factor_note`
 # `when`   above_threshold:ID  below_threshold:ID  well_above_threshold:ID  well_below_threshold:ID  (well = 0.25 beyond)
 #          agrees:ID  disagrees:ID (model verdict vs real result)  all_agree  any_disagrees
+# Appended to every step that renders a {factors_*} list.
+factor_note: >-
+  These are patterns the model found in {n_patients} patients who were already referred for an angiogram, not
+  causes and not advice.
+
 stories:
   - id: low-estimate
     title: A low estimate

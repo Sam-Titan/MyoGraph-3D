@@ -38,7 +38,13 @@ const response = {
   },
 } as unknown as PredictResponse
 
-const ctx = (truth: Record<string, boolean> | null): StoryContext => ({ targets, response, truth })
+const ctx = (truth: Record<string, boolean> | null): StoryContext => ({
+  targets,
+  response,
+  truth,
+  factorNote: 'Patterns found in {n_patients} patients.',
+  patients: 303,
+})
 
 const step = (over: Partial<StoryStep>): StoryStep => ({
   id: 's',
@@ -100,7 +106,11 @@ describe('rendering', () => {
         { text: 'Raised it: {factors_up:3}.', when: [] },
       ],
     })
-    expect(renderStep(up, ctx(null))).toEqual(['Base.', 'Raised it: Age: 70 and T inversion: Yes.'])
+    expect(renderStep(up, ctx(null))).toEqual([
+      'Base.',
+      'Raised it: Age: 70 and T inversion: Yes.',
+      'Patterns found in 303 patients.',
+    ])
     const down = step({
       highlight: { target: 'CAD', direction: 'down', top: 3 },
       parts: [
@@ -108,7 +118,11 @@ describe('rendering', () => {
         { text: 'Lowered it: {factors_down:3}.', when: [] },
       ],
     })
-    expect(renderStep(down, ctx(null))).toEqual(['Base.', 'Lowered it: Chest pain type: None.'])
+    expect(renderStep(down, ctx(null))).toEqual([
+      'Base.',
+      'Lowered it: Chest pain type: None.',
+      'Patterns found in 303 patients.',
+    ])
     expect(highlightedFactors(down, ctx(null)).map((c) => c.id)).toEqual(['b'])
   })
 
@@ -124,7 +138,7 @@ describe('rendering', () => {
         { text: 'Raised it: {factors_up:3}.', when: [] },
       ],
     })
-    expect(renderStep(s, { targets, response: none, truth: null })).toEqual(['Base.'])
+    expect(renderStep(s, { ...ctx(null), response: none })).toEqual(['Base.'])
   })
 
   it('renders the real result in plain words', () => {

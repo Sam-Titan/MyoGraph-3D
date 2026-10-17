@@ -79,6 +79,8 @@ class _Feature(_Strict):
     group: str
     column: str | None = None
     unit: str | None = None
+    #: Optional singular of `unit` ("region" for "regions"), used when the value is exactly 1.
+    unit_singular: str | None = None
     reference: Reference | None = None
 
 
@@ -135,6 +137,8 @@ class FeatureSchema(_Strict):
         for f in self.features:
             if f.group not in groups:
                 raise ValueError(f"feature {f.id!r}: unknown group {f.group!r}")
+            if f.unit_singular is not None and not f.unit:
+                raise ValueError(f"feature {f.id!r}: unit_singular needs a unit")
         roles = [t.role for t in self.targets.values()]
         if roles.count("overall") != 1:
             raise ValueError("exactly one target must have role 'overall'")
