@@ -146,7 +146,7 @@ Pydantic models are the source of truth. `make types` dumps the schema offline (
 - `positive` is `probability >= threshold`, where `threshold` is the target's tuned (Youden, train OOF) threshold from `calibration.json`. `breakdown` lists numeric inputs, derived BMI/obesity and binaries (categories only appear in `explanations`).
 - Validation: out-of-`input` bounds, non-finite numbers (NaN/±Infinity), missing inputs and unknown options are rejected (422) with field-level messages. Values outside the *observed* training range are allowed but produce a warning.
 - Latency target: < 50 ms per predict on CPU (4 models + contributions for 1 row).
-- CORS: allow `http://localhost:5173` in dev. In Docker, nginx proxies `/api`, so it's same-origin.
+- CORS: allow `http://localhost:$WEB_PORT` and `http://127.0.0.1:$WEB_PORT` in dev (default 5180; the API runs on `API_PORT`, default 8010). In Docker, nginx proxies `/api`, so it's same-origin.
 
 ### 5.1 Summary endpoint
 - **Structure** (template and Groq alike): S1 overall estimate; S2 vessel estimates in API order (every percentage stated); S3 the selected target named, with its main factors; an optional training-range caveat; then the disclaimer.
@@ -274,7 +274,7 @@ myograph-3d/
 │  └─ tests/            test_leakage.py · test_preprocess.py · test_api.py · test_explain_additivity.py · test_anatomy.py
 ├─ scripts/             build_heart_glb.py
 ├─ frontend/
-│  ├─ package.json  vite.config.ts (proxy /api → :8000)  biome.json  Dockerfile  nginx.conf
+│  ├─ package.json  vite.config.ts (port 5180 strict, proxy /api → :8010)  biome.json  Dockerfile  nginx.conf
 │  ├─ public/models/    heart.glb  LICENSE-ASSETS.md
 │  └─ src/
 │     ├─ api/           schema.d.ts (generated) · client.ts · queries.ts

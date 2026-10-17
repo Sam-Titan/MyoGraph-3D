@@ -126,7 +126,7 @@ def test_cors_preflight_is_logged(captured: _Capture) -> None:
         res = c.options(
             "/api/predict",
             headers={
-                "Origin": "http://localhost:5173",
+                "Origin": "http://localhost:5180",
                 "Access-Control-Request-Method": "POST",
             },
         )

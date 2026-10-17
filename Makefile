@@ -1,3 +1,7 @@
+WEB_PORT ?= 5180
+API_PORT ?= 8010
+export WEB_PORT API_PORT
+
 .PHONY: setup dev dev-api dev-web prepare train stability assets types lint fmt test check docker screenshots report
 
 setup:
@@ -8,7 +12,7 @@ dev:
 	$(MAKE) -j2 dev-api dev-web
 
 dev-api:
-	cd backend && uv run uvicorn app.main:app --reload --port 8000
+	cd backend && uv run uvicorn app.main:app --reload --port $(API_PORT)
 
 dev-web:
 	cd frontend && npm run dev

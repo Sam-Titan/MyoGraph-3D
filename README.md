@@ -73,12 +73,13 @@ in PowerShell instead of `cp`.
 
 ```bash
 make setup    # backend (uv sync --extra assets) and frontend (npm install) dependencies
-make dev      # API on http://localhost:8000, web on http://localhost:5173
+make dev      # API on http://localhost:8010, web on http://localhost:5180
 make check    # ruff, biome, pytest and tsc; run before committing
 ```
 
-Open <http://localhost:5173>. The Vite dev server proxies `/api` to the API on port 8000, so start both
-(`make dev` does). `make dev` stops both with Ctrl+C.
+Open <http://localhost:5180>. The Vite dev server proxies `/api` to the API on port 8010, so start both
+(`make dev` does). `make dev` stops both with Ctrl+C. Ports are fixed so this app does not clash with other
+projects; override with `make dev WEB_PORT=... API_PORT=...`.
 
 ### Windows, option 1 (recommended): WSL2
 
@@ -93,7 +94,7 @@ Open <http://localhost:5173>. The Vite dev server proxies `/api` to the API on p
    `/mnt/c` are served through a slow cross-OS filesystem layer, which makes `npm install`, `uv sync` and
    file watching (hot reload) very slow or unreliable.
 5. Follow *Local development on Linux and macOS* above, or the Docker quick start. Browse to
-   `http://localhost:5173` (or `:8080`) from Windows as usual.
+   `http://localhost:5180` (or `:8080`) from Windows as usual.
 
 ### Windows, option 2: native PowerShell without make
 
@@ -120,18 +121,18 @@ Then run the API and the web server in two separate PowerShell windows, both fro
 (what `make dev` runs):
 
 ```powershell
-# terminal 1: API on :8000
+# terminal 1: API on :8010
 cd backend
-uv run uvicorn app.main:app --reload --port 8000
+uv run uvicorn app.main:app --reload --port 8010
 ```
 
 ```powershell
-# terminal 2: web on :5173 (proxies /api to :8000)
+# terminal 2: web on :5180 (proxies /api to :8010)
 cd frontend
 npm run dev
 ```
 
-Open <http://localhost:5173>. The equivalent of `make check` is `cd backend; uv run ruff check .;
+Open <http://localhost:5180>. The equivalent of `make check` is `cd backend; uv run ruff check .;
 uv run ruff format --check .; uv run pytest` followed by `cd ..\frontend; npm run lint; npm run typecheck`.
 
 ### Optional: Groq plain-language summary
@@ -187,10 +188,12 @@ Render dashboard under the service's Logs. `TRUST_PROXY_HEADERS` (default `true`
 
 ### Troubleshooting
 
-- **Port already in use** (8000, 5173 or 8080). Stop whatever holds the port, or for Docker change the
-  left side of `"8080:80"` in `docker-compose.yml`. Find the process with `ss -ltnp | grep :8000`
-  (Linux), `lsof -i :8000` (macOS) or `netstat -ano | findstr :8000` (Windows). Vite moves to the next
-  free port on its own; the API port must stay 8000 because the dev proxy points there.
+- **Port already in use** (8010, 5180 or 8080). Stop whatever holds the port, or for Docker change the
+  left side of `"8080:80"` in `docker-compose.yml`. Find the process with `ss -ltnp | grep :8010`
+  (Linux), `lsof -i :8010` (macOS) or `netstat -ano | findstr :8010` (Windows). Vite refuses to move
+  (`strictPort`), so pick other ports for both servers: `make dev WEB_PORT=5190 API_PORT=8020` (the
+  proxy and the API's CORS list follow these variables). On Windows without make, set `$env:WEB_PORT` /
+  `$env:API_PORT` and use the same port in the uvicorn command.
 - **Docker is not running / `docker compose` cannot connect.** Start Docker Desktop (or
   `sudo systemctl start docker` on Linux). On Windows with WSL2, enable your distribution under
   Settings, Resources, WSL integration in Docker Desktop and restart the terminal.

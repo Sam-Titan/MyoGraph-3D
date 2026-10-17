@@ -3,7 +3,7 @@ import { mkdirSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const BASE = process.env.BASE_URL ?? 'http://localhost:5173'
+const BASE = process.env.BASE_URL ?? 'http://localhost:5180'
 const OUT = resolve(dirname(fileURLToPath(import.meta.url)), '../.screenshots')
 // playwright is a frontend devDependency; resolve it from there regardless of cwd.
 const { chromium } = await import(
