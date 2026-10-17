@@ -1146,6 +1146,17 @@
           "node": {
             "type": "string",
             "title": "Node"
+          },
+          "where": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Where"
           }
         },
         "type": "object",

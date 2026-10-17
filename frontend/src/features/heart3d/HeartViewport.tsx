@@ -1,18 +1,11 @@
 import { lazy, Suspense } from 'react'
 import { useFeatures } from '@/api/queries'
+import { PROBE } from './webgl'
 
 // three/R3F stay out of the initial bundle: they load when the workspace first renders.
 const HeartScene = lazy(() => import('./HeartScene'))
 
-function webglAvailable(): boolean {
-  try {
-    const c = document.createElement('canvas')
-    return Boolean(c.getContext('webgl2') ?? c.getContext('webgl'))
-  } catch {
-    return false
-  }
-}
-const HAS_WEBGL = webglAvailable()
+const HAS_WEBGL = PROBE.available
 
 const Message = ({ children }: { children: string }) => (
   <div className="flex h-full items-center justify-center p-6 text-center text-sm text-viewport-muted">

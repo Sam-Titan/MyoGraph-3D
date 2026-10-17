@@ -156,7 +156,7 @@ Pydantic models are the source of truth. `make types` dumps the schema offline (
 
 ## 6. Frontend
 
-**Stack**: React 19, Vite, TypeScript (strict), Tailwind v4, shadcn/ui (+ shadcn charts / Recharts), lucide-react, sonner, Motion, Zustand, TanStack Query, react-hook-form + zod, three + @react-three/fiber v9 + @react-three/drei v10 + @react-three/postprocessing. Lint/format: Biome.
+**Stack**: React 19, Vite, TypeScript (strict), Tailwind v4, shadcn/ui (+ shadcn charts / Recharts), lucide-react, sonner, Motion, Zustand, TanStack Query, react-hook-form + zod, three + @react-three/fiber v9 + @react-three/drei v10. Lint/format: Biome.
 
 ### 6.1 Layout (single page, desktop-first, min width 1280; graceful stacking below)
 
@@ -206,21 +206,20 @@ Pydantic models are the source of truth. `make types` dumps the schema offline (
   - LM and aorta: neutral. Veins: hidden by default, shown by a toolbar toggle (neutral blue-grey, not clickable). The toggle appears for any optional, default-hidden node in the GLB extras.
 - **Interaction**:
   - drei `CameraControls`: rotate / zoom / pan, with min/max distance clamped.
-  - Hover → pointer cursor + `<Html>` tooltip (name, %).
-  - Click a vessel → select + outline (postprocessing `Outline` / `Selection`) + the camera orbits to that node's view direction (`viewDir` extra: optional `view_dir`, else derived from `expect_side`: anterior front, right front-right ~45°, left left-lateral ~110°) and fits its bounding box.
+  - Hover → pointer cursor + DOM tooltip (name, %).
+  - Click a vessel → select + thicker, lighter outline (drei `<Outlines>`, see v2.0) + the camera orbits to that node's view direction (`viewDir` extra: optional `view_dir`, else derived from `expect_side`: anterior front, right front-right ~45°, left left-lateral ~110°) and fits its bounding box.
   - Click heart body → select CAD.
   - Click empty space / Reset → default view.
   - Optional auto-spin.
-- **Labels**: `<Html>` anchored at each vessel's `anchor` (glTF node extras, written by `build_heart_glb.py`: a point ON the vessel surface, not the centroid, which can lie inside the heart): "LAD 81%". Toggleable; the legend and result cards always show the numbers.
+- **Labels** (v2.0: DOM chips with leader lines, see below; originally drei `<Html>`) anchored at each vessel's `anchor` (glTF node extras, written by `build_heart_glb.py`: a point ON the vessel surface, not the centroid, which can lie inside the heart): "LAD 81%". Toggleable; the legend and result cards always show the numbers.
 - **No-GPU performance**:
   - `dpr={[1, 1.5]}`, `frameloop="demand"` (invalidate on change and interaction), no shadows.
   - Small `Environment` preset or simple 3-light rig.
   - Total < 80k triangles. `useGLTF(url, false)`: no Draco decoder fetch.
-  - Selection is always shown by an emissive boost on the selected node (no postprocessing needed). The
-    postprocessing `Outline` is rendered only while the frame budget is OK; when it declines, the
-    `EffectComposer` is unmounted and dpr stays at 1. The budget monitor (`FrameBudget.tsx`) replaces drei's
-    `PerformanceMonitor`, which counts frames per wall-clock window and so misreads idle time under
-    `frameloop="demand"` as a slow GPU.
+  - No post-processing. Selection is shown by an emissive boost and a thicker, lighter outline. The budget
+    monitor (`FrameBudget.tsx`) lowers dpr one rung per decline (1.5/1.25 -> 1 -> 0.75), never back up; it
+    replaces drei's `PerformanceMonitor`, which counts frames per wall-clock window and so misreads idle time
+    under `frameloop="demand"` as a slow GPU.
   - Click/drag: a press that travels >= 5 px is a drag; vessel, heart and empty-space clicks only fire for
     real clicks, so orbiting never changes selection or camera.
   - The workspace tab stays mounted while hidden; the canvas invalidates (without re-framing) when shown again.
@@ -317,6 +316,40 @@ Nothing else hard-codes feature or vessel lists.
 - 3D anatomy (BodyParts3D 4.0): "BodyParts3D, © The Database Center for Life Science licensed under CC Attribution 4.0 International". The BodyParts3D site states CC BY 4.0, but the source OBJ headers still embed CC BY-SA 2.1 Japan. The derived `heart.glb` is therefore released under CC BY-SA 4.0, which satisfies both; the repo's code remains MIT (`public/models/LICENSE-ASSETS.md`).
 
 ## v2.0
+
+### Phase 16a: scene (outlines, focus, supply regions, labels)
+- **Colour = risk only.** Vessel identity comes from outlines, name chips with leader lines, position, the
+  vessel key and interaction, so three vessels at nearly the same probability stay distinguishable. The number
+  is always shown next to a colour (chips, key, tooltip).
+- **Outlines:** drei `<Outlines>` (inverted hull, no post-processing, `@react-three/postprocessing` removed) on
+  every vessel mesh: thin dark by default, thicker and light for the selected / hovered vessel.
+- **Materials:** `MeshPhysicalMaterial`; heart muted rose, rough, light sheen, darker than the vessels; vessels
+  risk colour + risk-scaled emissive + light clearcoat. 3 directional lights + ambient + a soft cool rim. No
+  shadows.
+- **Focus mode:** with a vessel selected the other vessels fade to 35 % and lose 65 % of their saturation, the
+  heart dims slightly (tween 300 ms, instant under `prefers-reduced-motion`). Reset / selecting the heart (CAD)
+  restores everything.
+- **Supply-region shading** (toolbar "Supply area", default on): the heart's `_territory` attribute (exposed as
+  `territory`) channel of the selected vessel, found through the heart node's `territoryChannels` extra, tints
+  the surface with that vessel's risk colour (max 70 %). Caption: "Shaded area: approximate region the <id>
+  supplies". None for overall CAD. Never a clinical map.
+- **Labels:** one DOM chip per vessel target ("LAD · 81%", "LAD 81%" on phones) outside the heart's projected
+  silhouette with an SVG leader line and anchor dot; positions are written to the DOM every frame (no re-render);
+  per-side vertical relaxation prevents overlap; where the canvas is too narrow the chip is clamped inside the
+  view. A vessel behind the heart (X-ray off) keeps a dashed chip, line and hollow dot. Chips are buttons: tap /
+  click / Enter select.
+- **View presets:** Front / Left side / Underside (anatomical axes; if exactly one vessel's `viewDir` extra
+  points along the axis, that vessel's own `viewDir` is used) plus Reset, and a tiny A/P/L/R compass that follows
+  the camera azimuth.
+- **Vessel key:** inside the legend, one row per target from `/api/features` (`id`, `where` from anatomy.yaml,
+  risk dot and %). `targets[].where` is a new, additive API field. Row click selects and flies to the vessel.
+- **Keyboard:** Tab reaches the chips and key rows (visible focus ring), Enter / Space select, Esc resets.
+- **No-GPU:** `frameloop="demand"`; software GL (SwiftShader/llvmpipe, detected from the renderer string)
+  starts at dpr 1 with MSAA off, which is the largest single cost on a CPU rasteriser. Phones and coarse
+  pointers load `heart.mobile.glb` and cap dpr at 1.25.
+- **Console:** the Playwright check (`make e2e`) fails on any console error/warning. The allow-list is in
+  `frontend/e2e/helpers.ts`; one entry: R3F 9.8.x creates `new THREE.Clock()`, which three 0.186 warns about.
+- Charts mount only while the Performance tab is active (Recharts measured 0x0 in a hidden panel).
 
 ### Phase 15: heart asset v2
 - **Two GLBs** from one build (`make assets`): `heart.glb` (< 80k triangles, <= 2 MB) and `heart.mobile.glb`

@@ -20,6 +20,7 @@ class TargetInfo(BaseModel):
     plain_label: str
     role: Role
     node: str
+    where: str | None = None  # plain-language location (anatomy.yaml), for the vessel key
 
 
 class GroupInfo(BaseModel):

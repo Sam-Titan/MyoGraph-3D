@@ -12,7 +12,7 @@ export function WorkspaceLayout() {
       </Panel>
       <section
         aria-label="3D heart"
-        className="viewport-surface relative order-1 h-110 overflow-hidden rounded-xl xl:order-none xl:h-auto xl:min-h-0"
+        className="viewport-surface relative order-1 h-128 overflow-hidden rounded-xl xl:order-none xl:h-auto xl:min-h-0"
       >
         <HeartViewport />
       </section>

@@ -3,7 +3,12 @@ import { useMemo } from 'react'
 import { type Mesh, type Object3D, Vector3 } from 'three'
 import type { TargetInfo } from '@/api/client'
 
-export const HEART_URL = '/models/heart.glb'
+/** Phones / coarse pointers load the half-budget LOD (same node names and extras). */
+const COMPACT =
+  typeof window !== 'undefined' &&
+  window.matchMedia('(pointer: coarse), (max-width: 640px)').matches
+export const IS_COMPACT = COMPACT
+export const HEART_URL = COMPACT ? '/models/heart.mobile.glb' : '/models/heart.glb'
 
 /** glTF node extras written by scripts/build_heart_glb.py (surface at `anchor`). */
 interface Extras {
@@ -14,6 +19,8 @@ interface Extras {
   anchorHidden?: boolean
   /** Camera direction (target -> camera) when this node is selected; from anatomy.yaml. */
   viewDir?: [number, number, number] | null
+  /** Heart node only: target id per component of the `_TERRITORY` vertex attribute. */
+  territoryChannels?: string[]
 }
 
 export interface NodeBinding {
@@ -30,6 +37,8 @@ export interface NodeBinding {
   anchorHidden: boolean
   /** Unit direction the camera orbits to on selection; null keeps the default anterior view. */
   viewDir: Vector3 | null
+  /** Heart node only: target id per `territory` attribute channel (supply-region weights). */
+  territoryChannels: string[]
 }
 
 function readExtras(obj: Object3D): Extras {
@@ -56,6 +65,7 @@ function bind(obj: Object3D, target: TargetInfo | null): NodeBinding {
     optional: extras.optional ?? false,
     anchorHidden: extras.anchorHidden ?? false,
     viewDir: extras.viewDir ? new Vector3(...extras.viewDir).normalize() : null,
+    territoryChannels: extras.territoryChannels ?? [],
   }
 }
 
@@ -75,7 +85,11 @@ export function useHeartModel(targets: TargetInfo[]): {
     // one three renders flat-shaded facets. Compute smooth normals once per geometry.
     scene.traverse((o) => {
       const g = (o as Mesh).geometry
-      if ((o as Mesh).isMesh && !g.attributes.normal) g.computeVertexNormals()
+      if (!(o as Mesh).isMesh) return
+      if (!g.attributes.normal) g.computeVertexNormals()
+      // GLTFLoader lower-cases custom attributes (`_territory`); GLSL names are friendlier without the underscore.
+      if (g.attributes._territory && !g.attributes.territory)
+        g.setAttribute('territory', g.attributes._territory)
     })
     scene.updateWorldMatrix(true, true)
     const bindings: NodeBinding[] = []

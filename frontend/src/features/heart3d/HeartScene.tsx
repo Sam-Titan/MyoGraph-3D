@@ -1,22 +1,27 @@
 import { useProgress } from '@react-three/drei'
 import { Canvas, useFrame } from '@react-three/fiber'
-import { EffectComposer, Outline, Selection } from '@react-three/postprocessing'
 import { type RefObject, Suspense, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import type { TargetInfo } from '@/api/client'
 import { track } from '@/lib/analytics'
 import { overallTarget } from '@/lib/features'
+import { useAppStore } from '@/store/app'
 import { CameraRig } from './CameraRig'
 import { FrameBudget } from './FrameBudget'
 import { HeartModel } from './HeartModel'
 import { HoverTooltip } from './HoverTooltip'
-import { Labels } from './Labels'
+import { LabelChips } from './LabelChips'
+import { LabelSync } from './LabelSync'
 import { Legend } from './Legend'
+import type { LabelRegistry } from './labelRegistry'
+import { OrientationMarker, OrientationSync } from './OrientationMarker'
 import { Toolbar } from './Toolbar'
 import { useClickGuard } from './useClickGuard'
-import { useHeartModel } from './useHeartModel'
+import { IS_COMPACT, useHeartModel } from './useHeartModel'
 import { type Probabilities, useProbabilities, useThresholds } from './useProbabilities'
 import { focusTarget, useViewState } from './useViewState'
+import { bestVessels, presetDir, VIEW_PRESETS } from './viewPresets'
+import { SOFTWARE_GL } from './webgl'
 
 function ModelProgress() {
   const { active, progress } = useProgress()
@@ -51,16 +56,30 @@ function ReadySignal({
   return null
 }
 
+/** Explains the red/amber/green tint on the heart surface while a vessel is selected. */
+function SupplyCaption({ targets }: { targets: TargetInfo[] }) {
+  const selected = useAppStore((s) => s.selectedTarget)
+  const supply = useViewState((s) => s.supply)
+  const vessel = targets.find((t) => t.id === selected && t.role === 'vessel')
+  if (!supply || !vessel) return null
+  return (
+    <p className="pointer-events-none self-start rounded bg-slate-950/60 px-2 py-1 text-xs text-viewport-muted backdrop-blur-sm">
+      Shaded area: approximate region the {vessel.id} supplies
+    </p>
+  )
+}
+
+const DPR_STEPS = [IS_COMPACT ? 1.25 : 1.5, 1, 0.75] as const
+
 interface SceneProps {
   targets: TargetInfo[]
   probabilities: Probabilities
   isClick: () => boolean
-  effects: boolean
+  registry: LabelRegistry
   onDecline: () => void
-  onIncline: () => void
 }
 
-function Scene({ targets, probabilities, isClick, effects, onDecline, onIncline }: SceneProps) {
+function Scene({ targets, probabilities, isClick, registry, onDecline }: SceneProps) {
   const { bindings, missing } = useHeartModel(targets)
 
   // Hidden-by-default context nodes (read from the GLB extras) become toolbar toggles.
@@ -71,6 +90,18 @@ function Scene({ targets, probabilities, isClick, effects, onDecline, onIncline 
     useViewState.getState().setToggleableNodes(names)
   }, [bindings])
 
+  // View presets resolved from the nodes' viewDir extras (Front / Left side / Underside).
+  useEffect(() => {
+    useViewState.getState().setViewPresets(
+      VIEW_PRESETS.map((p) => ({
+        id: p.id,
+        label: p.label,
+        dir: presetDir(p, bindings),
+        best: bestVessels(p, bindings),
+      })),
+    )
+  }, [bindings])
+
   useEffect(() => {
     for (const t of missing) {
       console.error(`heart.glb has no node "${t.node}" for target ${t.id}`)
@@ -79,34 +110,26 @@ function Scene({ targets, probabilities, isClick, effects, onDecline, onIncline 
   }, [missing])
 
   return (
-    <Selection>
-      <ambientLight intensity={0.7} />
+    <>
+      <ambientLight intensity={0.6} />
       <directionalLight position={[3, 4, 5]} intensity={2} />
-      <directionalLight position={[-4, -1, 2]} intensity={0.6} />
-      <directionalLight position={[0, 3, -4]} intensity={0.8} />
+      <directionalLight position={[-4, -2, 3]} intensity={0.7} />
+      <directionalLight position={[0, 3, -4]} intensity={0.6} />
+      {/* soft cool rim from behind-left so the silhouette separates from the backdrop */}
+      <directionalLight position={[-4, 1, -3]} intensity={0.9} color="#9ec5ff" />
       <HeartModel bindings={bindings} probabilities={probabilities} isClick={isClick} />
-      <Labels bindings={bindings} probabilities={probabilities} />
+      <LabelSync bindings={bindings} registry={registry} />
       <CameraRig bindings={bindings} />
-      <FrameBudget onDecline={onDecline} onIncline={onIncline} />
-      {effects && (
-        <EffectComposer multisampling={0}>
-          <Outline
-            blur={false}
-            edgeStrength={4}
-            visibleEdgeColor={0xe6f4ff}
-            hiddenEdgeColor={0x5b8fb0}
-            pulseSpeed={0}
-          />
-        </EffectComposer>
-      )}
-    </Selection>
+      <FrameBudget onDecline={onDecline} />
+    </>
   )
 }
 
 /**
  * The R3F canvas + overlays. No-GPU settings (SPEC 6.3): frameloop="demand", dpr <= 1.5, no shadows,
- * flat tone mapping so scene colours match the legend. When the frame budget declines, the
- * postprocessing outline is unmounted and dpr stays at 1 (the emissive selection cue remains).
+ * flat tone mapping so scene colours match the legend. Outlines are drei inverted-hull meshes (no
+ * post-processing pass). Software GL starts without MSAA at dpr 1; every frame-budget decline
+ * lowers dpr one more step (1.5/1.25 -> 1 -> 0.75) and never raises it again.
  */
 export default function HeartScene({ targets }: { targets: TargetInfo[] }) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -114,31 +137,34 @@ export default function HeartScene({ targets }: { targets: TargetInfo[] }) {
   const probabilities = useProbabilities()
   const thresholds = useThresholds()
   const overall = overallTarget(targets)
-  const [effects, setEffects] = useState(true)
-  const [maxDpr, setMaxDpr] = useState(1.5)
-  const declines = useRef(0)
+  // Device-pixel-ratio ladder: each frame-budget decline steps down one rung and never back up.
+  const [rung, setRung] = useState(SOFTWARE_GL ? 1 : 0)
+  const maxDpr = DPR_STEPS[rung]
+  const registry = useRef<LabelRegistry>(new Map()).current
+  const onDecline = () => setRung((r) => Math.min(r + 1, DPR_STEPS.length - 1))
+  const tab = useAppStore((s) => s.tab)
 
-  const onDecline = () => {
-    declines.current += 1
-    setEffects(false)
-    setMaxDpr(1)
-  }
-  // dpr is never raised again; the outline returns only if we have declined fewer than twice.
-  const onIncline = () => {
-    if (declines.current < 2) setEffects(true)
-  }
+  // Esc resets the selection and view (Tab/Enter work natively on the label chips and key rows).
+  useEffect(() => {
+    if (tab !== 'workspace' || !overall) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !e.defaultPrevented) focusTarget(overall.id)
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [tab, overall])
 
   return (
     <div ref={containerRef} className="absolute inset-0">
       {/* Below xl the legend sits under the canvas instead of over the heart. */}
-      <div className="absolute inset-x-0 top-0 bottom-28 xl:bottom-0">
+      <div className="absolute inset-x-0 top-0 bottom-44 xl:bottom-0">
         <Canvas
           flat
           frameloop="demand"
-          dpr={[1, maxDpr]}
+          dpr={[Math.min(1, maxDpr), maxDpr]}
           shadows={false}
           camera={{ fov: 35, near: 0.05, far: 60, position: [0, 1.4, 4.2] }}
-          gl={{ antialias: true, powerPreference: 'low-power' }}
+          gl={{ antialias: !SOFTWARE_GL, powerPreference: 'low-power' }}
           // Empty space (not a drag) -> overall target + default view.
           onPointerMissed={() => {
             if (isClick() && overall) {
@@ -152,21 +178,24 @@ export default function HeartScene({ targets }: { targets: TargetInfo[] }) {
               targets={targets}
               probabilities={probabilities}
               isClick={isClick}
-              effects={effects}
+              registry={registry}
               onDecline={onDecline}
-              onIncline={onIncline}
             />
+            <OrientationSync container={containerRef} />
             <ReadySignal
               container={containerRef}
               hasPrediction={Object.keys(probabilities).length > 0}
             />
           </Suspense>
         </Canvas>
+        <LabelChips targets={targets} probabilities={probabilities} registry={registry} />
       </div>
       <div className="pointer-events-none absolute inset-0 z-20 flex flex-col justify-between p-3">
-        <div className="pointer-events-auto self-start">
+        <div className="pointer-events-auto flex items-start justify-between gap-2">
           <Toolbar overallId={overall?.id ?? null} />
+          <OrientationMarker />
         </div>
+        <SupplyCaption targets={targets} />
         <div className="pointer-events-auto">
           <Legend targets={targets} probabilities={probabilities} thresholds={thresholds} />
         </div>

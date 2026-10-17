@@ -58,8 +58,9 @@ async function frameAdvance(page, action) {
 // makes the element unclickable by pointer, so the screenshot captures the bug instead of timing out.
 const domClick = (locator) => locator.evaluate((el) => el.click())
 
+// The results table row (the 3D label chips and legend rows share the vessel name).
 const clickCard = (page, name) => () =>
-  page.getByRole('button', { name: new RegExp(`^${name}`) }).first().click()
+  page.locator('th[scope="row"] button').filter({ hasText: new RegExp(`^${name}`) }).first().click()
 
 const VIEWS = [
   { name: 'workspace-default', run: async () => {} },

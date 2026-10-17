@@ -11,6 +11,8 @@
       "**",
       "!node_modules",
       "!dist",
+      "!test-results",
+      "!playwright-report",
       "!src/api/schema.d.ts",
       "!openapi.json",
       "!components.json",

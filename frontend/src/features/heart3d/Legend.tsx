@@ -1,9 +1,11 @@
 import type { TargetInfo } from '@/api/client'
+import { track } from '@/lib/analytics'
 import { pct } from '@/lib/format'
 import { riskCss } from '@/lib/riskColor'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/store/app'
 import type { Probabilities } from './useProbabilities'
+import { focusTarget, useViewState } from './useViewState'
 
 const GRADIENT = `linear-gradient(to right, ${Array.from({ length: 11 }, (_, i) => `${riskCss(i / 10)} ${i * 10}%`).join(', ')})`
 
@@ -78,18 +80,37 @@ export function Legend({
           <span>100%</span>
         </div>
       </div>
-      <ul className="flex flex-wrap gap-x-4 gap-y-1">
+      <ul aria-label="Vessel key" className="space-y-0.5">
         {targets.map((t) => {
           const p = probabilities[t.id]
+          const vessel = t.role === 'vessel'
           return (
-            <li key={t.id} className="flex items-center gap-1.5 text-xs text-viewport-foreground">
-              <span
-                aria-hidden
-                className="size-2 rounded-full border border-white/30"
-                style={{ background: p === undefined ? 'transparent' : riskCss(p) }}
-              />
-              <span className="text-viewport-muted">{t.id}</span>
-              <span className="num font-medium">{pct(p)}</span>
+            <li key={t.id}>
+              <button
+                type="button"
+                aria-pressed={t.id === selected}
+                onClick={() => {
+                  focusTarget(t.id)
+                  track('target_selected', { target: t.id, source: 'list' })
+                }}
+                onPointerEnter={() => useViewState.getState().setRowHover(t.id)}
+                onPointerLeave={() => useViewState.getState().setRowHover(null)}
+                className={cn(
+                  'flex w-full items-center gap-2 rounded px-1 py-0.5 text-left text-xs text-viewport-foreground outline-none hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-sky-300',
+                  t.id === selected && 'bg-white/15',
+                )}
+              >
+                <span
+                  aria-hidden
+                  className="size-2 shrink-0 rounded-full border border-white/30"
+                  style={{ background: p === undefined ? 'transparent' : riskCss(p) }}
+                />
+                <span className="w-9 shrink-0 font-medium">{t.id}</span>
+                <span className="min-w-0 flex-1 truncate text-viewport-muted">
+                  {vessel ? (t.where ?? t.plain_label) : t.plain_label}
+                </span>
+                <span className="num font-medium">{pct(p)}</span>
+              </button>
             </li>
           )
         })}

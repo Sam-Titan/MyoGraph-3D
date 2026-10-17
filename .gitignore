@@ -60,3 +60,6 @@ desktop.ini
 #   backend/uv.lock, frontend/package-lock.json           reproducible installs
 # ----------------------------------------------------------------------
 .screenshots/
+
+frontend/test-results/
+frontend/playwright-report/

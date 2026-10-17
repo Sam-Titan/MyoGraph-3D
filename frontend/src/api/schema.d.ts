@@ -462,6 +462,8 @@ export interface components {
             role: "overall" | "vessel";
             /** Node */
             node: string;
+            /** Where */
+            where?: string | null;
         };
         /** TargetMetrics */
         TargetMetrics: {

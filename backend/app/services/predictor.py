@@ -79,6 +79,7 @@ class Predictor:
         self.thresholds = {t: float(calibration[t]["threshold"]) for t in self.schema.targets}
         nodes = anatomy_nodes()
         self.nodes = {t: nodes[t] for t in self.schema.targets}
+        self.where = {n.target: n.where for n in load_anatomy().nodes if n.target and n.where}
         self.presets = [Preset(**p) for p in _read("presets.json")]
         self.metrics = MetricsResponse(
             **_read("metrics.json"),
@@ -99,6 +100,7 @@ class Predictor:
                     plain_label=v.plain_label or v.label,
                     role=v.role,
                     node=self.nodes[t],
+                    where=self.where.get(t),
                 )
                 for t, v in s.targets.items()
             ],

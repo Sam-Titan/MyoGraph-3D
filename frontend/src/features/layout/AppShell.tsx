@@ -65,7 +65,8 @@ export function AppShell() {
           <WorkspaceLayout />
         </TabsContent>
         <TabsContent value="performance" keepMounted className={`${PANEL} overflow-y-auto`}>
-          <PerformancePanel />
+          {/* Charts measure their container: mounting them while the tab is hidden gives 0x0 (Recharts warns). */}
+          {tab === 'performance' && <PerformancePanel />}
         </TabsContent>
         <TabsContent value="about" keepMounted className={`${PANEL} overflow-y-auto`}>
           <AboutPanel />
