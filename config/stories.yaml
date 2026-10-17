@@ -20,7 +20,7 @@
 # `when`   above_threshold:ID  below_threshold:ID  well_above_threshold:ID  well_below_threshold:ID  (well = 0.25 beyond)
 #          has_range:ID  (the range loaded; sentences with {range:ID} need it so the step still reads without ranges)
 #          range_crosses_threshold:ID  range_clear_of_threshold:ID  (the range straddles the threshold / does not)
-#          agrees:ID  disagrees:ID (model verdict vs real result)  all_agree  any_disagrees
+#          agrees:ID  disagrees:ID (model label vs real result)  all_agree  any_disagrees
 # Appended to every step that renders a {factors_*} list.
 factor_note: >-
   These are patterns the model found in {n_patients} patients who were already referred for an angiogram, not
@@ -222,7 +222,7 @@ stories:
             when: [well_below_threshold:CAD]
           - text: >-
               The whole range sits on one side of the decision threshold, so training on different patients would
-              probably not have changed this verdict.
+              probably not have changed which side of the cut-off it falls on.
             when: [range_clear_of_threshold:CAD]
           - text: But the range crosses the decision threshold, so the model is close to undecided on this one.
             when: [range_crosses_threshold:CAD]

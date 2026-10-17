@@ -1,0 +1,10 @@
+# Plain-language wording shown in the UI (Phase 16.5c+). Validated by backend/ml/display.py and served by
+# GET /api/display, so the frontend never hard-codes these sentences. Numbers are never typed here: placeholders
+# like {p} are filled from the API or metrics.json.
+
+# The main label for every target compares the POINT estimate with that target's own cut-off (threshold).
+# "uncertain" is appended when the range crosses that cut-off.
+threshold_labels:
+  above: "Above the model's cut-off"
+  below: "Below the model's cut-off"
+  uncertain_suffix: "uncertain"

@@ -161,10 +161,10 @@ def test_validator_rejects_factor_not_in_selected_list(
 
 
 def _stated(facts: dict[str, Any]) -> str:
-    """Every target with its percentage, range and verdict word."""
+    """Every target with its percentage, range, above/below word and uncertain flag."""
     return ", ".join(
         f"{t['probability_percent']}% (range {t['range_low_percent']}–{t['range_high_percent']}%, "
-        f"{t['verdict']})"
+        f"{t['side']} the cut-off{', uncertain' if t['uncertain'] else ''})"
         for t in facts["targets"]
     )
 
@@ -173,7 +173,7 @@ def _good_text(client: TestClient, values: dict[str, Any]) -> str:
     return f"The model estimates {_stated(_facts(client, values))}. {S.DISCLAIMER}"
 
 
-def test_validator_requires_ranges_and_verdicts(client: TestClient, values: dict[str, Any]) -> None:
+def test_validator_requires_ranges_and_sides(client: TestClient, values: dict[str, Any]) -> None:
     facts = _facts(client, values)
     labels: frozenset[str] = frozenset()
     pct_only = ", ".join(f"{t['probability_percent']}%" for t in facts["targets"])
@@ -185,10 +185,23 @@ def test_validator_requires_ranges_and_verdicts(client: TestClient, values: dict
     dropped = _good_text(client, values).replace(f"{t0['range_low_percent']}–", "", 1)
     if f"{t0['range_low_percent']}" not in dropped.split(S.DISCLAIMER)[0].replace("%", " ").split():
         assert not S.validate_llm_text(dropped, facts, labels)
-    # A verdict word the facts never give fails.
-    other = next(w for w in ("likely", "unlikely", "uncertain") if w not in _verdicts(facts))
-    swapped = _good_text(client, values).replace(t0["verdict"], other, 1)
-    assert not S.validate_llm_text(swapped, facts, labels)
+    # A side word the facts never give fails.
+    sides = _sides(facts)
+    flipped = {"above": "below", "below": "above"}
+    if len(sides) == 1:
+        swapped = _good_text(client, values).replace(t0["side"], flipped[t0["side"]], 1)
+        assert not S.validate_llm_text(swapped, facts, labels)
+    # "uncertain" is rejected when no target is uncertain, and required when one is.
+    calm = [dict(t, uncertain=False) for t in facts["targets"]]
+    calm_facts = {**facts, "targets": calm}
+    with_word = _good_text(client, values) + ""
+    if any(t["uncertain"] for t in facts["targets"]):
+        assert not S.validate_llm_text(with_word, calm_facts, labels)
+        stripped = with_word.replace(", uncertain", "")
+        assert not S.validate_llm_text(stripped, facts, labels)
+    else:
+        extra = with_word.replace("the cut-off)", "the cut-off, uncertain)", 1)
+        assert not S.validate_llm_text(extra, facts, labels)
 
 
 def test_validator_without_ranges_in_facts_is_unchanged(
@@ -196,15 +209,15 @@ def test_validator_without_ranges_in_facts_is_unchanged(
 ) -> None:
     facts = _facts(client, values)
     for t in facts["targets"]:
-        for k in ("range_low_percent", "range_high_percent", "range_level_percent", "verdict"):
+        for k in ("range_low_percent", "range_high_percent", "range_level_percent", "side"):
             t.pop(k)
     pcts = ", ".join(f"{t['probability_percent']}%" for t in facts["targets"])
     text = f"The model estimates {pcts}."
     assert S.validate_llm_text(f"{text} {S.DISCLAIMER}", facts, frozenset())
 
 
-def _verdicts(facts: dict[str, Any]) -> set[str]:
-    return {t["verdict"] for t in facts["targets"]}
+def _sides(facts: dict[str, Any]) -> set[str]:
+    return {t["side"] for t in facts["targets"]}
 
 
 def _resp(status: int, content: str = "") -> httpx.Response:

@@ -35,12 +35,13 @@ SYSTEM_PROMPT = (
     "Say 'the model estimates'. No diagnosis, no treatment, no medication or lifestyle advice, "
     "no instructions to the reader. Structure, in this order: "
     "(1) one or two sentences with the overall target's probability in percent, its range, and "
-    "its verdict (likely, unlikely or uncertain: uncertain means the range crosses the decision "
-    "threshold); "
-    "(2) one sentence with each remaining target's probability in percent, range and verdict, in "
-    "the order given; always state every percentage; the range only describes how much the "
-    "estimate depends on which patients the model learned from, never call it the patient's "
-    "true risk or a guarantee; "
+    "whether it is above or below the model's cut-off (decision threshold), and, only when the "
+    "facts say uncertain is true, that it is uncertain because the range crosses the cut-off; "
+    "(2) one sentence with each remaining target's probability in percent, range and "
+    "above/below word, in the order given; always state every percentage; say above or below the "
+    "cut-off for each, and uncertain only for targets whose facts say uncertain is true; the "
+    "range only describes how much the estimate depends on which patients the model learned "
+    "from, never call it the patient's true risk or a guarantee; "
     "(3) one sentence naming the selected target (by its label, as given) and its main factors, "
     "using ONLY the factors listed for that target in facts.factors, never another target's; "
     "(4) only if outside_training_range_warnings is not empty, one sentence saying some values "
@@ -48,14 +49,14 @@ SYSTEM_PROMPT = (
     f"exactly this sentence: {DISCLAIMER}\n"
     "Style: say 'probability of <condition>', never 'probability that X is likely'; write "
     "percentages like 75% (no space); no meta phrases such as 'the selected target is'. "
-    "Match the tone and structure of this example, but take the target names, verdict words "
-    "(above/below, likely/unlikely) and order from the facts, never from the example:\n"
+    "Match the tone and structure of this example, but take the target names, above/below words, "
+    "uncertain flags and order from the facts, never from the example:\n"
     "EXAMPLE: The model estimates a {overall_pct} probability of coronary artery disease for this "
-    "patient (range {overall_range}); the whole range is at or above its {overall_thr} decision "
-    "threshold. For the individual arteries, it estimates {lad_pct} (range {lad_range}) for the "
-    "LAD (likely), {lcx_pct} (range {lcx_range}) for the LCX (unlikely) and {rca_pct} (range "
-    "{rca_range}) for the RCA (uncertain). For {selected_label}, the factors that raised the "
-    "estimate most were "
+    "patient (range {overall_range}), above the model's {overall_thr} cut-off. For the individual "
+    "arteries, it estimates {lad_pct} (range {lad_range}) for the LAD (above the cut-off), "
+    "{lcx_pct} (range {lcx_range}) for the LCX (below the cut-off) and {rca_pct} (range "
+    "{rca_range}) for the RCA (below the cut-off, uncertain). For {selected_label}, the factors "
+    "that raised the estimate most were "
     "{up_factor_1} and {up_factor_2}, while {down_factor_1} lowered it. {disclaimer}"
 )
 _BANNED = re.compile(
@@ -101,7 +102,8 @@ def build_facts(
                 "range_low_percent": _pct(rng.interval.lo),
                 "range_high_percent": _pct(rng.interval.hi),
                 "range_level_percent": _pct(rng.interval.level),
-                "verdict": rng.verdict,
+                "side": rng.side,  # point estimate vs the cut-off: "above" or "below"
+                "uncertain": rng.uncertain,  # the range crosses the cut-off
             }
         )
     blocks: list[dict[str, Any]] = []
@@ -135,6 +137,10 @@ def _range(t: dict[str, Any]) -> str:
     return f"{t['range_low_percent']}–{t['range_high_percent']}%"
 
 
+def _side(t: dict[str, Any]) -> str:
+    return f"{t['side']} the cut-off" + (", uncertain" if t["uncertain"] else "")
+
+
 def _join(items: list[str]) -> str:
     if len(items) <= 2:
         return " and ".join(items)
@@ -150,19 +156,16 @@ def template_summary(facts: dict[str, Any]) -> str:
     block = next(b for b in facts["factors"] if b["target_id"] == chosen["id"])
     overall_pct = overall["probability_percent"]
     thr = overall["threshold_percent"]
-    where = {
-        "likely": f"The whole range is at or above its {thr}% decision threshold.",
-        "unlikely": f"The whole range is below its {thr}% decision threshold.",
-        "uncertain": f"The range crosses its {thr}% decision threshold, so the verdict is "
-        "uncertain.",
-    }[overall["verdict"]]
+    where = f"This is {overall['side']} the model's {thr}% cut-off."
+    if overall["uncertain"]:
+        where += " The range crosses the cut-off, so this is uncertain."
     s = [
         f"The model estimates {_a(overall_pct)} {overall_pct}% probability "
         f"(range {_range(overall)}) for {overall['label']}. {where}"
     ]
     if others:
         parts = [
-            f"{t['label']} {t['probability_percent']}% (range {_range(t)}, {t['verdict']})"
+            f"{t['label']} {t['probability_percent']}% (range {_range(t)}, {_side(t)})"
             for t in others
         ]
         s.append(f"For the individual vessels it estimates {_join(parts)}.")
@@ -220,14 +223,14 @@ def _request_groq(facts: dict[str, Any], settings: GroqSettings) -> str:
     return _A_BEFORE_EIGHT.sub(r"\1n ", text)
 
 
-_VERDICT_WORD = re.compile(r"\b(likely|unlikely|uncertain)\b", re.IGNORECASE)
+_SIDE_WORD = re.compile(r"\b(above|below)\b", re.IGNORECASE)
+_UNCERTAIN_WORD = re.compile(r"\buncertain\b", re.IGNORECASE)
 
 
-def _states_ranges_and_verdicts(body: str, facts: dict[str, Any]) -> bool:
-    """When the facts carry ranges: every range bound is stated, every verdict word used is one the
-    facts give (never another), and each verdict that occurs in the facts is stated."""
+def _states_ranges_and_sides(body: str, facts: dict[str, Any]) -> bool:
+    """When the facts carry ranges: every range bound is stated, the above/below words used are
+    exactly those the facts give, and "uncertain" appears only if some target is uncertain."""
     present = set(_NUMBER.findall(body))
-    verdicts = {t["verdict"] for t in facts["targets"] if "verdict" in t}
     for t in facts["targets"]:
         if (
             "range_low_percent" in t
@@ -238,10 +241,12 @@ def _states_ranges_and_verdicts(body: str, facts: dict[str, Any]) -> bool:
             <= present
         ):
             return False
-    if not verdicts:
+    sides = {t["side"] for t in facts["targets"] if "side" in t}
+    if not sides:
         return True
-    used = {w.lower() for w in _VERDICT_WORD.findall(body)}
-    return used == verdicts
+    used = {w.lower() for w in _SIDE_WORD.findall(body)}
+    says_uncertain = bool(_UNCERTAIN_WORD.search(body))
+    return used == sides and says_uncertain == any(t.get("uncertain") for t in facts["targets"])
 
 
 def validate_llm_text(
@@ -257,7 +262,7 @@ def validate_llm_text(
     present = set(_NUMBER.findall(body))
     if not all(str(t["probability_percent"]) in present for t in facts["targets"]):
         return False  # every target's percentage must be stated
-    if not _states_ranges_and_verdicts(body, facts):
+    if not _states_ranges_and_sides(body, facts):
         return False
     allowed = set(_NUMBER.findall(json.dumps(facts, ensure_ascii=False)))
     if not all(n in allowed for n in _NUMBER.findall(body)):

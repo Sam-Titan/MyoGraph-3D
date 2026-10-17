@@ -17,6 +17,7 @@ from app.schemas import (
 from app.services.predictor import Predictor
 from app.services.summary import build_facts, summarise
 from app.services.validation import validate_values
+from ml.display import DisplayConfig, load_display
 from ml.stories import Stories
 
 router = APIRouter(prefix="/api")
@@ -50,6 +51,11 @@ def presets(predictor: Pred) -> list[Preset]:
 @router.get("/stories", response_model=Stories)
 def stories(predictor: Pred) -> Stories:
     return predictor.stories
+
+
+@router.get("/display", response_model=DisplayConfig)
+def display() -> DisplayConfig:
+    return load_display()
 
 
 @router.post("/predict", response_model=PredictResponse)

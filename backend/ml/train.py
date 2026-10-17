@@ -127,7 +127,7 @@ def main() -> None:
         started = time.perf_counter()
         replicates = fit_replicates(model, X_train, y_tr, unc_cfg, ti)
         replicates.save(replicate_path(t))
-        unc_report[t] = holdout_report(replicates, X_test, p_te, unc_cfg.level)
+        unc_report[t] = holdout_report(replicates, X_test, p_te, unc_cfg.level, cal.threshold)
         log.info(
             "%s: %d bootstrap replicates in %.0f s, %.1f MB",
             t,

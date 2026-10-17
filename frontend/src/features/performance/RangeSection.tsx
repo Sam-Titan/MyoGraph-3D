@@ -38,6 +38,17 @@ export function RangeSection({ metrics }: { metrics: MetricsResponse }) {
           </tbody>
         </table>
       </div>
+      <ul className="space-y-0.5 text-sm" data-testid="uncertain-share">
+        {targetIds(metrics).map((id) => (
+          <li key={id}>
+            The range crosses the cut-off for{' '}
+            <span className="num">
+              {u.targets[id].n_uncertain} of {u.targets[id].n}
+            </span>{' '}
+            {id} hold-out patients.
+          </li>
+        ))}
+      </ul>
       <p className="text-xs text-muted-foreground">
         Each range is the middle {pct(u.level)} of {u.n_models} retrained models; the shown estimate
         comes from the model trained on all training patients, so it can occasionally sit just

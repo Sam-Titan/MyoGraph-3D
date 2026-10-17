@@ -1,6 +1,6 @@
 import { Info } from 'lucide-react'
 
-/** SPEC 6.2: overall CAD and the vessel models are separate and can give conflicting verdicts. */
+/** SPEC 6.2: overall CAD and the vessel models are separate and can give conflicting labels. */
 export function DisagreementNote() {
   return (
     <p
@@ -17,8 +17,8 @@ export function DisagreementNote() {
 }
 
 /**
- * Tuned verdicts conflict: overall says unlikely but some vessel likely, or overall says likely
- * but no vessel does. Uses the same `positive` flags the cards show.
+ * Labels conflict: overall is below its cut-off but some vessel is above, or overall is above
+ * but no vessel is. Uses the same `positive` flags the cards show.
  */
 export function targetsDisagree(overallPositive: boolean, vesselPositives: boolean[]): boolean {
   return overallPositive !== vesselPositives.some(Boolean)

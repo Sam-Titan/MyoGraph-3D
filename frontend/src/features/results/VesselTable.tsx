@@ -5,7 +5,7 @@ import { pct, pctRange } from '@/lib/format'
 import { riskCss } from '@/lib/riskColor'
 import { cn } from '@/lib/utils'
 import { TweenedPercent } from './TweenedPercent'
-import { VERDICT_LABEL } from './verdict'
+import { useThresholdLabel } from './verdict'
 
 type Prediction = components['schemas']['TargetPrediction']
 
@@ -49,10 +49,11 @@ function EstimateBar({
   )
 }
 
-/** Compact per-vessel table: estimate, the model's verdict, and (unedited preset) the cath result. */
+/** Compact per-vessel table: estimate, where it sits against the model's cut-off, and (unedited preset) the cath result. */
 export function VesselTable({ vessels, predictions, ranges, truth, selected, onSelect }: Props) {
   const setRowHover = useViewState((s) => s.setRowHover)
   const hovered3d = useViewState((s) => s.hover?.id)
+  const thresholdLabel = useThresholdLabel()
   return (
     <table className="w-full table-fixed border-collapse text-sm">
       <colgroup>
@@ -133,7 +134,7 @@ export function VesselTable({ vessels, predictions, ranges, truth, selected, onS
                   </span>
                 )}
               </td>
-              <td className="px-1 py-2 align-top">{range ? VERDICT_LABEL[range.verdict] : '—'}</td>
+              <td className="px-1 py-2 align-top">{range ? thresholdLabel(range) : '—'}</td>
               <td className="px-1 py-2 align-top">
                 {actual === undefined ? (
                   <span className="t-meta">—</span>

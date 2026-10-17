@@ -102,8 +102,10 @@ class TargetPrediction(BaseModel):
 
 class TargetRange(BaseModel):
     interval: Interval
-    #: From the range vs the threshold: likely if lo >= threshold, unlikely if hi < threshold.
-    verdict: Literal["likely", "unlikely", "uncertain"]
+    #: Main label: the POINT estimate against the target's threshold (at/above = "above").
+    side: Literal["above", "below"]
+    #: The range crosses the threshold (lo < threshold <= hi): shown as an "uncertain" qualifier.
+    uncertain: bool
 
 
 class IntervalsResponse(BaseModel):
@@ -255,6 +257,8 @@ class UncertaintyTarget(BaseModel):
     n_outside: int
     n: int
     outside_fraction: float
+    n_uncertain: int  # hold-out patients whose range crosses the threshold
+    uncertain_fraction: float
 
 
 class UncertaintyMetrics(BaseModel):

@@ -46,8 +46,8 @@ const interval = (lo: number, hi: number) => ({
   n_models: 50,
 })
 const ranges = {
-  CAD: { interval: interval(0.9, 1), verdict: 'likely' },
-  AAA: { interval: interval(0.05, 0.55), verdict: 'uncertain' },
+  CAD: { interval: interval(0.9, 1), side: 'above', uncertain: false },
+  AAA: { interval: interval(0.05, 0.55), side: 'below', uncertain: true },
 } as StoryContext['ranges']
 
 const ctx = (truth: Record<string, boolean> | null): StoryContext => ({

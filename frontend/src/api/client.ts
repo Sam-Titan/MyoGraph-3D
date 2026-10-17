@@ -13,7 +13,7 @@ export type PredictRequest = Schemas['PredictRequest']
 export type PredictResponse = Schemas['PredictResponse']
 export type IntervalsResponse = Schemas['IntervalsResponse']
 export type TargetRange = Schemas['TargetRange']
-export type Verdict = TargetRange['verdict']
+export type DisplayConfig = Schemas['DisplayConfig']
 export type SummaryRequest = Schemas['SummaryRequest']
 export type SummaryResponse = Schemas['SummaryResponse']
 export type MetricsResponse = Schemas['MetricsResponse']
@@ -48,6 +48,7 @@ export const getFeatures = (signal?: AbortSignal) =>
   apiFetch<FeaturesResponse>('/features', { signal })
 export const getPresets = (signal?: AbortSignal) => apiFetch<Preset[]>('/presets', { signal })
 export const getStories = (signal?: AbortSignal) => apiFetch<Stories>('/stories', { signal })
+export const getDisplay = (signal?: AbortSignal) => apiFetch<DisplayConfig>('/display', { signal })
 export const getMetrics = (signal?: AbortSignal) =>
   apiFetch<MetricsResponse>('/metrics', { signal })
 

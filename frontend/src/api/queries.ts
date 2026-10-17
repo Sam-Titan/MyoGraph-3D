@@ -1,6 +1,7 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import {
   ApiError,
+  getDisplay,
   getFeatures,
   getHealth,
   getMetrics,
@@ -18,6 +19,7 @@ export const queryKeys = {
   presets: ['presets'] as const,
   metrics: ['metrics'] as const,
   stories: ['stories'] as const,
+  display: ['display'] as const,
   summary: (values: PredictRequest['values'], selected: string | null) =>
     ['summary', values, selected] as const,
   predict: (values: PredictRequest['values']) => ['predict', values] as const,
@@ -44,6 +46,14 @@ export function usePresets() {
   return useQuery({
     queryKey: queryKeys.presets,
     queryFn: ({ signal }) => getPresets(signal),
+    staleTime: Number.POSITIVE_INFINITY,
+  })
+}
+
+export function useDisplay() {
+  return useQuery({
+    queryKey: queryKeys.display,
+    queryFn: ({ signal }) => getDisplay(signal),
     staleTime: Number.POSITIVE_INFINITY,
   })
 }

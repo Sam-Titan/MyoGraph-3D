@@ -13,7 +13,7 @@ export const WELL_MARGIN = 0.25
 export interface StoryContext {
   targets: TargetInfo[]
   response: PredictResponse
-  /** Ranges and range verdicts for the same patient (POST /api/intervals). */
+  /** Ranges, side and uncertain flag for the same patient (POST /api/intervals). */
   ranges: IntervalsResponse['targets']
   /** The preset's real catheterisation result; only read once the step reveals it. */
   truth: Record<string, boolean> | null
@@ -46,11 +46,9 @@ export function evalCondition(cond: string, ctx: StoryContext): boolean {
     case 'has_range':
       return ctx.ranges[id ?? ''] !== undefined
     case 'range_crosses_threshold':
-      return ctx.ranges[id ?? '']?.verdict === 'uncertain'
+      return ctx.ranges[id ?? '']?.uncertain === true
     case 'range_clear_of_threshold':
-      return (
-        ctx.ranges[id ?? '']?.verdict !== undefined && ctx.ranges[id ?? '']?.verdict !== 'uncertain'
-      )
+      return ctx.ranges[id ?? '']?.uncertain === false
     case 'agrees':
       return pred !== undefined && real !== undefined && Boolean(pred.positive) === real
     case 'disagrees':

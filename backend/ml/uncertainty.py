@@ -141,23 +141,28 @@ def fit_replicates(
 
 
 def holdout_report(
-    rs: ReplicateSet, X_test: pd.DataFrame, p_test: np.ndarray, level: float
+    rs: ReplicateSet, X_test: pd.DataFrame, p_test: np.ndarray, level: float, threshold: float
 ) -> dict[str, float | int]:
-    """Mean range width, and how often the point estimate lies outside its own range (hold-out)."""
+    """Hold-out range width, how often the point estimate lies outside its own range, and how often
+    the range crosses the threshold (the "uncertain" share)."""
     lo, hi = rs.interval(X_test, level)
     outside = (p_test < lo) | (p_test > hi)
+    uncertain = (lo < threshold) & (threshold <= hi)
     return {
         "mean_width": float(np.mean(hi - lo)),
         "n_outside": int(outside.sum()),
         "n": len(p_test),
         "outside_fraction": float(outside.mean()),
+        "n_uncertain": int(uncertain.sum()),
+        "uncertain_fraction": float(uncertain.mean()),
     }
 
 
-def verdict(lo: float, hi: float, threshold: float) -> Literal["likely", "unlikely", "uncertain"]:
-    """Likely: whole range at/above the threshold. Unlikely: all below. Otherwise Uncertain."""
-    if lo >= threshold:
-        return "likely"
-    if hi < threshold:
-        return "unlikely"
-    return "uncertain"
+def side(p: float, threshold: float) -> Literal["above", "below"]:
+    """The point estimate against the target's own threshold (the main label)."""
+    return "above" if p >= threshold else "below"
+
+
+def crosses(lo: float, hi: float, threshold: float) -> bool:
+    """The range straddles the threshold: some replicates are below it and some at or above it."""
+    return lo < threshold <= hi

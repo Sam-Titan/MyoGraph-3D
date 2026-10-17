@@ -72,6 +72,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/display": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Display */
+        get: operations["display_api_display_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/predict": {
         parameters: {
             query?: never;
@@ -236,6 +253,10 @@ export interface components {
             tuned: {
                 [key: string]: components["schemas"]["MetricStat"];
             };
+        };
+        /** DisplayConfig */
+        DisplayConfig: {
+            threshold_labels: components["schemas"]["ThresholdLabels"];
         };
         /** FeatureInfo */
         FeatureInfo: {
@@ -628,10 +649,12 @@ export interface components {
         TargetRange: {
             interval: components["schemas"]["Interval"];
             /**
-             * Verdict
+             * Side
              * @enum {string}
              */
-            verdict: "likely" | "unlikely" | "uncertain";
+            side: "above" | "below";
+            /** Uncertain */
+            uncertain: boolean;
         };
         /** TestMetrics */
         TestMetrics: {
@@ -654,6 +677,15 @@ export interface components {
             default: number;
             /** Tuned */
             tuned: number;
+        };
+        /** ThresholdLabels */
+        ThresholdLabels: {
+            /** Above */
+            above: string;
+            /** Below */
+            below: string;
+            /** Uncertain Suffix */
+            uncertain_suffix: string;
         };
         /** UncertaintyMetrics */
         UncertaintyMetrics: {
@@ -678,6 +710,10 @@ export interface components {
             n: number;
             /** Outside Fraction */
             outside_fraction: number;
+            /** N Uncertain */
+            n_uncertain: number;
+            /** Uncertain Fraction */
+            uncertain_fraction: number;
         };
         /** ValidationError */
         ValidationError: {
@@ -777,6 +813,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Stories"];
+                };
+            };
+        };
+    };
+    display_api_display_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DisplayConfig"];
                 };
             };
         };

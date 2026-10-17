@@ -21,9 +21,10 @@ from ml.uncertainty import (
     ReplicateSet,
     UncertaintyConfig,
     bootstrap_split,
+    crosses,
     fit_replicates,
     load_uncertainty,
-    verdict,
+    side,
 )
 
 SCHEMA = load_schema()
@@ -55,11 +56,13 @@ def test_config_validates_and_rejects_bad_values() -> None:
         UncertaintyConfig.model_validate({**RAW, "extra": 1})
 
 
-def test_verdict_from_range_and_threshold() -> None:
-    assert verdict(0.5, 0.9, 0.5) == "likely"  # lo == threshold counts as at or above
-    assert verdict(0.2, 0.49, 0.5) == "unlikely"
-    assert verdict(0.2, 0.5, 0.5) == "uncertain"  # hi == threshold is not below it
-    assert verdict(0.4, 0.6, 0.5) == "uncertain"
+def test_side_and_crosses() -> None:
+    assert side(0.5, 0.5) == "above"  # at the threshold counts as above
+    assert side(0.49, 0.5) == "below"
+    assert not crosses(0.5, 0.9, 0.5)  # lo == threshold: the whole range is at or above
+    assert not crosses(0.2, 0.49, 0.5)  # all below
+    assert crosses(0.2, 0.5, 0.5)  # hi == threshold is not below it
+    assert crosses(0.4, 0.6, 0.5)
 
 
 def test_bootstrap_split_is_stratified_and_disjoint() -> None:
@@ -84,7 +87,8 @@ def test_intervals_endpoint_one_per_target(
                 CFG.method,
                 CFG.n_models,
             )
-            assert r["verdict"] == verdict(iv["lo"], iv["hi"], pred[t]["threshold"])
+            assert r["side"] == ("above" if pred[t]["positive"] else "below")
+            assert r["uncertain"] == crosses(iv["lo"], iv["hi"], pred[t]["threshold"])
 
 
 def test_intervals_rejects_invalid_input(client: TestClient) -> None:
@@ -154,3 +158,17 @@ def test_intervals_cache_is_bounded(client: TestClient, presets: list[dict[str, 
     for i in range(mod.INTERVALS_CACHE_SIZE + 5):
         predictor.intervals({**base, "age": 30 + i % 50, "weight": 50 + i // 50})
     assert len(predictor._intervals_cache) <= mod.INTERVALS_CACHE_SIZE
+
+
+def test_metrics_report_uncertain_share(client: TestClient) -> None:
+    unc = client.get("/api/metrics").json()["uncertainty"]["targets"]
+    assert set(unc) == set(SCHEMA.targets)
+    for u in unc.values():
+        assert 0 <= u["n_uncertain"] <= u["n"]
+        assert u["uncertain_fraction"] == pytest.approx(u["n_uncertain"] / u["n"], abs=1e-4)
+
+
+def test_display_endpoint_serves_threshold_labels(client: TestClient) -> None:
+    labels = client.get("/api/display").json()["threshold_labels"]
+    assert set(labels) == {"above", "below", "uncertain_suffix"}
+    assert all(isinstance(v, str) and v for v in labels.values())

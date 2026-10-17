@@ -17,7 +17,7 @@ export function useResults() {
   return {
     features,
     predict,
-    /** Ranges and range-based verdicts; arrive after the point estimate. */
+    /** Ranges with the above/below side and uncertain flag; arrive after the point estimate. */
     ranges: intervals.data?.targets,
     rangesStale:
       intervals.isFetching || intervals.isPlaceholderData || intervalValues !== predictValues,

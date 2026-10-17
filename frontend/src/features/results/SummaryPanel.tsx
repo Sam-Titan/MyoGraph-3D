@@ -48,7 +48,7 @@ export function SummaryPanel() {
           </p>
           {data.source === 'groq' && (
             <p className="text-xs text-muted-foreground">
-              The model’s results (percentages, verdicts and the top contributing factors with their
+              The model’s results (percentages, ranges and the top contributing factors with their
               entered values) are sent to Groq to word this summary. Nothing else is sent.
             </p>
           )}

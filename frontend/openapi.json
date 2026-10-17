@@ -81,6 +81,24 @@
         }
       }
     },
+    "/api/display": {
+      "get": {
+        "summary": "Display",
+        "operationId": "display_api_display_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisplayConfig"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/predict": {
       "post": {
         "summary": "Predict",
@@ -471,6 +489,19 @@
           "tuned"
         ],
         "title": "CvMetrics"
+      },
+      "DisplayConfig": {
+        "properties": {
+          "threshold_labels": {
+            "$ref": "#/components/schemas/ThresholdLabels"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "threshold_labels"
+        ],
+        "title": "DisplayConfig"
       },
       "FeatureInfo": {
         "properties": {
@@ -1566,20 +1597,24 @@
           "interval": {
             "$ref": "#/components/schemas/Interval"
           },
-          "verdict": {
+          "side": {
             "type": "string",
             "enum": [
-              "likely",
-              "unlikely",
-              "uncertain"
+              "above",
+              "below"
             ],
-            "title": "Verdict"
+            "title": "Side"
+          },
+          "uncertain": {
+            "type": "boolean",
+            "title": "Uncertain"
           }
         },
         "type": "object",
         "required": [
           "interval",
-          "verdict"
+          "side",
+          "uncertain"
         ],
         "title": "TargetRange"
       },
@@ -1635,6 +1670,30 @@
         ],
         "title": "ThresholdInfo"
       },
+      "ThresholdLabels": {
+        "properties": {
+          "above": {
+            "type": "string",
+            "title": "Above"
+          },
+          "below": {
+            "type": "string",
+            "title": "Below"
+          },
+          "uncertain_suffix": {
+            "type": "string",
+            "title": "Uncertain Suffix"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "above",
+          "below",
+          "uncertain_suffix"
+        ],
+        "title": "ThresholdLabels"
+      },
       "UncertaintyMetrics": {
         "properties": {
           "method": {
@@ -1683,6 +1742,14 @@
           "outside_fraction": {
             "type": "number",
             "title": "Outside Fraction"
+          },
+          "n_uncertain": {
+            "type": "integer",
+            "title": "N Uncertain"
+          },
+          "uncertain_fraction": {
+            "type": "number",
+            "title": "Uncertain Fraction"
           }
         },
         "type": "object",
@@ -1690,7 +1757,9 @@
           "mean_width",
           "n_outside",
           "n",
-          "outside_fraction"
+          "outside_fraction",
+          "n_uncertain",
+          "uncertain_fraction"
         ],
         "title": "UncertaintyTarget"
       },

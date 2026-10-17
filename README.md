@@ -146,7 +146,7 @@ GROQ_MODEL=            # optional; leave empty for the default
 ```
 
 Restart the API (`docker compose up -d` again, or restart `make dev`). Only the summary facts
-(percentages, verdicts, top factors) are sent to Groq. `.env` is git-ignored; never commit it.
+(percentages, ranges, top factors) are sent to Groq. `.env` is git-ignored; never commit it.
 
 ### Analytics (optional)
 

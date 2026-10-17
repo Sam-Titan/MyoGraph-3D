@@ -1884,25 +1884,33 @@
         "mean_width": 0.27955,
         "n": 61,
         "n_outside": 0,
-        "outside_fraction": 0.0
+        "n_uncertain": 17,
+        "outside_fraction": 0.0,
+        "uncertain_fraction": 0.278689
       },
       "LAD": {
         "mean_width": 0.301965,
         "n": 61,
         "n_outside": 0,
-        "outside_fraction": 0.0
+        "n_uncertain": 27,
+        "outside_fraction": 0.0,
+        "uncertain_fraction": 0.442623
       },
       "LCX": {
         "mean_width": 0.295211,
         "n": 61,
         "n_outside": 3,
-        "outside_fraction": 0.04918
+        "n_uncertain": 24,
+        "outside_fraction": 0.04918,
+        "uncertain_fraction": 0.393443
       },
       "RCA": {
         "mean_width": 0.268414,
         "n": 61,
         "n_outside": 1,
-        "outside_fraction": 0.016393
+        "n_uncertain": 38,
+        "outside_fraction": 0.016393,
+        "uncertain_fraction": 0.622951
       }
     }
   }

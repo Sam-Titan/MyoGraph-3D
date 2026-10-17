@@ -1,11 +1,12 @@
 import type { TargetInfo, TargetRange } from '@/api/client'
+import { useDisplay } from '@/api/queries'
 import type { components } from '@/api/schema'
 import { useViewState } from '@/features/heart3d/useViewState'
 import { pctRange } from '@/lib/format'
 import { riskCss } from '@/lib/riskColor'
 import { cn } from '@/lib/utils'
 import { TweenedPercent } from './TweenedPercent'
-import { verdictSentence } from './verdict'
+import { labelSentence } from './verdict'
 
 type Prediction = components['schemas']['TargetPrediction']
 
@@ -20,6 +21,7 @@ interface Props {
 /** The overall estimate as one plain sentence; a button so its WHY can be opened like a vessel's. */
 export function Headline({ target, prediction, range, selected, onSelect }: Props) {
   const setRowHover = useViewState((s) => s.setRowHover)
+  const { data: display } = useDisplay()
   return (
     <button
       type="button"
@@ -52,7 +54,7 @@ export function Headline({ target, prediction, range, selected, onSelect }: Prop
       </span>
       {prediction && range && (
         <span className="t-meta mt-1 block pl-[1.375rem]">
-          {verdictSentence(range, prediction)}
+          {labelSentence(range, prediction.threshold, display)}
         </span>
       )}
     </button>

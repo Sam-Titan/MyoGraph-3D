@@ -48,7 +48,7 @@ from ml.schema import (
 )
 from ml.stats import load_feature_stats
 from ml.stories import Stories, load_stories, validate_stories
-from ml.uncertainty import ReplicateSet, load_uncertainty, replicate_path, verdict
+from ml.uncertainty import ReplicateSet, crosses, load_uncertainty, replicate_path, side
 
 logger = logging.getLogger(__name__)
 
@@ -206,7 +206,8 @@ class Predictor:
         )
 
     def intervals(self, values: Mapping[str, InputValue]) -> IntervalsResponse:
-        """Bootstrap ranges and range verdicts (a separate call: /api/predict keeps its latency).
+        """Bootstrap ranges, point-vs-threshold side and the uncertain flag (a separate call, so
+        /api/predict keeps its latency).
 
         Cached per input (LRU); `/api/summary` reuses it, so a summary after the live call is free.
         """
@@ -229,6 +230,7 @@ class Predictor:
         targets: dict[str, TargetRange] = {}
         for t, rs in self.replicates.items():
             lo, hi = (float(v[0]) for v in rs.interval(X, self.uncertainty.level))
+            point = float(self.models[t].predict_proba(X)[0])
             targets[t] = TargetRange(
                 interval=Interval(
                     lo=lo,
@@ -237,7 +239,8 @@ class Predictor:
                     method=self.uncertainty.method,
                     n_models=len(rs),
                 ),
-                verdict=verdict(lo, hi, self.thresholds[t]),
+                side=side(point, self.thresholds[t]),
+                uncertain=crosses(lo, hi, self.thresholds[t]),
             )
         logger.info("intervals took %.1f ms", (time.perf_counter() - t0) * 1000)
         return IntervalsResponse(model_version=self.version, targets=targets)
