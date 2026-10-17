@@ -26,7 +26,8 @@ async function loadStories(page: Page): Promise<Story[]> {
 }
 
 /**
- * Every percentage the API gives for this hold-out patient (probabilities and thresholds), plus the
+ * Every percentage the API gives for this hold-out patient (probabilities, thresholds and range
+ * bounds), plus the
  * "label: display_value" strings of its contributions, which factor tokens print verbatim.
  */
 async function allowedPercents(
@@ -37,7 +38,14 @@ async function allowedPercents(
   const preset = presets.find((p: { id: string }) => p.id === presetId)
   const res = await page.request.post('/api/predict', { data: { values: preset.values } })
   const body = await res.json()
+  const ranges = await (
+    await page.request.post('/api/intervals', { data: { values: preset.values } })
+  ).json()
   const out = new Set<string>()
+  for (const r of Object.values(ranges.targets) as { interval: { lo: number; hi: number } }[]) {
+    out.add(pct(r.interval.lo))
+    out.add(pct(r.interval.hi))
+  }
   for (const t of Object.values(body.targets) as { probability: number; threshold: number }[]) {
     out.add(pct(t.probability))
     out.add(pct(t.threshold))

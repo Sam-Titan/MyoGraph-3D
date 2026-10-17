@@ -115,6 +115,7 @@ Pydantic models are the source of truth. `make types` dumps the schema offline (
 | `GET /api/features` | Form schema: `targets[{id, label, role, node}]` (`role` = `overall | vessel` from `features.yaml`; node from `anatomy.yaml`), groups, and per-input `{id, label, group, kind, unit, input{min,max,step}, options[], reference{low,high}, observed{min,max}, default, help}`. Built from `features.yaml` + `anatomy.yaml` + `feature_stats.json`. |
 | `GET /api/presets` | `[{id, label, description, values{input_id: value}, truth{CAD,LAD,LCX,RCA: bool}}]` |
 | `POST /api/predict` | Body `{values: {input_id: value}}` (all 49 inputs; derived fields are ignored if sent) → response below |
+| `POST /api/intervals` | Same body as `/api/predict`. Returns `{model_version, targets{ID: {interval{lo,hi,level,method,n_models}, verdict: likely\|unlikely\|uncertain}}}`: the middle `level` share of the bootstrap replicates (config/uncertainty.yaml); verdict is `likely` if `lo >= threshold`, `unlikely` if `hi < threshold`, else `uncertain`. A separate call because ranges added ~65-105 ms p95 to `/api/predict` on the Docker image (budget +30 ms). |
 | `POST /api/summary` | Body = `/api/predict` body plus optional `selected_target` (default: overall; unknown id → 422). Re-runs predict server-side (client numbers are never trusted), builds a `facts` object (per target: probability %, threshold %, Likely/Unlikely, probability %, threshold %, Likely/Unlikely for every target; top 3 increasing and top 3 decreasing `label: value` factors only for the overall target and the selected target, each block labelled with its target id; out-of-training-range warnings) and returns `{text, source: "groq" \| "template", model?}`. See §5.1. |
 | `GET /api/metrics` | Contents of `metrics.json` (typed) plus `stability` (contents of `stability.json`: per-target median/IQR/min/max and the seed-42 percentile) and `excluded_inputs` (from `features.yaml`) |
 
@@ -420,3 +421,17 @@ Nothing else hard-codes feature or vessel lists.
 - No Netlify `/ingest` reverse proxy: events from ad-blocking visitors are lost, which is accepted.
 - `netlify.toml` sets no CSP, so no allow-listing was needed. `render.yaml` carries `TRUST_PROXY_HEADERS` and
   `LOG_IP_MODE` as plain values. Frontend unit tests use vitest (`npm test`, part of `make test`).
+
+
+### Phase 16.5: uncertainty ranges
+- **`config/uncertainty.yaml`** (`method: bootstrap`, `n_models`, `level`, `seed`; validated by `backend/ml/uncertainty.py`).
+  `make train` refits each target `n_models` times on a stratified bootstrap resample of the train patients (same fixed
+  params), Platt-calibrated on each replicate's out-of-bag patients (own-model coefficients if the OOB set has < 5 of a
+  class). Stored as `backend/artifacts/models/replicates/{T}.bin.gz` (deterministic bytes). The point estimate stays the
+  main model; the range is the replicates' 5th-95th percentile. `metrics.json` gains `uncertainty` (hold-out mean width and
+  how often the point estimate lies outside its own range).
+- Served by `POST /api/intervals` (see API table); the frontend shows the point first and the range when it arrives.
+- Meaning, everywhere: "The range shows how much the estimate depends on which patients the model learned from. It is not a
+  guarantee, and not the range of your true risk." `positive` (point >= threshold) still drives agree/miss against the cath
+  result; the Likely / Unlikely / Uncertain label comes from the range.
+- Stories: token `{range:ID}`; conditions `range_crosses_threshold:ID`, `range_clear_of_threshold:ID`.

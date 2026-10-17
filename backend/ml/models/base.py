@@ -49,6 +49,12 @@ class RiskModel(Protocol):
 
     def explain(self, X: pd.DataFrame) -> Explanation: ...
 
+    def bootstrap_member(
+        self, X: pd.DataFrame, y: np.ndarray, fit_idx: np.ndarray, oob_idx: np.ndarray, seed: int
+    ) -> tuple[bytes, float, float]:
+        """One uncertainty replicate: (serialized booster, Platt a, Platt b)."""
+        ...
+
     def save(self, path: Path) -> None: ...
 
     @classmethod

@@ -15,7 +15,7 @@ from typing import Any
 import httpx
 
 from app.core.config import GroqSettings
-from app.schemas import PredictResponse, SummaryResponse, TargetInfo
+from app.schemas import IntervalsResponse, PredictResponse, SummaryResponse, TargetInfo
 
 logger = logging.getLogger(__name__)
 
@@ -34,9 +34,13 @@ SYSTEM_PROMPT = (
     "never add numbers, medical facts, causes or comparisons; do not expand abbreviations. "
     "Say 'the model estimates'. No diagnosis, no treatment, no medication or lifestyle advice, "
     "no instructions to the reader. Structure, in this order: "
-    "(1) one sentence with the overall target's probability in percent and its verdict; "
-    "(2) one sentence with each remaining target's probability in percent and verdict, in the "
-    "order given; always state every percentage; "
+    "(1) one or two sentences with the overall target's probability in percent, its range, and "
+    "its verdict (likely, unlikely or uncertain: uncertain means the range crosses the decision "
+    "threshold); "
+    "(2) one sentence with each remaining target's probability in percent, range and verdict, in "
+    "the order given; always state every percentage; the range only describes how much the "
+    "estimate depends on which patients the model learned from, never call it the patient's "
+    "true risk or a guarantee; "
     "(3) one sentence naming the selected target (by its label, as given) and its main factors, "
     "using ONLY the factors listed for that target in facts.factors, never another target's; "
     "(4) only if outside_training_range_warnings is not empty, one sentence saying some values "
@@ -47,9 +51,11 @@ SYSTEM_PROMPT = (
     "Match the tone and structure of this example, but take the target names, verdict words "
     "(above/below, likely/unlikely) and order from the facts, never from the example:\n"
     "EXAMPLE: The model estimates a {overall_pct} probability of coronary artery disease for this "
-    "patient, which is above its {overall_thr} decision threshold. For the individual arteries, it "
-    "estimates {lad_pct} for the LAD (likely), {lcx_pct} for the LCX (unlikely) and {rca_pct} for "
-    "the RCA (likely). For {selected_label}, the factors that raised the estimate most were "
+    "patient (range {overall_range}); the whole range is at or above its {overall_thr} decision "
+    "threshold. For the individual arteries, it estimates {lad_pct} (range {lad_range}) for the "
+    "LAD (likely), {lcx_pct} (range {lcx_range}) for the LCX (unlikely) and {rca_pct} (range "
+    "{rca_range}) for the RCA (uncertain). For {selected_label}, the factors that raised the "
+    "estimate most were "
     "{up_factor_1} and {up_factor_2}, while {down_factor_1} lowered it. {disclaimer}"
 )
 _BANNED = re.compile(
@@ -70,7 +76,10 @@ def _fmt(v: float) -> str:
 
 
 def build_facts(
-    resp: PredictResponse, targets: list[TargetInfo], selected: str | None = None
+    resp: PredictResponse,
+    ranges: IntervalsResponse,
+    targets: list[TargetInfo],
+    selected: str | None = None,
 ) -> dict[str, Any]:
     """Everything the summary may mention, pre-formatted. Built from a server-side predict.
 
@@ -81,6 +90,7 @@ def build_facts(
     out_targets: list[dict[str, Any]] = []
     for t in targets:
         pred = resp.targets[t.id]
+        rng = ranges.targets[t.id]
         out_targets.append(
             {
                 "id": t.id,
@@ -88,7 +98,10 @@ def build_facts(
                 "role": t.role,
                 "probability_percent": _pct(pred.probability),
                 "threshold_percent": _pct(pred.threshold),
-                "verdict": "likely" if pred.positive else "unlikely",
+                "range_low_percent": _pct(rng.interval.lo),
+                "range_high_percent": _pct(rng.interval.hi),
+                "range_level_percent": _pct(rng.interval.level),
+                "verdict": rng.verdict,
             }
         )
     blocks: list[dict[str, Any]] = []
@@ -118,6 +131,10 @@ def _a(pct: int) -> str:
     return "an" if str(pct).startswith("8") or pct in (11, 18) else "a"
 
 
+def _range(t: dict[str, Any]) -> str:
+    return f"{t['range_low_percent']}–{t['range_high_percent']}%"
+
+
 def _join(items: list[str]) -> str:
     if len(items) <= 2:
         return " and ".join(items)
@@ -132,14 +149,22 @@ def template_summary(facts: dict[str, Any]) -> str:
     chosen = next(t for t in ts if t["id"] == facts["selected_target"])
     block = next(b for b in facts["factors"] if b["target_id"] == chosen["id"])
     overall_pct = overall["probability_percent"]
-    side = "above" if overall["verdict"] == "likely" else "below"
+    thr = overall["threshold_percent"]
+    where = {
+        "likely": f"The whole range is at or above its {thr}% decision threshold.",
+        "unlikely": f"The whole range is below its {thr}% decision threshold.",
+        "uncertain": f"The range crosses its {thr}% decision threshold, so the verdict is "
+        "uncertain.",
+    }[overall["verdict"]]
     s = [
-        f"The model estimates {_a(overall_pct)} {overall_pct}% probability for "
-        f"{overall['label']}, which is {side} its "
-        f"{overall['threshold_percent']}% decision threshold."
+        f"The model estimates {_a(overall_pct)} {overall_pct}% probability "
+        f"(range {_range(overall)}) for {overall['label']}. {where}"
     ]
     if others:
-        parts = [f"{t['label']} {t['probability_percent']}% ({t['verdict']})" for t in others]
+        parts = [
+            f"{t['label']} {t['probability_percent']}% (range {_range(t)}, {t['verdict']})"
+            for t in others
+        ]
         s.append(f"For the individual vessels it estimates {_join(parts)}.")
     up, down = block["increasing"], block["decreasing"]
     if up and down:

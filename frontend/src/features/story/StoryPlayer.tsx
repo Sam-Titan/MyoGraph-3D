@@ -1,6 +1,13 @@
 import { X } from 'lucide-react'
 import { useEffect, useMemo, useRef } from 'react'
-import { useFeatures, useMetrics, usePredict, usePresets, useStories } from '@/api/queries'
+import {
+  useFeatures,
+  useIntervals,
+  useMetrics,
+  usePredict,
+  usePresets,
+  useStories,
+} from '@/api/queries'
 import { Button } from '@/components/ui/button'
 import { focusTarget } from '@/features/heart3d/useViewState'
 import { cn } from '@/lib/utils'
@@ -23,6 +30,7 @@ export function StoryPlayer() {
   const preset = usePresets().data?.find((p) => p.id === story?.preset)
   const targets = useFeatures().data?.targets
   const predict = usePredict(preset?.values ?? null)
+  const intervals = useIntervals(preset?.values ?? null)
   const next = useRef<HTMLButtonElement>(null)
 
   const index = active?.step ?? 0
@@ -31,16 +39,33 @@ export function StoryPlayer() {
 
   const ctx: StoryContext | null = useMemo(
     () =>
-      predict.data && targets && preset && storiesData && split
+      predict.data &&
+      !predict.isPlaceholderData &&
+      intervals.data &&
+      !intervals.isPlaceholderData &&
+      targets &&
+      preset &&
+      storiesData &&
+      split
         ? {
             targets,
             response: predict.data,
+            ranges: intervals.data.targets,
             truth: preset.truth,
             factorNote: storiesData.factor_note,
             patients: split.n_train + split.n_test,
           }
         : null,
-    [predict.data, targets, preset, storiesData, split],
+    [
+      predict.data,
+      predict.isPlaceholderData,
+      intervals.data,
+      intervals.isPlaceholderData,
+      targets,
+      preset,
+      storiesData,
+      split,
+    ],
   )
 
   const go = (to: number) => {

@@ -1,5 +1,11 @@
-import type { PredictResponse, StoryPart, StoryStep, TargetInfo } from '@/api/client'
-import { joinList, pct } from '@/lib/format'
+import type {
+  IntervalsResponse,
+  PredictResponse,
+  StoryPart,
+  StoryStep,
+  TargetInfo,
+} from '@/api/client'
+import { joinList, pct, pctRange } from '@/lib/format'
 
 /** "Well above / below" the decision threshold means at least this far (in probability) beyond it. */
 export const WELL_MARGIN = 0.25
@@ -7,6 +13,8 @@ export const WELL_MARGIN = 0.25
 export interface StoryContext {
   targets: TargetInfo[]
   response: PredictResponse
+  /** Ranges and range verdicts for the same patient (POST /api/intervals). */
+  ranges: IntervalsResponse['targets']
   /** The preset's real catheterisation result; only read once the step reveals it. */
   truth: Record<string, boolean> | null
   /** stories.yaml `factor_note`: closes every step that lists factors. */
@@ -35,6 +43,12 @@ export function evalCondition(cond: string, ctx: StoryContext): boolean {
       return pred !== undefined && pred.probability >= pred.threshold + WELL_MARGIN
     case 'well_below_threshold':
       return pred !== undefined && pred.probability <= pred.threshold - WELL_MARGIN
+    case 'range_crosses_threshold':
+      return ctx.ranges[id ?? '']?.verdict === 'uncertain'
+    case 'range_clear_of_threshold':
+      return (
+        ctx.ranges[id ?? '']?.verdict !== undefined && ctx.ranges[id ?? '']?.verdict !== 'uncertain'
+      )
     case 'agrees':
       return pred !== undefined && real !== undefined && Boolean(pred.positive) === real
     case 'disagrees':
@@ -69,6 +83,10 @@ function fill(name: string, arg: string | undefined, step: StoryStep, ctx: Story
   switch (name) {
     case 'p':
       return pred ? pct(pred.probability) : null
+    case 'range': {
+      const r = ctx.ranges[id]?.interval
+      return r ? pctRange(r.lo, r.hi) : null
+    }
     case 'thr':
       return pred ? pct(pred.threshold) : null
     case 'truth': {

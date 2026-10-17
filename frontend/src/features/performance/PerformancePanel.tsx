@@ -6,6 +6,7 @@ import { HeadlineStrip } from './HeadlineStrip'
 import { ImportanceChart } from './ImportanceChart'
 import { MetricTable } from './MetricTable'
 import { ProtocolBox } from './ProtocolBox'
+import { RangeSection } from './RangeSection'
 import { RocChart } from './RocChart'
 import { StabilityPlot } from './StabilityPlot'
 
@@ -23,6 +24,7 @@ export function PerformancePanel() {
             <ProtocolBox metrics={m} />
             <MetricTable metrics={m} />
             <StabilityPlot metrics={m} />
+            <RangeSection metrics={m} />
             <div className="grid min-w-0 grid-cols-1 gap-4 items-start xl:grid-cols-2">
               <RocChart metrics={m} />
               <CalibrationChart metrics={m} />

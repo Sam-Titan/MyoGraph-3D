@@ -1,7 +1,7 @@
 {
   "data_sha256": "b60472ecebdd4ea11d09b8a793711b8da2051fdf79eeae5b88f33269e4a02d37",
-  "git_sha": "6e59fc7a2f821135f69288b7feb837a4d0557779",
+  "git_sha": "5188b6a741d52f581a10e2b91ff134e76f6a9caf",
   "model_version": "xgb-v1-b60472ec",
   "seed": 42,
-  "trained_at": "2026-10-13T13:42:08+00:00"
+  "trained_at": "2026-10-17T13:59:58+00:00"
 }

@@ -1,0 +1,11 @@
+# Uncertainty ranges (Phase 16.5). Validated by backend/ml/uncertainty.py.
+#
+# `make train` refits each target `n_models` times on a stratified bootstrap resample of the TRAIN patients (same fixed
+# XGBoost params, Platt-calibrated on that replicate's out-of-bag patients). At serve time an estimate's range is the
+# middle `level` share of the replicates' calibrated probabilities. The shown point estimate stays the main model.
+# The range is model variability ("how much the estimate depends on which patients the model learned from"),
+# not a guarantee and not the range of anyone's true risk.
+method: bootstrap
+n_models: 50
+level: 0.90
+seed: 42

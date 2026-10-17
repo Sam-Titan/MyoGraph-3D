@@ -7,6 +7,7 @@ import {
   getPresets,
   getStories,
   type PredictRequest,
+  postIntervals,
   postPredict,
   postSummary,
 } from '@/api/client'
@@ -20,6 +21,7 @@ export const queryKeys = {
   summary: (values: PredictRequest['values'], selected: string | null) =>
     ['summary', values, selected] as const,
   predict: (values: PredictRequest['values']) => ['predict', values] as const,
+  intervals: (values: PredictRequest['values']) => ['intervals', values] as const,
 }
 
 export function useHealth() {
@@ -84,6 +86,21 @@ export function useSummary(values: PredictRequest['values'] | null, selected: st
     queryFn: ({ signal }) =>
       postSummary({ values: values ?? {}, selected_target: selected }, signal),
     enabled: false,
+    staleTime: Number.POSITIVE_INFINITY,
+    retry: false,
+  })
+}
+
+/**
+ * Bootstrap ranges for the same values. A second call so /api/predict stays fast: the point
+ * estimate renders first and the range follows.
+ */
+export function useIntervals(values: PredictRequest['values'] | null) {
+  return useQuery({
+    queryKey: queryKeys.intervals(values ?? {}),
+    queryFn: ({ signal }) => postIntervals({ values: values ?? {} }, signal),
+    enabled: values !== null,
+    placeholderData: keepPreviousData,
     staleTime: Number.POSITIVE_INFINITY,
     retry: false,
   })

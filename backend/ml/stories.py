@@ -19,7 +19,7 @@ from ml.schema import FeatureSchema
 STORIES_PATH = CONFIG_DIR / "stories.yaml"
 
 #: Tokens that take a target id.
-TARGET_TOKENS = {"p", "thr", "truth", "name", "plain", "where"}
+TARGET_TOKENS = {"p", "range", "thr", "truth", "name", "plain", "where"}
 #: Tokens that take a count (1-5): up to N factors, joined as a list.
 FACTOR_TOKENS = {"factors_up": "up", "factors_down": "down"}
 #: Tokens that take no argument.
@@ -32,6 +32,8 @@ TARGET_CONDITIONS = {
     "well_below_threshold",
     "agrees",
     "disagrees",
+    "range_crosses_threshold",
+    "range_clear_of_threshold",
 }
 GLOBAL_CONDITIONS = {"all_agree", "any_disagrees"}
 

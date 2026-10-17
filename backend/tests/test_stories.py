@@ -53,6 +53,9 @@ def test_no_digits_or_percent_in_any_text() -> None:
         lambda p: p.update(text="Reasons {factors_up:3}."),
         lambda p: p.update(text="Estimate {p:CAD"),
         lambda p: p.update(text="Seen in {n_patients:CAD} people."),
+        lambda p: p.update(text="Range {range:NOPE}."),
+        lambda p: p.update(text="Estimate {p:CAD}.", when=["range_crosses_threshold"]),
+        lambda p: p.update(text="It depends much on which patients."),
     ],
 )
 def test_text_rules_reject(mutate) -> None:  # noqa: ANN001
@@ -100,3 +103,12 @@ def test_stories_endpoint() -> None:
         body = client.get("/api/stories").json()
     assert [s["id"] for s in body["stories"]] == [s["id"] for s in RAW["stories"]]
     assert all(s["preset"] in PRESET_IDS for s in body["stories"])
+
+
+def test_every_estimate_sentence_carries_its_range() -> None:
+    """Any step that states `{p:ID}` also states `{range:ID}` somewhere in the same step."""
+    for story in RAW["stories"]:
+        for step in story["steps"]:
+            text = " ".join(p["text"] for p in step["parts"])
+            for tid in re.findall(r"\{p:(\w+)\}", text):
+                assert f"{{range:{tid}}}" in text, (story["id"], step["id"], tid)

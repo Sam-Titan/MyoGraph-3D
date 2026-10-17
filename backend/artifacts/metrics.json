@@ -1874,5 +1874,36 @@
         "tuned": 0.461735
       }
     }
+  },
+  "uncertainty": {
+    "level": 0.9,
+    "method": "bootstrap",
+    "n_models": 50,
+    "targets": {
+      "CAD": {
+        "mean_width": 0.27955,
+        "n": 61,
+        "n_outside": 0,
+        "outside_fraction": 0.0
+      },
+      "LAD": {
+        "mean_width": 0.301965,
+        "n": 61,
+        "n_outside": 0,
+        "outside_fraction": 0.0
+      },
+      "LCX": {
+        "mean_width": 0.295211,
+        "n": 61,
+        "n_outside": 3,
+        "outside_fraction": 0.04918
+      },
+      "RCA": {
+        "mean_width": 0.268414,
+        "n": 61,
+        "n_outside": 1,
+        "outside_fraction": 0.016393
+      }
+    }
   }
 }

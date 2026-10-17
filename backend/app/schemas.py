@@ -83,10 +83,34 @@ class PredictRequest(BaseModel):
     values: dict[str, InputValue]
 
 
+class Interval(BaseModel):
+    """Range of the replicates' calibrated probabilities (config/uncertainty.yaml)."""
+
+    lo: float
+    hi: float
+    level: float
+    method: str
+    n_models: int
+
+
 class TargetPrediction(BaseModel):
     probability: float
+    #: Point estimate at/above the threshold (compared with the real result in presets and stories).
     positive: bool
     threshold: float
+
+
+class TargetRange(BaseModel):
+    interval: Interval
+    #: From the range vs the threshold: likely if lo >= threshold, unlikely if hi < threshold.
+    verdict: Literal["likely", "unlikely", "uncertain"]
+
+
+class IntervalsResponse(BaseModel):
+    """Ranges for every target. A separate call so /api/predict keeps its latency budget."""
+
+    model_version: str
+    targets: dict[str, TargetRange]
 
 
 class Contribution(BaseModel):
@@ -226,12 +250,27 @@ class SplitInfo(BaseModel):
     stratify_on: list[str]
 
 
+class UncertaintyTarget(BaseModel):
+    mean_width: float
+    n_outside: int
+    n: int
+    outside_fraction: float
+
+
+class UncertaintyMetrics(BaseModel):
+    method: str
+    n_models: int
+    level: float
+    targets: dict[str, UncertaintyTarget]
+
+
 class MetricsResponse(BaseModel):
     cv: CvInfo
     split: SplitInfo
     targets: dict[str, TargetMetrics]
     feature_importance: dict[str, list[ImportanceRow]]
     stability: Stability
+    uncertainty: UncertaintyMetrics
     excluded_inputs: list[str]
 
 

@@ -119,6 +119,44 @@
         }
       }
     },
+    "/api/intervals": {
+      "post": {
+        "summary": "Intervals",
+        "operationId": "intervals_api_intervals_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PredictRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntervalsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/summary": {
       "post": {
         "summary": "Summary",
@@ -703,6 +741,62 @@
         ],
         "title": "InputBoundsInfo"
       },
+      "Interval": {
+        "properties": {
+          "lo": {
+            "type": "number",
+            "title": "Lo"
+          },
+          "hi": {
+            "type": "number",
+            "title": "Hi"
+          },
+          "level": {
+            "type": "number",
+            "title": "Level"
+          },
+          "method": {
+            "type": "string",
+            "title": "Method"
+          },
+          "n_models": {
+            "type": "integer",
+            "title": "N Models"
+          }
+        },
+        "type": "object",
+        "required": [
+          "lo",
+          "hi",
+          "level",
+          "method",
+          "n_models"
+        ],
+        "title": "Interval",
+        "description": "Range of the replicates' calibrated probabilities (config/uncertainty.yaml)."
+      },
+      "IntervalsResponse": {
+        "properties": {
+          "model_version": {
+            "type": "string",
+            "title": "Model Version"
+          },
+          "targets": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/TargetRange"
+            },
+            "type": "object",
+            "title": "Targets"
+          }
+        },
+        "type": "object",
+        "required": [
+          "model_version",
+          "targets"
+        ],
+        "title": "IntervalsResponse",
+        "description": "Ranges for every target. A separate call so /api/predict keeps its latency budget."
+      },
       "MetricStat": {
         "properties": {
           "mean": {
@@ -749,6 +843,9 @@
           "stability": {
             "$ref": "#/components/schemas/Stability"
           },
+          "uncertainty": {
+            "$ref": "#/components/schemas/UncertaintyMetrics"
+          },
           "excluded_inputs": {
             "items": {
               "type": "string"
@@ -764,6 +861,7 @@
           "targets",
           "feature_importance",
           "stability",
+          "uncertainty",
           "excluded_inputs"
         ],
         "title": "MetricsResponse"
@@ -1463,6 +1561,28 @@
         ],
         "title": "TargetPrediction"
       },
+      "TargetRange": {
+        "properties": {
+          "interval": {
+            "$ref": "#/components/schemas/Interval"
+          },
+          "verdict": {
+            "type": "string",
+            "enum": [
+              "likely",
+              "unlikely",
+              "uncertain"
+            ],
+            "title": "Verdict"
+          }
+        },
+        "type": "object",
+        "required": [
+          "interval",
+          "verdict"
+        ],
+        "title": "TargetRange"
+      },
       "TestMetrics": {
         "properties": {
           "default": {
@@ -1514,6 +1634,65 @@
           "tuned"
         ],
         "title": "ThresholdInfo"
+      },
+      "UncertaintyMetrics": {
+        "properties": {
+          "method": {
+            "type": "string",
+            "title": "Method"
+          },
+          "n_models": {
+            "type": "integer",
+            "title": "N Models"
+          },
+          "level": {
+            "type": "number",
+            "title": "Level"
+          },
+          "targets": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/UncertaintyTarget"
+            },
+            "type": "object",
+            "title": "Targets"
+          }
+        },
+        "type": "object",
+        "required": [
+          "method",
+          "n_models",
+          "level",
+          "targets"
+        ],
+        "title": "UncertaintyMetrics"
+      },
+      "UncertaintyTarget": {
+        "properties": {
+          "mean_width": {
+            "type": "number",
+            "title": "Mean Width"
+          },
+          "n_outside": {
+            "type": "integer",
+            "title": "N Outside"
+          },
+          "n": {
+            "type": "integer",
+            "title": "N"
+          },
+          "outside_fraction": {
+            "type": "number",
+            "title": "Outside Fraction"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mean_width",
+          "n_outside",
+          "n",
+          "outside_fraction"
+        ],
+        "title": "UncertaintyTarget"
       },
       "ValidationError": {
         "properties": {

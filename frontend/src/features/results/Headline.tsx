@@ -1,22 +1,24 @@
-import type { TargetInfo } from '@/api/client'
+import type { TargetInfo, TargetRange } from '@/api/client'
 import type { components } from '@/api/schema'
 import { useViewState } from '@/features/heart3d/useViewState'
-import { pct } from '@/lib/format'
+import { pctRange } from '@/lib/format'
 import { riskCss } from '@/lib/riskColor'
 import { cn } from '@/lib/utils'
 import { TweenedPercent } from './TweenedPercent'
+import { verdictSentence } from './verdict'
 
 type Prediction = components['schemas']['TargetPrediction']
 
 interface Props {
   target: TargetInfo
   prediction: Prediction | undefined
+  range: TargetRange | undefined
   selected: boolean
   onSelect: () => void
 }
 
 /** The overall estimate as one plain sentence; a button so its WHY can be opened like a vessel's. */
-export function Headline({ target, prediction, selected, onSelect }: Props) {
+export function Headline({ target, prediction, range, selected, onSelect }: Props) {
   const setRowHover = useViewState((s) => s.setRowHover)
   return (
     <button
@@ -39,15 +41,18 @@ export function Headline({ target, prediction, selected, onSelect }: Props) {
           style={{ background: prediction ? riskCss(prediction.probability) : 'transparent' }}
         />
         <span className="min-w-0 text-[1.375rem] font-semibold leading-snug">
-          <TweenedPercent value={prediction?.probability} className="num" /> probability of{' '}
-          {target.plain_label}
+          <TweenedPercent value={prediction?.probability} className="num" />
+          {range && (
+            <span className="num ml-1 text-[1rem] font-medium text-muted-foreground">
+              ({pctRange(range.interval.lo, range.interval.hi)})
+            </span>
+          )}{' '}
+          probability of {target.plain_label}
         </span>
       </span>
-      {prediction && (
+      {prediction && range && (
         <span className="t-meta mt-1 block pl-[1.375rem]">
-          {prediction.positive ? 'Likely' : 'Unlikely'},{' '}
-          {prediction.positive ? 'at or above' : 'below'} the {pct(prediction.threshold)} decision
-          threshold
+          {verdictSentence(range, prediction)}
         </span>
       )}
     </button>

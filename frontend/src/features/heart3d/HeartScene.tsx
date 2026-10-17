@@ -21,7 +21,7 @@ import { OrientationMarker, OrientationSync } from './OrientationMarker'
 import { Toolbar } from './Toolbar'
 import { useClickGuard } from './useClickGuard'
 import { IS_COMPACT, useHeartModel } from './useHeartModel'
-import { type Probabilities, useProbabilities, useThresholds } from './useProbabilities'
+import { type Probabilities, useProbabilities, useRanges, useThresholds } from './useProbabilities'
 import { focusTarget, useViewState } from './useViewState'
 import { bestVessels, presetDir, VIEW_PRESETS } from './viewPresets'
 import { SOFTWARE_GL } from './webgl'
@@ -139,6 +139,7 @@ export default function HeartScene({ targets }: { targets: TargetInfo[] }) {
   const isClick = useClickGuard(containerRef)
   const probabilities = useProbabilities()
   const thresholds = useThresholds()
+  const ranges = useRanges()
   const overall = overallTarget(targets)
   // Device-pixel-ratio ladder: each frame-budget decline steps down one rung and never back up.
   const [rung, setRung] = useState(SOFTWARE_GL ? 1 : 0)
@@ -219,7 +220,7 @@ export default function HeartScene({ targets }: { targets: TargetInfo[] }) {
         </div>
       </div>
       <ModelProgress />
-      <HoverTooltip targets={targets} probabilities={probabilities} />
+      <HoverTooltip targets={targets} probabilities={probabilities} ranges={ranges} />
     </div>
   )
 }

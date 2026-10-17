@@ -17,6 +17,8 @@ from app.schemas import (
     GroupInfo,
     InputBoundsInfo,
     InputValue,
+    Interval,
+    IntervalsResponse,
     MetricsResponse,
     ObservedInfo,
     OptionInfo,
@@ -26,6 +28,7 @@ from app.schemas import (
     TargetExplanation,
     TargetInfo,
     TargetPrediction,
+    TargetRange,
 )
 from ml.anatomy import ANATOMY_PATH, load_anatomy
 from ml.explain import aggregate_to_inputs
@@ -43,6 +46,7 @@ from ml.schema import (
 )
 from ml.stats import load_feature_stats
 from ml.stories import Stories, load_stories, validate_stories
+from ml.uncertainty import ReplicateSet, load_uncertainty, replicate_path, verdict
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +81,8 @@ class Predictor:
             t: cls.load(ARTIFACTS_DIR / "models" / f"{t}.ubj", Calibration(**calibration[t]))
             for t in self.schema.targets
         }
+        self.uncertainty = load_uncertainty()
+        self.replicates = {t: ReplicateSet.load(replicate_path(t)) for t in self.schema.targets}
         self.thresholds = {t: float(calibration[t]["threshold"]) for t in self.schema.targets}
         nodes = anatomy_nodes()
         self.nodes = {t: nodes[t] for t in self.schema.targets}
@@ -192,6 +198,26 @@ class Predictor:
             breakdown=breakdown,
             warnings=warnings,
         )
+
+    def intervals(self, values: Mapping[str, InputValue]) -> IntervalsResponse:
+        """Bootstrap ranges and range verdicts (a separate call: /api/predict keeps its latency)."""
+        t0 = time.perf_counter()
+        X = inputs_to_matrix([values], self.schema)
+        targets: dict[str, TargetRange] = {}
+        for t, rs in self.replicates.items():
+            lo, hi = (float(v[0]) for v in rs.interval(X, self.uncertainty.level))
+            targets[t] = TargetRange(
+                interval=Interval(
+                    lo=lo,
+                    hi=hi,
+                    level=self.uncertainty.level,
+                    method=self.uncertainty.method,
+                    n_models=len(rs),
+                ),
+                verdict=verdict(lo, hi, self.thresholds[t]),
+            )
+        logger.info("intervals took %.1f ms", (time.perf_counter() - t0) * 1000)
+        return IntervalsResponse(model_version=self.version, targets=targets)
 
     def _breakdown(
         self, row: Mapping[str, float], per_target: Mapping[str, Mapping[str, float]]

@@ -89,6 +89,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/intervals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Intervals */
+        post: operations["intervals_api_intervals_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/summary": {
         parameters: {
             query?: never;
@@ -310,6 +327,34 @@ export interface components {
             /** Step */
             step: number;
         };
+        /**
+         * Interval
+         * @description Range of the replicates' calibrated probabilities (config/uncertainty.yaml).
+         */
+        Interval: {
+            /** Lo */
+            lo: number;
+            /** Hi */
+            hi: number;
+            /** Level */
+            level: number;
+            /** Method */
+            method: string;
+            /** N Models */
+            n_models: number;
+        };
+        /**
+         * IntervalsResponse
+         * @description Ranges for every target. A separate call so /api/predict keeps its latency budget.
+         */
+        IntervalsResponse: {
+            /** Model Version */
+            model_version: string;
+            /** Targets */
+            targets: {
+                [key: string]: components["schemas"]["TargetRange"];
+            };
+        };
         /** MetricStat */
         MetricStat: {
             /** Mean */
@@ -330,6 +375,7 @@ export interface components {
                 [key: string]: components["schemas"]["ImportanceRow"][];
             };
             stability: components["schemas"]["Stability"];
+            uncertainty: components["schemas"]["UncertaintyMetrics"];
             /** Excluded Inputs */
             excluded_inputs: string[];
         };
@@ -578,6 +624,15 @@ export interface components {
             /** Threshold */
             threshold: number;
         };
+        /** TargetRange */
+        TargetRange: {
+            interval: components["schemas"]["Interval"];
+            /**
+             * Verdict
+             * @enum {string}
+             */
+            verdict: "likely" | "unlikely" | "uncertain";
+        };
         /** TestMetrics */
         TestMetrics: {
             /** Default */
@@ -599,6 +654,30 @@ export interface components {
             default: number;
             /** Tuned */
             tuned: number;
+        };
+        /** UncertaintyMetrics */
+        UncertaintyMetrics: {
+            /** Method */
+            method: string;
+            /** N Models */
+            n_models: number;
+            /** Level */
+            level: number;
+            /** Targets */
+            targets: {
+                [key: string]: components["schemas"]["UncertaintyTarget"];
+            };
+        };
+        /** UncertaintyTarget */
+        UncertaintyTarget: {
+            /** Mean Width */
+            mean_width: number;
+            /** N Outside */
+            n_outside: number;
+            /** N */
+            n: number;
+            /** Outside Fraction */
+            outside_fraction: number;
         };
         /** ValidationError */
         ValidationError: {
@@ -722,6 +801,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PredictResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    intervals_api_intervals_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PredictRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntervalsResponse"];
                 };
             };
             /** @description Validation Error */

@@ -6,6 +6,7 @@ from app.core.config import groq_settings, model_version
 from app.schemas import (
     FeaturesResponse,
     HealthResponse,
+    IntervalsResponse,
     MetricsResponse,
     PredictRequest,
     PredictResponse,
@@ -59,6 +60,14 @@ def predict(body: PredictRequest, predictor: Pred) -> PredictResponse:
     return predictor.predict(body.values)
 
 
+@router.post("/intervals", response_model=IntervalsResponse)
+def intervals(body: PredictRequest, predictor: Pred) -> IntervalsResponse:
+    errors = validate_values(body.values, predictor.schema)
+    if errors:
+        raise HTTPException(status_code=422, detail=errors)
+    return predictor.intervals(body.values)
+
+
 @router.post("/summary", response_model=SummaryResponse)
 def summary(body: SummaryRequest, predictor: Pred) -> SummaryResponse:
     """Re-runs predict server-side (client numbers are never trusted), then words it."""
@@ -68,7 +77,12 @@ def summary(body: SummaryRequest, predictor: Pred) -> SummaryResponse:
     targets = predictor.features.targets
     if body.selected_target is not None and body.selected_target not in {t.id for t in targets}:
         raise HTTPException(status_code=422, detail="unknown selected_target")
-    facts = build_facts(predictor.predict(body.values), targets, body.selected_target)
+    facts = build_facts(
+        predictor.predict(body.values),
+        predictor.intervals(body.values),
+        targets,
+        body.selected_target,
+    )
     labels = frozenset(f.label for f in predictor.features.features)
     return summarise(facts, groq_settings(), labels)
 

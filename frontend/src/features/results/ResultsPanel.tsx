@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils'
 import { BreakdownTable } from './BreakdownTable'
 import { DisagreementNote, targetsDisagree } from './DisagreementNote'
 import { Headline } from './Headline'
+import { RangeNote } from './RangeNote'
 import { SummaryPanel } from './SummaryPanel'
 import { useResults } from './useResults'
 import { VesselTable } from './VesselTable'
@@ -11,13 +12,23 @@ import { WhyPanel } from './WhyPanel'
 
 /** SPEC 6.2 predictions column: cards, disagreement note, WHY bars, physiological breakdown. */
 export function ResultsPanel() {
-  const { features, predict, selected, setSelected, truth, presetEdited, overall, vessels } =
-    useResults()
+  const {
+    features,
+    predict,
+    ranges,
+    rangesStale,
+    selected,
+    setSelected,
+    truth,
+    presetEdited,
+    overall,
+    vessels,
+  } = useResults()
   const selectFromList = (id: string) => {
     setSelected(id)
     track('target_selected', { target: id, source: 'list' })
   }
-  const stale = predict.isFetching || predict.isPlaceholderData
+  const stale = predict.isFetching || predict.isPlaceholderData || rangesStale
   const data = predict.data
 
   return (
@@ -38,6 +49,7 @@ export function ResultsPanel() {
                 <Headline
                   target={overall}
                   prediction={data?.targets[overall.id]}
+                  range={ranges?.[overall.id]}
                   selected={overall.id === selected}
                   onSelect={() => selectFromList(overall.id)}
                 />
@@ -45,10 +57,12 @@ export function ResultsPanel() {
               <VesselTable
                 vessels={vessels}
                 predictions={data?.targets}
+                ranges={ranges}
                 truth={truth}
                 selected={selected}
                 onSelect={selectFromList}
               />
+              {data && <RangeNote ranges={ranges} />}
               {presetEdited && (
                 <p className="t-meta px-3">
                   The patient was edited after the preset loaded, so the cath results no longer

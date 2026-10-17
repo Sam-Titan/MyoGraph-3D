@@ -11,6 +11,9 @@ export type Preset = Schemas['Preset']
 export type BreakdownRow = Schemas['BreakdownRow']
 export type PredictRequest = Schemas['PredictRequest']
 export type PredictResponse = Schemas['PredictResponse']
+export type IntervalsResponse = Schemas['IntervalsResponse']
+export type TargetRange = Schemas['TargetRange']
+export type Verdict = TargetRange['verdict']
 export type SummaryRequest = Schemas['SummaryRequest']
 export type SummaryResponse = Schemas['SummaryResponse']
 export type MetricsResponse = Schemas['MetricsResponse']
@@ -50,6 +53,14 @@ export const getMetrics = (signal?: AbortSignal) =>
 
 export const postPredict = (body: PredictRequest, signal?: AbortSignal) =>
   apiFetch<PredictResponse>('/predict', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    signal,
+  })
+
+export const postIntervals = (body: PredictRequest, signal?: AbortSignal) =>
+  apiFetch<IntervalsResponse>('/intervals', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),

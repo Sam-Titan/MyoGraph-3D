@@ -38,9 +38,22 @@ const response = {
   },
 } as unknown as PredictResponse
 
+const interval = (lo: number, hi: number) => ({
+  lo,
+  hi,
+  level: 0.9,
+  method: 'bootstrap',
+  n_models: 50,
+})
+const ranges = {
+  CAD: { interval: interval(0.9, 1), verdict: 'likely' },
+  AAA: { interval: interval(0.05, 0.55), verdict: 'uncertain' },
+} as StoryContext['ranges']
+
 const ctx = (truth: Record<string, boolean> | null): StoryContext => ({
   targets,
   response,
+  ranges,
   truth,
   factorNote: 'Patterns found in {n_patients} patients.',
   patients: 303,
@@ -53,6 +66,22 @@ const step = (over: Partial<StoryStep>): StoryStep => ({
   camera: null,
   highlight: null,
   ...over,
+})
+
+describe('ranges', () => {
+  it('fills {range:ID} from the interval', () => {
+    const s = step({ parts: [{ text: 'CAD {range:CAD}, AAA {range:AAA}.', when: [] }] })
+    expect(renderStep(s, ctx(null))).toEqual(['CAD 90–100%, AAA 5–55%.'])
+  })
+
+  it('knows whether a range crosses its threshold', () => {
+    expect(evalCondition('range_crosses_threshold:AAA', ctx(null))).toBe(true)
+    expect(evalCondition('range_crosses_threshold:CAD', ctx(null))).toBe(false)
+    expect(evalCondition('range_clear_of_threshold:CAD', ctx(null))).toBe(true)
+    expect(evalCondition('range_clear_of_threshold:AAA', ctx(null))).toBe(false)
+    expect(evalCondition('range_crosses_threshold:NOPE', ctx(null))).toBe(false)
+    expect(evalCondition('range_clear_of_threshold:NOPE', ctx(null))).toBe(false)
+  })
 })
 
 describe('conditions', () => {
