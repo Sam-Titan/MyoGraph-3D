@@ -8,9 +8,7 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
-import yaml
-
-from app.core.config import ARTIFACTS_DIR, CONFIG_DIR, model_version
+from app.core.config import ARTIFACTS_DIR, model_version
 from app.schemas import (
     BreakdownRow,
     Contribution,
@@ -29,6 +27,7 @@ from app.schemas import (
     TargetInfo,
     TargetPrediction,
 )
+from ml.anatomy import ANATOMY_PATH, load_anatomy
 from ml.explain import aggregate_to_inputs
 from ml.models import Calibration, model_class
 from ml.preprocess import inputs_to_matrix
@@ -46,7 +45,6 @@ from ml.stats import load_feature_stats
 
 logger = logging.getLogger(__name__)
 
-ANATOMY_PATH = CONFIG_DIR / "anatomy.yaml"
 MODEL_NAME = "xgb"
 
 
@@ -64,8 +62,7 @@ def _read(name: str) -> Any:
 
 def anatomy_nodes(path: Path = ANATOMY_PATH) -> dict[str, str]:
     """Target id -> mesh node name."""
-    nodes = yaml.safe_load(path.read_text())["nodes"]
-    return {n["target"]: n["name"] for n in nodes if n.get("target")}
+    return {n.target: n.name for n in load_anatomy(path).nodes if n.target}
 
 
 class Predictor:

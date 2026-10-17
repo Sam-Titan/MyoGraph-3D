@@ -71,6 +71,12 @@ export function useHeartModel(targets: TargetInfo[]): {
   const { scene } = useGLTF(HEART_URL, false)
 
   return useMemo(() => {
+    // The GLB ships no NORMAL attribute (smaller files; vertices are already merged), and without
+    // one three renders flat-shaded facets. Compute smooth normals once per geometry.
+    scene.traverse((o) => {
+      const g = (o as Mesh).geometry
+      if ((o as Mesh).isMesh && !g.attributes.normal) g.computeVertexNormals()
+    })
     scene.updateWorldMatrix(true, true)
     const bindings: NodeBinding[] = []
     const missing: TargetInfo[] = []

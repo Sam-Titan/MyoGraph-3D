@@ -1,7 +1,9 @@
 # 3D asset license
 
-`heart.glb` is built by `scripts/build_heart_glb.py` from **BodyParts3D 4.0** meshes (selected by
-`config/anatomy.yaml`): merged, recentred, rescaled, axis-converted and decimated.
+`heart.glb` and its lighter twin `heart.mobile.glb` are built by `scripts/build_heart_glb.py` from
+**BodyParts3D 4.0** meshes (selected by `config/anatomy.yaml`): merged, recentred, rescaled, axis-converted,
+decimated, with the coronary arteries thickened (`inflate`). The heart mesh also carries a derived per-vertex
+`_TERRITORY` attribute (distance-based weights to each artery: an approximate, nearest-artery illustration).
 
 ## Credit
 
@@ -11,7 +13,7 @@ Source: https://dbarchive.biosciencedbc.jp/en/bodyparts3d/
 
 ## License of this file
 
-`heart.glb` is a derivative of BodyParts3D and is released under
+Both files are derivatives of BodyParts3D and are released under
 [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
 
 Why BY-SA: the BodyParts3D website states CC BY 4.0, but the source OBJ headers still embed

@@ -318,6 +318,19 @@ Nothing else hard-codes feature or vessel lists.
 
 ## v2.0
 
+### Phase 15: heart asset v2
+- **Two GLBs** from one build (`make assets`): `heart.glb` (< 80k triangles, <= 2 MB) and `heart.mobile.glb`
+  (< 40k, <= 1 MB). Same node names and extras; per-node budgets `max_triangles` / `max_triangles_mobile`.
+- **Thicker vessels:** per-node `inflate` (source mm) along smoothed vertex normals, duplicate vertices merged
+  first, displacement capped at `inflate_edge_ratio` x local edge length. The build reports requested vs applied
+  and warns when the cap removes more than half.
+- **Supply regions:** the heart mesh carries a custom `_TERRITORY` vertex attribute (three.js:
+  `geometry.attributes._territory`), one 0-1 channel per `territory: true` node, from the distance to that
+  artery (`territory.falloff_mm`, `territory.max_mm`), computed on each LOD's final heart vertices. Channel
+  order is in the heart node's `territoryChannels` extra. It is an *approximate, nearest-artery illustration*
+  of the region each artery supplies, never a clinical map.
+- `config/anatomy.yaml` is validated by `backend/ml/anatomy.py`; `scripts/inspect_glb.py` prints both files.
+
 ### Phase 14: visitor analytics and real client IPs
 - **Client IP** (`app/core/client_ip.py`): `x-nf-client-connection-ip`, else the left-most globally routable
   `X-Forwarded-For` entry, else the socket peer; malformed values ignored. `TRUST_PROXY_HEADERS` (default
