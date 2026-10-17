@@ -31,6 +31,10 @@ class Node(_Strict):
     inflate: float = Field(default=0.0, ge=0)  # source millimetres, along smoothed vertex normals
     territory: bool = False  # the heart carries a supply-region weight channel for this node
     where: str | None = None  # plain-language location, shown in the vessel key
+    # Per-node overrides of the global `territory` scale (a short artery needs a wider reach so its
+    # supply region shows at a strength comparable to the long ones).
+    territory_falloff_mm: float | None = Field(default=None, gt=0)
+    territory_max_mm: float | None = Field(default=None, gt=0)
     optional: bool = False
     default_visible: bool = True
 
@@ -38,6 +42,8 @@ class Node(_Strict):
     def _consistent(self) -> Node:
         if self.max_triangles_mobile > self.max_triangles:
             raise ValueError(f"{self.name}: max_triangles_mobile exceeds max_triangles")
+        if (self.territory_falloff_mm or self.territory_max_mm) and not self.territory:
+            raise ValueError(f"{self.name}: territory_* overrides need territory: true")
         if self.territory and self.role != "vessel":
             raise ValueError(f"{self.name}: territory needs role: vessel")
         if self.role == "vessel" and (not self.target or not self.territory or not self.where):
@@ -88,6 +94,14 @@ class Anatomy(_Strict):
         if sum(1 for n in self.nodes if n.role == "muscle") != 1:
             raise ValueError("exactly one node must have role: muscle")
         return self
+
+    def territory_scale(self, node: Node) -> tuple[float, float]:
+        """(falloff_mm, max_mm) for a territory node: its overrides, else the global values."""
+        falloff = node.territory_falloff_mm or self.territory.falloff_mm
+        max_mm = node.territory_max_mm or self.territory.max_mm
+        if max_mm <= falloff:
+            raise ValueError(f"{node.name}: territory max_mm must exceed falloff_mm")
+        return falloff, max_mm
 
     def territory_nodes(self) -> list[Node]:
         """Nodes with a supply-region channel, in config order (= channel order in the GLB)."""

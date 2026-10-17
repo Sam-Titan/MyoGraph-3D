@@ -147,8 +147,8 @@ def build_lod(
         final[heart].vertices,
         [final[c] for c in channels],
         scale,
-        anatomy.territory.falloff_mm,
-        anatomy.territory.max_mm,
+        [anatomy.territory_scale(n)[0] for n in anatomy.territory_nodes()],
+        [anatomy.territory_scale(n)[1] for n in anatomy.territory_nodes()],
     )
     frame = ViewFrame(
         [final[n.name] for n in anatomy.nodes if n.name in final and n.default_visible]

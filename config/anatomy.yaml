@@ -45,6 +45,9 @@
 #               normalised across vessels), computed on the final vertices of each LOD. Channel order = node order
 #               here; the heart node's extras list it in `territoryChannels`. An APPROXIMATE, nearest-artery
 #               illustration of the region each artery supplies, never a clinical map.
+#   territory_falloff_mm / territory_max_mm   optional per-node override of the global `territory` values below. BodyParts3D has no
+#               branches of the circumflex beyond its trunk (FMA3895; the left marginal vein is a vein), so the short LCX
+#               gets a wider reach instead, to show its region at a strength comparable to LAD and RCA.
 #   where       plain-language location, shown in the vessel key.
 #   max_triangles_mobile   per-node budget of the second GLB (output_mobile); same node names and extras.
 
@@ -82,6 +85,8 @@ nodes:
     role: vessel
     territory: true
     where: left side and back of the heart, wrapping around the left lower chamber
+    territory_falloff_mm: 22
+    territory_max_mm: 45
     fma: [FMA3895]                            # circumflex branch of left coronary artery
     expect_side: left
     inflate: 0.8

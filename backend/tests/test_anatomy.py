@@ -84,6 +84,25 @@ def test_glb_territory_mapping_matches_config(glb: tuple[str, Path, dict[str, di
     assert all(n["territory"] is None for k, n in nodes.items() if k != ANATOMY.muscle().name)
 
 
+def test_glb_supply_regions_are_balanced(glb: tuple[str, Path, dict[str, dict]]) -> None:
+    """No channel's strong region (weight > 0.5) is under half the size of the largest one."""
+    _, _, nodes = glb
+    t = nodes[ANATOMY.muscle().name]["territory"]
+    share = (t > 0.5).mean(axis=0)
+    assert share.min() >= 0.5 * share.max(), share
+
+
+def test_territory_override_must_stay_ordered() -> None:
+    raw = yaml.safe_load(ANATOMY_PATH.read_text())
+    node = next(n for n in raw["nodes"] if n.get("territory"))
+    node["territory_falloff_mm"] = 50
+    node["territory_max_mm"] = 40
+    with pytest.raises(ValueError):
+        Anatomy.model_validate(raw).territory_scale(
+            next(n for n in Anatomy.model_validate(raw).nodes if n.name == node["name"])
+        )
+
+
 def test_glb_keeps_the_heart_colour_free(glb: tuple[str, Path, dict[str, dict]]) -> None:
     """Territory rides on a custom attribute, so the heart's material and colour are unaffected."""
     _, _, nodes = glb

@@ -91,12 +91,13 @@ def territory_weights(
     heart_vertices: np.ndarray,
     vessels: list[trimesh.Trimesh],
     units_per_mm: float,
-    falloff_mm: float,
-    max_mm: float,
+    falloff_mm: list[float],
+    max_mm: list[float],
 ) -> np.ndarray:
     """(n_vertices, n_vessels) float32 in [0, 1]: closeness of each heart vertex to each vessel.
 
-    Channels are independent (not normalised across vessels). Distance is to the nearest point on
+    `falloff_mm` / `max_mm` are per vessel. Channels are independent (not normalised across vessels;
+    each peaks at 1 on the artery itself). Distance is to the nearest point on
     the vessel surface (its vertices plus fixed-seed surface samples), in millimetres.
     """
     out = np.zeros((len(heart_vertices), len(vessels)), dtype=np.float32)
@@ -108,8 +109,8 @@ def territory_weights(
             points = np.vstack([points, samples])
         dist_mm, _ = cKDTree(points).query(heart_vertices)
         dist_mm = dist_mm / units_per_mm
-        weight = np.exp(-((dist_mm / falloff_mm) ** 2))
-        t = np.clip((dist_mm / max_mm - FADE_START) / (1 - FADE_START), 0.0, 1.0)
+        weight = np.exp(-((dist_mm / falloff_mm[k]) ** 2))
+        t = np.clip((dist_mm / max_mm[k] - FADE_START) / (1 - FADE_START), 0.0, 1.0)
         weight *= 1.0 - t * t * (3 - 2 * t)  # smoothstep fade to exactly 0 at max_mm
-        out[:, k] = np.where(dist_mm >= max_mm, 0.0, weight)
+        out[:, k] = np.where(dist_mm >= max_mm[k], 0.0, weight)
     return out
