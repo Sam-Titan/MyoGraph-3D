@@ -31,6 +31,7 @@ ALLOWED: dict[str, frozenset[str]] = {
     "waterfall.baseline_caption": frozenset({"target", "base", "prev", "outcome"}),
     "waterfall.order_caption": frozenset(),
     "waterfall.points": frozenset({"sign", "n"}),
+    "waterfall.points_one": frozenset({"sign"}),
     "waterfall.cutoff_tick": frozenset({"thr"}),
     "waterfall.technical_title": frozenset(),
     "waterfall.technical_line": frozenset({"base_logit", "logit", "p"}),
@@ -75,6 +76,7 @@ class WaterfallText(_Strict):
     baseline_caption: str
     order_caption: str
     points: str
+    points_one: str
     cutoff_tick: str
     technical_title: str
     technical_line: str

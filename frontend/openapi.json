@@ -2104,6 +2104,10 @@
             "type": "string",
             "title": "Points"
           },
+          "points_one": {
+            "type": "string",
+            "title": "Points One"
+          },
           "cutoff_tick": {
             "type": "string",
             "title": "Cutoff Tick"
@@ -2126,6 +2130,7 @@
           "baseline_caption",
           "order_caption",
           "points",
+          "points_one",
           "cutoff_tick",
           "technical_title",
           "technical_line"

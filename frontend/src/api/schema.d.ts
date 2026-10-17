@@ -840,6 +840,8 @@ export interface components {
             order_caption: string;
             /** Points */
             points: string;
+            /** Points One */
+            points_one: string;
             /** Cutoff Tick */
             cutoff_tick: string;
             /** Technical Title */

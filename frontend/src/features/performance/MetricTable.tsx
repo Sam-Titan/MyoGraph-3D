@@ -30,7 +30,7 @@ export function MetricTable({ metrics }: { metrics: MetricsResponse }) {
       aside={
         <div className="flex items-center gap-2">
           <Label htmlFor="threshold-mode" className="text-xs">
-            Decision threshold: {tuned ? 'tuned' : defaultThreshold}
+            Decision cut-off: {tuned ? 'tuned' : defaultThreshold}
           </Label>
           <Switch id="threshold-mode" checked={tuned} onCheckedChange={setTuned} />
         </div>
@@ -41,7 +41,7 @@ export function MetricTable({ metrics }: { metrics: MetricsResponse }) {
           <thead className="border-b text-xs text-muted-foreground">
             <tr>
               <th className={TH}>Target</th>
-              <th className={TH}>Threshold</th>
+              <th className={TH}>Cut-off</th>
               {METRICS.map((m) => (
                 <th key={m.key} className={TH}>
                   {m.label}
@@ -106,7 +106,7 @@ export function MetricTable({ metrics }: { metrics: MetricsResponse }) {
         </div>
       )}
       <p className="text-xs text-muted-foreground">
-        ROC-AUC and Brier do not depend on the threshold. Accuracy should be read against the
+        ROC-AUC and Brier do not depend on the cut-off. Accuracy should be read against the
         majority-class reference: always predicting the commoner class would already score that
         high.
       </p>

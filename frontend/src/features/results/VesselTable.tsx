@@ -19,7 +19,7 @@ interface Props {
   onSelect: (id: string) => void
 }
 
-/** Probability bar: lighter segment = range, tick = decision threshold. The number is always shown beside it. */
+/** Probability bar: lighter segment = range, tick = the model's cut-off. The number is always shown beside it. */
 function EstimateBar({
   p,
   threshold,
@@ -130,7 +130,7 @@ export function VesselTable({ vessels, predictions, ranges, truth, selected, onS
                   <span className="sr-only">
                     {range &&
                       `range ${Math.round(range.interval.lo * 100)} to ${Math.round(range.interval.hi * 100)} percent, `}
-                    threshold {pct(pred.threshold)}
+                    cut-off {pct(pred.threshold)}
                   </span>
                 )}
               </td>

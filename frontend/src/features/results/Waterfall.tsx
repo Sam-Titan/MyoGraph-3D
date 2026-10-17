@@ -56,7 +56,10 @@ export function Waterfall({ steps, probability, threshold, range, display, marke
           const lo = Math.min(s.from_p, s.to_p)
           const width = Math.max(Math.abs(at(axis, s.to_p) - at(axis, s.from_p)), 0.8)
           const up = s.to_p >= s.from_p
-          const text = fillText(w.points, { sign: signOf(points), n: Math.abs(points) })
+          const text =
+            Math.abs(points) === 1
+              ? fillText(w.points_one, { sign: signOf(points) })
+              : fillText(w.points, { sign: signOf(points), n: Math.abs(points) })
           return (
             <Row
               cut={cut}

@@ -27,7 +27,7 @@ export function AboutPanel() {
           <li>
             Colour is the calibrated probability for that vessel; the number is always shown too.
           </li>
-          <li>Legend ticks mark each target’s decision threshold.</li>
+          <li>Legend ticks mark each target’s cut-off.</li>
           <li>Selecting a vessel rotates the heart to it.</li>
           <li>Dashed labels mark a vessel that sits behind the heart.</li>
         </ul>

@@ -11,7 +11,7 @@ const GRADIENT = `linear-gradient(to right, ${Array.from({ length: 11 }, (_, i) 
 
 /**
  * Probability legend plus every target's number, so the % is visible even with labels toggled off.
- * Colour is never shown without a number. Only the selected target's decision threshold is
+ * Colour is never shown without a number. Only the selected target's cut-off is
  * labelled; the others are faint ticks (id + value in the tooltip) so labels never collide.
  */
 export function Legend({
@@ -45,7 +45,7 @@ export function Legend({
                 transform: `translateX(-${active.threshold * 100}%)`,
               }}
             >
-              {active.id} threshold {pct(active.threshold)}
+              {active.id} cut-off {pct(active.threshold)}
             </span>
           )}
         </div>
@@ -57,8 +57,8 @@ export function Legend({
               <span
                 key={t.id}
                 role="img"
-                aria-label={`${t.id} decision threshold ${pct(t.threshold)}`}
-                title={`${t.id} decision threshold ${pct(t.threshold)}`}
+                aria-label={`${t.id} cut-off ${pct(t.threshold)}`}
+                title={`${t.id} cut-off ${pct(t.threshold)}`}
                 className={cn(
                   'absolute flex w-3 -translate-x-1/2 justify-center',
                   isActive ? '-top-[0.9rem] h-6' : '-top-1 h-4',
@@ -79,7 +79,7 @@ export function Legend({
         </div>
         <div className="mt-1 flex justify-between gap-2 text-xs text-viewport-muted">
           <span>0%</span>
-          <span className="truncate">model estimate, tick marks the threshold</span>
+          <span className="truncate">model estimate, tick marks the cut-off</span>
           <span>100%</span>
         </div>
       </div>
