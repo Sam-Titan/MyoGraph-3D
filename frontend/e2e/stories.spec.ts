@@ -139,6 +139,26 @@ test('plays every story end to end', async ({ page }) => {
   expect(c.problems).toEqual([])
 })
 
+test('every story still reads fully when /api/intervals fails', async ({ page }) => {
+  await page.route('**/api/intervals', (route) => route.fulfill({ status: 500, body: '{}' }))
+  await page.goto('/')
+  await waitReady(page)
+  const stories = await loadStories(page)
+  for (const story of stories) {
+    await openAndStart(page, story.id)
+    for (const step of story.steps) {
+      await expect(card(page)).toHaveAttribute('data-story-step', step.id)
+      await expect(text(page)).not.toHaveText('Loading the estimate…', { timeout: 30_000 })
+      const body = (await text(page).innerText()).trim()
+      expect(body.length, `${story.id}/${step.id} is empty`).toBeGreaterThan(20)
+      expect(body, `${story.id}/${step.id} has an unfilled token`).not.toMatch(/[{}]|undefined|NaN/)
+      expect(body, `${story.id}/${step.id} mentions a range`).not.toMatch(/range/i)
+      await page.locator('[data-story-next]').click()
+    }
+    await expect(card(page)).toHaveCount(0)
+  }
+})
+
 test('Back, keyboard and Esc; exit restores an edited patient', async ({ page }) => {
   await page.goto('/')
   await waitReady(page)

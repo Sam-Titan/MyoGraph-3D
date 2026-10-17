@@ -123,3 +123,34 @@ def test_replicates_are_reproducible_and_round_trip(tmp_path: Any) -> None:
     rows: pd.DataFrame = X.iloc[:5]
     np.testing.assert_allclose(loaded.probabilities(rows), one.probabilities(rows))
     assert loaded.probabilities(rows).shape == (3, 5)
+
+
+def test_intervals_are_cached_per_input(client: TestClient, presets: list[dict[str, Any]]) -> None:
+    predictor = client.app.state.predictor  # type: ignore[attr-defined]
+    calls: list[int] = []
+    original = predictor._compute_intervals
+    predictor._intervals_cache.clear()
+    predictor._compute_intervals = lambda v: (calls.append(1), original(v))[1]
+    try:
+        values = presets[0]["values"]
+        first = predictor.intervals(values)
+        assert predictor.intervals(dict(reversed(list(values.items())))) is first  # key order-free
+        assert len(calls) == 1
+        predictor.intervals(presets[1]["values"])
+        assert len(calls) == 2
+        # /api/summary reuses the same entry (no recompute for an already-seen patient).
+        client.post("/api/summary", json={"values": values})
+        assert len(calls) == 2
+    finally:
+        predictor._compute_intervals = original
+
+
+def test_intervals_cache_is_bounded(client: TestClient, presets: list[dict[str, Any]]) -> None:
+    from app.services import predictor as mod
+
+    predictor = client.app.state.predictor  # type: ignore[attr-defined]
+    predictor._intervals_cache.clear()
+    base = presets[0]["values"]
+    for i in range(mod.INTERVALS_CACHE_SIZE + 5):
+        predictor.intervals({**base, "age": 30 + i % 50, "weight": 50 + i // 50})
+    assert len(predictor._intervals_cache) <= mod.INTERVALS_CACHE_SIZE

@@ -43,6 +43,8 @@ export function evalCondition(cond: string, ctx: StoryContext): boolean {
       return pred !== undefined && pred.probability >= pred.threshold + WELL_MARGIN
     case 'well_below_threshold':
       return pred !== undefined && pred.probability <= pred.threshold - WELL_MARGIN
+    case 'has_range':
+      return ctx.ranges[id ?? ''] !== undefined
     case 'range_crosses_threshold':
       return ctx.ranges[id ?? '']?.verdict === 'uncertain'
     case 'range_clear_of_threshold':

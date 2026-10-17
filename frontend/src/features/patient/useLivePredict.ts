@@ -6,6 +6,8 @@ import { useAppStore } from '@/store/app'
 import type { FormValues } from './formSchema'
 
 export const PREDICT_DEBOUNCE_MS = 300
+/** Extra wait before the ranges (about 15x the CPU of a predict) are requested for the same values. */
+export const INTERVALS_EXTRA_DEBOUNCE_MS = 400
 
 export type LiveState = 'live' | 'busy' | 'paused' | 'error'
 
@@ -18,6 +20,7 @@ export function useLivePredict(values: FormValues, schema: z.ZodType<FormValues,
   const key = JSON.stringify(values)
   const debouncedKey = useDebouncedValue(key, PREDICT_DEBOUNCE_MS)
   const setPredictValues = useAppStore((s) => s.setPredictValues)
+  const setIntervalValues = useAppStore((s) => s.setIntervalValues)
 
   const valid = useMemo(() => schema.safeParse(values).success, [schema, values])
   const debounced = useMemo(() => {
@@ -27,6 +30,9 @@ export function useLivePredict(values: FormValues, schema: z.ZodType<FormValues,
 
   const query = usePredict(debounced)
   useEffect(() => setPredictValues(debounced), [debounced, setPredictValues])
+  // Ranges follow later; changing the key aborts the superseded request (TanStack passes `signal`).
+  const slow = useDebouncedValue(debounced, INTERVALS_EXTRA_DEBOUNCE_MS)
+  useEffect(() => setIntervalValues(slow), [slow, setIntervalValues])
 
   const pending = key !== debouncedKey
   const stale = pending || query.isFetching || query.isPlaceholderData

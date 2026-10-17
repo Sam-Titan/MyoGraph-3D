@@ -18,6 +18,7 @@
 #          {factors_up:N} / {factors_down:N}  up to N factors (of `highlight.target`) that raised / lowered the estimate
 #          {n_patients}  size of the whole dataset (train + hold-out); only used in `factor_note`
 # `when`   above_threshold:ID  below_threshold:ID  well_above_threshold:ID  well_below_threshold:ID  (well = 0.25 beyond)
+#          has_range:ID  (the range loaded; sentences with {range:ID} need it so the step still reads without ranges)
 #          range_crosses_threshold:ID  range_clear_of_threshold:ID  (the range straddles the threshold / does not)
 #          agrees:ID  disagrees:ID (model verdict vs real result)  all_agree  any_disagrees
 # Appended to every step that renders a {factors_*} list.
@@ -42,9 +43,11 @@ stories:
         highlight: {target: CAD, direction: down, top: 3}
         parts:
           - text: >-
-              The model estimates {p:CAD} for coronary artery disease, with a range of {range:CAD}. Its decision
-              threshold is {thr:CAD}.
+              The model estimates {p:CAD} for coronary artery disease. Its decision threshold is {thr:CAD}.
+          - text: The range is {range:CAD}.
+            when: [has_range:CAD]
           - text: The range shows how strongly the estimate depends on which patients the model learned from.
+            when: [has_range:CAD]
           - text: That is below the decision threshold.
             when: [below_threshold:CAD]
           - text: That is at or above the decision threshold.
@@ -75,17 +78,19 @@ stories:
               Colour shows only the estimated probability. Which artery is which comes from the outline, the label and
               where it sits.
           - text: >-
-              The {name:LAD} ({plain:LAD}) lies on the {where:LAD}. The model estimates {p:LAD} for it, with a
-              range of {range:LAD}.
+              The {name:LAD} ({plain:LAD}) lies on the {where:LAD}. The model estimates {p:LAD} for it.
+          - text: The range is {range:LAD}.
+            when: [has_range:LAD]
           - text: The range shows how strongly the estimate depends on which patients the model learned from.
+            when: [has_range:LAD]
           - text: But the range crosses the decision threshold, so the model is close to undecided on this one.
             when: [range_crosses_threshold:LAD]
       - id: second-artery
         camera: {target: LCX}
         parts:
-          - text: >-
-              The {name:LCX} lies on the {where:LCX}. The model estimates {p:LCX} for it, with a range of
-              {range:LCX}.
+          - text: The {name:LCX} lies on the {where:LCX}. The model estimates {p:LCX} for it.
+          - text: The range is {range:LCX}.
+            when: [has_range:LCX]
           - text: That is well below its decision threshold of {thr:LCX}.
             when: [well_below_threshold:LCX]
           - text: But the range crosses the decision threshold, so the model is close to undecided on this one.
@@ -93,9 +98,9 @@ stories:
       - id: third-artery
         camera: {target: RCA}
         parts:
-          - text: >-
-              The {name:RCA} lies on the {where:RCA}. The model estimates {p:RCA} for it, with a range of
-              {range:RCA}.
+          - text: The {name:RCA} lies on the {where:RCA}. The model estimates {p:RCA} for it.
+          - text: The range is {range:RCA}.
+            when: [has_range:RCA]
           - text: That is well below its decision threshold of {thr:RCA}.
             when: [well_below_threshold:RCA]
           - text: But the range crosses the decision threshold, so the model is close to undecided on this one.
@@ -131,9 +136,11 @@ stories:
         camera: {target: LAD}
         parts:
           - text: >-
-              The {name:LAD} lies on the {where:LAD}. Estimate {p:LAD}, range {range:LAD}, decision threshold
-              {thr:LAD}.
+              The {name:LAD} lies on the {where:LAD}. Estimate {p:LAD}, decision threshold {thr:LAD}.
+          - text: The range is {range:LAD}.
+            when: [has_range:LAD]
           - text: The range shows how strongly the estimate depends on which patients the model learned from.
+            when: [has_range:LAD]
           - text: That is below its threshold.
             when: [below_threshold:LAD]
           - text: That is at or above its threshold.
@@ -144,8 +151,9 @@ stories:
         camera: {target: RCA}
         parts:
           - text: >-
-              The {name:RCA} lies on the {where:RCA}. Estimate {p:RCA}, range {range:RCA}, decision threshold
-              {thr:RCA}.
+              The {name:RCA} lies on the {where:RCA}. Estimate {p:RCA}, decision threshold {thr:RCA}.
+          - text: The range is {range:RCA}.
+            when: [has_range:RCA]
           - text: That is below its threshold.
             when: [below_threshold:RCA]
           - text: That is at or above its threshold.
@@ -157,7 +165,9 @@ stories:
         parts:
           - text: >-
               The {name:LCX} lies on the {where:LCX}, so it is partly hidden from the front: turn the heart or use the
-              view buttons. Estimate {p:LCX}, range {range:LCX}, decision threshold {thr:LCX}.
+              view buttons. Estimate {p:LCX}, decision threshold {thr:LCX}.
+          - text: The range is {range:LCX}.
+            when: [has_range:LCX]
           - text: That is below its threshold.
             when: [below_threshold:LCX]
           - text: That is at or above its threshold.
@@ -201,9 +211,11 @@ stories:
         highlight: {target: CAD, direction: up, top: 3}
         parts:
           - text: >-
-              The model estimates {p:CAD} for coronary artery disease, with a range of {range:CAD}. Its decision
-              threshold is {thr:CAD}.
+              The model estimates {p:CAD} for coronary artery disease. Its decision threshold is {thr:CAD}.
+          - text: The range is {range:CAD}.
+            when: [has_range:CAD]
           - text: The range shows how strongly the estimate depends on which patients the model learned from.
+            when: [has_range:CAD]
           - text: That is far above the decision threshold.
             when: [well_above_threshold:CAD]
           - text: That is far below the decision threshold.
@@ -228,8 +240,10 @@ stories:
         reveal_truth: true
         parts:
           - text: >-
-              Single arteries can be off too. The {name:LCX} estimate is {p:LCX}, range {range:LCX}; its decision
-              threshold is {thr:LCX}.
+              Single arteries can be off too. The {name:LCX} estimate is {p:LCX}; its decision threshold is
+              {thr:LCX}.
+          - text: The range is {range:LCX}.
+            when: [has_range:LCX]
           - text: But the range crosses the decision threshold, so the model is close to undecided on this one.
             when: [range_crosses_threshold:LCX]
           - text: "The angiogram showed: {truth:LCX}. The estimate and the real result disagree."

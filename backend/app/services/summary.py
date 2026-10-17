@@ -220,6 +220,30 @@ def _request_groq(facts: dict[str, Any], settings: GroqSettings) -> str:
     return _A_BEFORE_EIGHT.sub(r"\1n ", text)
 
 
+_VERDICT_WORD = re.compile(r"\b(likely|unlikely|uncertain)\b", re.IGNORECASE)
+
+
+def _states_ranges_and_verdicts(body: str, facts: dict[str, Any]) -> bool:
+    """When the facts carry ranges: every range bound is stated, every verdict word used is one the
+    facts give (never another), and each verdict that occurs in the facts is stated."""
+    present = set(_NUMBER.findall(body))
+    verdicts = {t["verdict"] for t in facts["targets"] if "verdict" in t}
+    for t in facts["targets"]:
+        if (
+            "range_low_percent" in t
+            and not {
+                str(t["range_low_percent"]),
+                str(t["range_high_percent"]),
+            }
+            <= present
+        ):
+            return False
+    if not verdicts:
+        return True
+    used = {w.lower() for w in _VERDICT_WORD.findall(body)}
+    return used == verdicts
+
+
 def validate_llm_text(
     text: str, facts: dict[str, Any], all_labels: frozenset[str] = frozenset()
 ) -> bool:
@@ -233,6 +257,8 @@ def validate_llm_text(
     present = set(_NUMBER.findall(body))
     if not all(str(t["probability_percent"]) in present for t in facts["targets"]):
         return False  # every target's percentage must be stated
+    if not _states_ranges_and_verdicts(body, facts):
+        return False
     allowed = set(_NUMBER.findall(json.dumps(facts, ensure_ascii=False)))
     if not all(n in allowed for n in _NUMBER.findall(body)):
         return False

@@ -1,5 +1,5 @@
 import { X } from 'lucide-react'
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   useFeatures,
   useIntervals,
@@ -14,6 +14,9 @@ import { cn } from '@/lib/utils'
 import { endStory } from './storyActions'
 import { highlightedFactors, renderStep, type StoryContext } from './storyText'
 import { useStory } from './useStory'
+
+/** How long a story waits for its ranges before playing without them. */
+const RANGES_GRACE_MS = 1500
 
 /**
  * The story card: Back / Next / Exit, arrow keys and Esc. Each step flies the camera to its target
@@ -33,6 +36,18 @@ export function StoryPlayer() {
   const intervals = useIntervals(preset?.values ?? null)
   const next = useRef<HTMLButtonElement>(null)
 
+  // Ranges are a bonus: if they fail or are slow, the story plays without its range sentences.
+  const [rangesWaited, setRangesWaited] = useState(false)
+  const presetId = preset?.id
+  // biome-ignore lint/correctness/useExhaustiveDependencies: restart the wait when the story's patient changes
+  useEffect(() => {
+    setRangesWaited(false)
+    const id = setTimeout(() => setRangesWaited(true), RANGES_GRACE_MS)
+    return () => clearTimeout(id)
+  }, [presetId])
+  const rangesReady = Boolean(intervals.data) && !intervals.isPlaceholderData
+  const noRanges = !rangesReady && (intervals.isError || rangesWaited)
+
   const index = active?.step ?? 0
   const step = story?.steps[index]
   const last = story ? index === story.steps.length - 1 : false
@@ -41,8 +56,7 @@ export function StoryPlayer() {
     () =>
       predict.data &&
       !predict.isPlaceholderData &&
-      intervals.data &&
-      !intervals.isPlaceholderData &&
+      (rangesReady || noRanges) &&
       targets &&
       preset &&
       storiesData &&
@@ -50,7 +64,7 @@ export function StoryPlayer() {
         ? {
             targets,
             response: predict.data,
-            ranges: intervals.data.targets,
+            ranges: rangesReady && intervals.data ? intervals.data.targets : {},
             truth: preset.truth,
             factorNote: storiesData.factor_note,
             patients: split.n_train + split.n_test,
@@ -60,7 +74,8 @@ export function StoryPlayer() {
       predict.data,
       predict.isPlaceholderData,
       intervals.data,
-      intervals.isPlaceholderData,
+      rangesReady,
+      noRanges,
       targets,
       preset,
       storiesData,

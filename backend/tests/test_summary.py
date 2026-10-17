@@ -64,8 +64,7 @@ def test_groq_valid_output_used(
 ) -> None:
     monkeypatch.setenv("GROQ_API_KEY", KEY)
     facts = _facts(client, values)
-    pcts = ", ".join(f"{t['probability_percent']}%" for t in facts["targets"])
-    good = f"The model estimates {pcts}. {S.DISCLAIMER}"
+    good = f"The model estimates {_stated(facts)}. {S.DISCLAIMER}"
     sent: dict[str, Any] = {}
 
     def fake(f: dict[str, Any], s: GroqSettings) -> str:
@@ -154,17 +153,58 @@ def test_validator_rejects_factor_not_in_selected_list(
     facts = S.build_facts(p.predict(values), p.intervals(values), p.features.targets)
     listed = {x.split(": ")[0] for b in facts["factors"] for x in b["increasing"] + b["decreasing"]}
     foreign = sorted(labels - listed - {"Sex"})[0]
-    pcts = ", ".join(f"{t['probability_percent']}%" for t in facts["targets"])
+    pcts = _stated(facts)
     ok = f"The model estimates {pcts}. {S.DISCLAIMER}"
     bad = f"The model estimates {pcts}, influenced by {foreign}. {S.DISCLAIMER}"
     assert S.validate_llm_text(ok, facts, labels)
     assert not S.validate_llm_text(bad, facts, labels)
 
 
+def _stated(facts: dict[str, Any]) -> str:
+    """Every target with its percentage, range and verdict word."""
+    return ", ".join(
+        f"{t['probability_percent']}% (range {t['range_low_percent']}–{t['range_high_percent']}%, "
+        f"{t['verdict']})"
+        for t in facts["targets"]
+    )
+
+
 def _good_text(client: TestClient, values: dict[str, Any]) -> str:
+    return f"The model estimates {_stated(_facts(client, values))}. {S.DISCLAIMER}"
+
+
+def test_validator_requires_ranges_and_verdicts(client: TestClient, values: dict[str, Any]) -> None:
     facts = _facts(client, values)
+    labels: frozenset[str] = frozenset()
+    pct_only = ", ".join(f"{t['probability_percent']}%" for t in facts["targets"])
+    assert S.validate_llm_text(_good_text(client, values), facts, labels)
+    # Percentages alone (no ranges, no verdict words) now fail.
+    assert not S.validate_llm_text(f"The model estimates {pct_only}. {S.DISCLAIMER}", facts, labels)
+    # A missing range bound fails.
+    t0 = facts["targets"][0]
+    dropped = _good_text(client, values).replace(f"{t0['range_low_percent']}–", "", 1)
+    if f"{t0['range_low_percent']}" not in dropped.split(S.DISCLAIMER)[0].replace("%", " ").split():
+        assert not S.validate_llm_text(dropped, facts, labels)
+    # A verdict word the facts never give fails.
+    other = next(w for w in ("likely", "unlikely", "uncertain") if w not in _verdicts(facts))
+    swapped = _good_text(client, values).replace(t0["verdict"], other, 1)
+    assert not S.validate_llm_text(swapped, facts, labels)
+
+
+def test_validator_without_ranges_in_facts_is_unchanged(
+    client: TestClient, values: dict[str, Any]
+) -> None:
+    facts = _facts(client, values)
+    for t in facts["targets"]:
+        for k in ("range_low_percent", "range_high_percent", "range_level_percent", "verdict"):
+            t.pop(k)
     pcts = ", ".join(f"{t['probability_percent']}%" for t in facts["targets"])
-    return f"The model estimates {pcts}. {S.DISCLAIMER}"
+    text = f"The model estimates {pcts}."
+    assert S.validate_llm_text(f"{text} {S.DISCLAIMER}", facts, frozenset())
+
+
+def _verdicts(facts: dict[str, Any]) -> set[str]:
+    return {t["verdict"] for t in facts["targets"]}
 
 
 def _resp(status: int, content: str = "") -> httpx.Response:

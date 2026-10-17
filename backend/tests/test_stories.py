@@ -112,3 +112,12 @@ def test_every_estimate_sentence_carries_its_range() -> None:
             text = " ".join(p["text"] for p in step["parts"])
             for tid in re.findall(r"\{p:(\w+)\}", text):
                 assert f"{{range:{tid}}}" in text, (story["id"], step["id"], tid)
+
+
+def test_anchor_part_cannot_depend_on_a_range() -> None:
+    """A step must still read when /api/intervals fails: its anchor part has no {range} token."""
+    raw = copy.deepcopy(RAW)
+    step = raw["stories"][0]["steps"][0]
+    step["parts"] = [{"text": "Estimate {p:CAD}, range {range:CAD}."}]
+    with pytest.raises(ValueError):
+        _check(raw)

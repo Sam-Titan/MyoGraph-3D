@@ -12,11 +12,14 @@ interface AppState {
   presetEdited: boolean
   /** Debounced, zod-valid form values the shared predict query runs on; null while invalid. */
   predictValues: PredictRequest['values'] | null
+  /** Same values, trailing predictValues by a longer debounce: what the (costlier) intervals query runs on. */
+  intervalValues: PredictRequest['values'] | null
   setTab: (tab: Tab) => void
   setSelectedTarget: (id: string | null) => void
   setSelectedPresetId: (id: string | null) => void
   setPresetEdited: (edited: boolean) => void
   setPredictValues: (values: PredictRequest['values'] | null) => void
+  setIntervalValues: (values: PredictRequest['values'] | null) => void
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -25,9 +28,11 @@ export const useAppStore = create<AppState>((set) => ({
   selectedPresetId: null,
   presetEdited: false,
   predictValues: null,
+  intervalValues: null,
   setTab: (tab) => set({ tab }),
   setSelectedTarget: (selectedTarget) => set({ selectedTarget }),
   setSelectedPresetId: (selectedPresetId) => set({ selectedPresetId }),
   setPresetEdited: (presetEdited) => set({ presetEdited }),
   setPredictValues: (predictValues) => set({ predictValues }),
+  setIntervalValues: (intervalValues) => set({ intervalValues }),
 }))

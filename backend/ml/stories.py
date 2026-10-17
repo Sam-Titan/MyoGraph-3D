@@ -32,6 +32,7 @@ TARGET_CONDITIONS = {
     "well_below_threshold",
     "agrees",
     "disagrees",
+    "has_range",
     "range_crosses_threshold",
     "range_clear_of_threshold",
 }
@@ -141,8 +142,10 @@ def validate_stories(stories: Stories, schema: FeatureSchema, preset_ids: set[st
                 if _UNSAFE.search(_TOKEN.sub("", part.text)):
                     raise ValueError(f"{where}: digits or % in text (use a token): {part.text!r}")
                 has_factors = False
+                has_range = False
                 for name, arg in _TOKEN.findall(part.text):
                     if name in TARGET_TOKENS:
+                        has_range = has_range or name == "range"
                         need_target(where, arg)
                         if name == "truth" and not step.reveal_truth:
                             raise ValueError(f"{where}: {{truth}} before reveal_truth")
@@ -166,9 +169,11 @@ def validate_stories(stories: Stories, schema: FeatureSchema, preset_ids: set[st
                         raise ValueError(f"{where}: unknown condition {cond!r}")
                 if not part.when and _OUTCOME_WORDS.search(part.text):
                     raise ValueError(f"{where}: outcome wording needs a `when`: {part.text!r}")
-                anchored = anchored or (not part.when and not has_factors)
+                anchored = anchored or (not part.when and not has_factors and not has_range)
             if not anchored:
-                raise ValueError(f"{where}: needs one part with no `when` and no factor token")
+                raise ValueError(
+                    f"{where}: needs one part with no `when`, no factor token and no range token"
+                )
 
 
 @cache

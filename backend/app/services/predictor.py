@@ -3,7 +3,9 @@
 import json
 import logging
 import math
+import threading
 import time
+from collections import OrderedDict
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
@@ -51,6 +53,7 @@ from ml.uncertainty import ReplicateSet, load_uncertainty, replicate_path, verdi
 logger = logging.getLogger(__name__)
 
 MODEL_NAME = "xgb"
+INTERVALS_CACHE_SIZE = 256
 
 
 def _sigmoid(z: float) -> float:
@@ -82,6 +85,9 @@ class Predictor:
             for t in self.schema.targets
         }
         self.uncertainty = load_uncertainty()
+        # LRU of interval results keyed by the validated inputs (like the summary cache).
+        self._intervals_cache: OrderedDict[str, IntervalsResponse] = OrderedDict()
+        self._intervals_lock = threading.Lock()
         self.replicates = {t: ReplicateSet.load(replicate_path(t)) for t in self.schema.targets}
         self.thresholds = {t: float(calibration[t]["threshold"]) for t in self.schema.targets}
         nodes = anatomy_nodes()
@@ -200,7 +206,24 @@ class Predictor:
         )
 
     def intervals(self, values: Mapping[str, InputValue]) -> IntervalsResponse:
-        """Bootstrap ranges and range verdicts (a separate call: /api/predict keeps its latency)."""
+        """Bootstrap ranges and range verdicts (a separate call: /api/predict keeps its latency).
+
+        Cached per input (LRU); `/api/summary` reuses it, so a summary after the live call is free.
+        """
+        key = json.dumps(values, sort_keys=True, default=str)
+        with self._intervals_lock:
+            hit = self._intervals_cache.get(key)
+            if hit is not None:
+                self._intervals_cache.move_to_end(key)
+                return hit
+        result = self._compute_intervals(values)
+        with self._intervals_lock:
+            self._intervals_cache[key] = result
+            while len(self._intervals_cache) > INTERVALS_CACHE_SIZE:
+                self._intervals_cache.popitem(last=False)
+        return result
+
+    def _compute_intervals(self, values: Mapping[str, InputValue]) -> IntervalsResponse:
         t0 = time.perf_counter()
         X = inputs_to_matrix([values], self.schema)
         targets: dict[str, TargetRange] = {}

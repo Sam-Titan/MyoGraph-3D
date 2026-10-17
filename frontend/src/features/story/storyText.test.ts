@@ -79,6 +79,8 @@ describe('ranges', () => {
     expect(evalCondition('range_crosses_threshold:CAD', ctx(null))).toBe(false)
     expect(evalCondition('range_clear_of_threshold:CAD', ctx(null))).toBe(true)
     expect(evalCondition('range_clear_of_threshold:AAA', ctx(null))).toBe(false)
+    expect(evalCondition('has_range:CAD', ctx(null))).toBe(true)
+    expect(evalCondition('has_range:CAD', { ...ctx(null), ranges: {} })).toBe(false)
     expect(evalCondition('range_crosses_threshold:NOPE', ctx(null))).toBe(false)
     expect(evalCondition('range_clear_of_threshold:NOPE', ctx(null))).toBe(false)
   })
@@ -175,5 +177,30 @@ describe('rendering', () => {
     expect(renderStep(s, ctx({ CAD: true, AAA: false }))).toEqual([
       'narrowing (stenosis) found; no narrowing found.',
     ])
+  })
+})
+
+describe('without ranges (intervals failed or slow)', () => {
+  const noRanges = { ...ctx(null), ranges: {} }
+  const steps: StoryStep[] = [
+    step({
+      parts: [
+        { text: 'Estimate {p:CAD}, range {range:CAD}.', when: [] },
+        { text: 'The range crosses it.', when: ['range_crosses_threshold:CAD'] },
+        { text: 'Estimate {p:CAD}.', when: [] },
+      ],
+    }),
+  ]
+
+  it('skips range sentences and keeps the rest', () => {
+    expect(renderStep(steps[0], noRanges)).toEqual(['Estimate 98%.'])
+  })
+
+  it('never leaves an unfilled token or an empty step for the shipped story shapes', () => {
+    for (const s of steps) {
+      const out = renderStep(s, noRanges).join(' ')
+      expect(out).not.toMatch(/[{}]|undefined|NaN/)
+      expect(out.length).toBeGreaterThan(0)
+    }
   })
 })

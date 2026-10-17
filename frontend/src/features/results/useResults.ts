@@ -8,7 +8,8 @@ export function useResults() {
   const features = useFeatures()
   const predictValues = useAppStore((s) => s.predictValues)
   const predict = usePredict(predictValues)
-  const intervals = useIntervals(predictValues)
+  const intervalValues = useAppStore((s) => s.intervalValues)
+  const intervals = useIntervals(intervalValues)
   const selected = useAppStore((s) => s.selectedTarget)
   const setSelected = useAppStore((s) => s.setSelectedTarget)
   const { truth, edited } = usePresetTruth()
@@ -18,7 +19,8 @@ export function useResults() {
     predict,
     /** Ranges and range-based verdicts; arrive after the point estimate. */
     ranges: intervals.data?.targets,
-    rangesStale: intervals.isFetching || intervals.isPlaceholderData,
+    rangesStale:
+      intervals.isFetching || intervals.isPlaceholderData || intervalValues !== predictValues,
     selected,
     setSelected,
     // Truth only applies to the preset as loaded; once edited it no longer describes the patient.

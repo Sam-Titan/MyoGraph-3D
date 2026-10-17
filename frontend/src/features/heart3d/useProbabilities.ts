@@ -28,7 +28,7 @@ export function useThresholds(): Probabilities {
 
 /** Range (as lo/hi probabilities) per target id from the shared intervals query. */
 export function useRanges(): Readonly<Record<string, { lo: number; hi: number } | undefined>> {
-  const values = useAppStore((s) => s.predictValues)
+  const values = useAppStore((s) => s.intervalValues)
   const { data } = useIntervals(values)
   return useMemo(() => {
     const out: Record<string, { lo: number; hi: number }> = {}
