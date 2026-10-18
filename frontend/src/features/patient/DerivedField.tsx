@@ -12,7 +12,10 @@ export interface DerivedState {
 }
 
 function format(row: BreakdownRow): string {
-  if (row.unit) return `${Number(row.value.toFixed(1))} ${row.unit}`
+  if (row.unit) {
+    const unit = row.value === 1 && row.unit_singular ? row.unit_singular : row.unit
+    return `${Number(row.value.toFixed(1))} ${unit}`
+  }
   if (row.value === 0 || row.value === 1) return row.value === 1 ? 'Yes' : 'No'
   return String(Number(row.value.toFixed(2)))
 }

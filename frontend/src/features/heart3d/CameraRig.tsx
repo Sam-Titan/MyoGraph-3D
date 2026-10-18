@@ -63,6 +63,7 @@ export function CameraRig({ bindings }: Props) {
   const tab = useAppStore((s) => s.tab)
   const selected = useAppStore((s) => s.selectedTarget)
   const nonce = useViewState((s) => s.viewNonce)
+  const override = useViewState((s) => s.viewDirOverride)
   const spin = useViewState((s) => s.spin)
   const ready = width > 0 && height > 0
   const readyRef = useRef(ready)
@@ -83,11 +84,11 @@ export function CameraRig({ bindings }: Props) {
       // A vessel orbits to its configured view direction (anatomy.yaml `expect_side`/`view_dir`,
       // via the GLB extras) but always frames the whole heart; the vessel is shown by highlight only.
       const vessel = bindings.find((b) => b.target?.id === id && b.target.role === 'vessel')
-      const dir = vessel?.viewDir ?? VIEW_DIR
+      const dir = override ? new Vector3(...override).normalize() : (vessel?.viewDir ?? VIEW_DIR)
       const { eye, centre } = fitView(defaultBox, dir, camera)
       void c.setLookAt(...eye.toArray(), ...centre.toArray(), animate)
     },
-    [bindings, camera, defaultBox],
+    [bindings, camera, defaultBox, override],
   )
 
   // Selection or Reset changed: re-frame (deferred while the canvas has no size).
@@ -98,7 +99,8 @@ export function CameraRig({ bindings }: Props) {
       return
     }
     moved.current = false
-    frame(selected, true)
+    // Reduced motion: cut straight to the view instead of flying.
+    frame(selected, !window.matchMedia('(prefers-reduced-motion: reduce)').matches)
   }, [selected, nonce, frame])
 
   // Canvas got a real size (first mount, shown again after being hidden, or resized between the
@@ -120,6 +122,11 @@ export function CameraRig({ bindings }: Props) {
     const id = requestAnimationFrame(() => invalidate())
     return () => cancelAnimationFrame(id)
   }, [ready, width, height, tab, frame, invalidate])
+
+  // frameloop="demand": turning Spin on must request the first frame, which then keeps requesting more.
+  useEffect(() => {
+    if (spin) invalidate()
+  }, [spin, invalidate])
 
   useFrame((_, delta) => {
     if (spin && controls.current) {

@@ -22,3 +22,7 @@ export const ordinal = (n: number): string => {
   if (r >= 11 && r <= 13) return `${n}th`
   return `${n}${['th', 'st', 'nd', 'rd'][n % 10] ?? 'th'}`
 }
+
+/** A range as `65–87%`, with the same integer rounding as `pct`. */
+export const pctRange = (lo: number, hi: number): string =>
+  `${Math.round(lo * 100)}–${Math.round(hi * 100)}%`

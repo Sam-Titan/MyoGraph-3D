@@ -6,6 +6,7 @@ Deterministic: fixed seeds, single-threaded XGBoost, no wall-clock values in met
 import hashlib
 import logging
 import subprocess
+import time
 from datetime import UTC, datetime
 from typing import Any
 
@@ -31,6 +32,7 @@ from ml.preprocess import RAW_CSV, load_raw, raw_targets, raw_to_matrix
 from ml.presets import build_presets
 from ml.schema import FeatureSchema, load_schema
 from ml.split import SEED, load_split
+from ml.uncertainty import fit_replicates, holdout_report, load_uncertainty, replicate_path
 
 log = logging.getLogger(__name__)
 
@@ -107,8 +109,10 @@ def main() -> None:
     calibration: dict[str, dict[str, float]] = {}
     scale_pos_weight: dict[str, float] = {}
     test_probs: dict[str, np.ndarray] = {}
+    unc_cfg = load_uncertainty()
+    unc_report: dict[str, Any] = {}
 
-    for t in schema.targets:
+    for ti, t in enumerate(schema.targets):
         y_tr, y_te = Y_train[t].to_numpy(), Y_test[t].to_numpy()
         log.info("%s: cross-validating (%dx%d)", t, N_SPLITS, N_REPEATS)
         folds, cv_thresholds, oof = cross_validate(X_train, y_tr)
@@ -119,6 +123,18 @@ def main() -> None:
         assert isinstance(cal, Calibration)
         p_te = model.predict_proba(X_test)
         model.save(MODELS_DIR / f"{t}.ubj")
+
+        started = time.perf_counter()
+        replicates = fit_replicates(model, X_train, y_tr, unc_cfg, ti)
+        replicates.save(replicate_path(t))
+        unc_report[t] = holdout_report(replicates, X_test, p_te, unc_cfg.level, cal.threshold)
+        log.info(
+            "%s: %d bootstrap replicates in %.0f s, %.1f MB",
+            t,
+            len(replicates),
+            time.perf_counter() - started,
+            replicate_path(t).stat().st_size / 1e6,
+        )
 
         test_probs[t] = p_te
         calibration[t] = {"a": cal.a, "b": cal.b, "threshold": cal.threshold}
@@ -158,6 +174,12 @@ def main() -> None:
         "cv": {"n_splits": N_SPLITS, "n_repeats": N_REPEATS, "seed": SEED},
         "targets": target_metrics,
         "feature_importance": importance,
+        "uncertainty": {
+            "method": unc_cfg.method,
+            "n_models": unc_cfg.n_models,
+            "level": unc_cfg.level,
+            "targets": unc_report,
+        },
     }
     write_json("metrics.json", metrics)
     write_json("calibration.json", calibration)

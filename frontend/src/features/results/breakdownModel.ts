@@ -45,7 +45,8 @@ export function formatValue(row: BreakdownRow): string {
   if (row.kind === 'binary') return row.value >= 0.5 ? 'Yes' : 'No'
   const v = trimmed(row.value, 2)
   if (!row.unit) return v
-  return row.unit === '%' ? `${v}%` : `${v} ${row.unit}`
+  if (row.unit === '%') return `${v}%`
+  return `${v} ${row.value === 1 && row.unit_singular ? row.unit_singular : row.unit}`
 }
 
 export function formatReference(row: BreakdownRow): string {

@@ -12,7 +12,7 @@ function makeScale(values: number[]) {
   const span = hi - lo
   const at = (v: number): string => `${((v - lo) / span) * 100}%`
   const count = Math.round(span / STEP)
-  const every = count > 10 ? 2 : 1
+  const every = Math.max(1, Math.ceil(count / 6)) // at most ~7 labels, so they never collide on a phone
   const ticks = Array.from({ length: count + 1 }, (_, i) => lo + i * STEP).filter(
     (_, i) => i % every === 0,
   )

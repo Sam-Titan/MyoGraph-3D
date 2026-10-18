@@ -1,26 +1,45 @@
-import type { TargetInfo } from '@/api/client'
+import type { TargetInfo, TargetRange } from '@/api/client'
 import type { components } from '@/api/schema'
 import { useViewState } from '@/features/heart3d/useViewState'
-import { pct } from '@/lib/format'
+import { pct, pctRange } from '@/lib/format'
 import { riskCss } from '@/lib/riskColor'
 import { cn } from '@/lib/utils'
+import { PinDelta } from './PinDelta'
+import type { Delta } from './pinModel'
 import { TweenedPercent } from './TweenedPercent'
+import { useThresholdParts } from './verdict'
 
 type Prediction = components['schemas']['TargetPrediction']
 
 interface Props {
   vessels: TargetInfo[]
   predictions: Record<string, Prediction> | undefined
+  ranges: Record<string, TargetRange> | undefined
+  deltas?: Readonly<Record<string, Delta>>
   /** Actual catheterisation findings (loaded, unedited preset), if known. */
   truth: Record<string, boolean> | null
   selected: string | null
   onSelect: (id: string) => void
 }
 
-/** Probability bar with a tick at the decision threshold. The number is always shown beside it. */
-function EstimateBar({ p, threshold }: { p: number; threshold: number }) {
+/** Probability bar: lighter segment = range, tick = the model's cut-off. The number is always shown beside it. */
+function EstimateBar({
+  p,
+  threshold,
+  range,
+}: {
+  p: number
+  threshold: number
+  range: TargetRange['interval'] | undefined
+}) {
   return (
     <span aria-hidden className="relative mt-1 block h-1.5 w-full rounded-full bg-muted">
+      {range && (
+        <span
+          className="absolute -inset-y-0.5 rounded-full bg-foreground/15"
+          style={{ left: `${range.lo * 100}%`, width: `${(range.hi - range.lo) * 100}%` }}
+        />
+      )}
       <span
         className="absolute inset-y-0 left-0 rounded-full"
         style={{ width: `${p * 100}%`, background: riskCss(p) }}
@@ -33,19 +52,29 @@ function EstimateBar({ p, threshold }: { p: number; threshold: number }) {
   )
 }
 
-/** Compact per-vessel table: estimate, the model's verdict, and (unedited preset) the cath result. */
-export function VesselTable({ vessels, predictions, truth, selected, onSelect }: Props) {
+/** Compact per-vessel table: estimate, where it sits against the model's cut-off, and (unedited preset) the cath result. */
+export function VesselTable({
+  vessels,
+  predictions,
+  ranges,
+  deltas,
+  truth,
+  selected,
+  onSelect,
+}: Props) {
   const setRowHover = useViewState((s) => s.setRowHover)
   const hovered3d = useViewState((s) => s.hover?.id)
+  const thresholdParts = useThresholdParts()
   return (
-    <table className="w-full table-fixed border-collapse text-sm">
-      <colgroup>
-        <col className="w-[36%]" />
-        <col className="w-[24%]" />
-        <col className="w-[17%]" />
-        <col className="w-[23%]" />
+    /* Below sm each vessel becomes a stacked card (4 columns do not fit 360 px). */
+    <table className="w-full table-fixed border-collapse text-sm max-sm:block">
+      <colgroup className="max-sm:hidden">
+        <col className="w-[22%]" />
+        <col className="w-[29%]" />
+        <col className="w-[30%]" />
+        <col className="w-[19%]" />
       </colgroup>
-      <thead>
+      <thead className="max-sm:hidden">
         <tr className="t-meta text-left">
           <th scope="col" className="px-3 pb-1 font-medium">
             Vessel
@@ -61,9 +90,10 @@ export function VesselTable({ vessels, predictions, truth, selected, onSelect }:
           </th>
         </tr>
       </thead>
-      <tbody>
+      <tbody className="max-sm:block">
         {vessels.map((t) => {
           const pred = predictions?.[t.id]
+          const range = ranges?.[t.id]
           const actual = truth?.[t.id]
           const agrees = actual !== undefined && pred ? actual === pred.positive : undefined
           const isSelected = t.id === selected
@@ -77,10 +107,14 @@ export function VesselTable({ vessels, predictions, truth, selected, onSelect }:
               onPointerLeave={() => setRowHover(null)}
               className={cn(
                 'cursor-pointer transition-colors hover:bg-muted data-[linked=true]:bg-muted',
+                'max-sm:mb-2 max-sm:grid max-sm:grid-cols-2 max-sm:gap-x-3 max-sm:rounded-lg max-sm:border max-sm:p-2',
                 'data-[selected=true]:bg-accent data-[selected=true]:shadow-[inset_2px_0_0_var(--primary)]',
               )}
             >
-              <th scope="row" className="px-3 py-2 text-left align-top font-normal">
+              <th
+                scope="row"
+                className="px-3 py-2 text-left align-top font-normal max-sm:col-span-2 max-sm:px-1 max-sm:py-1"
+              >
                 <button
                   type="button"
                   aria-pressed={isSelected}
@@ -92,18 +126,53 @@ export function VesselTable({ vessels, predictions, truth, selected, onSelect }:
                   <span className="t-meta block">{t.plain_label}</span>
                 </button>
               </th>
-              <td className="px-1 py-2 align-top">
-                <TweenedPercent
-                  value={pred?.probability}
-                  className="num block text-[0.9375rem] font-semibold"
-                />
-                {pred && <EstimateBar p={pred.probability} threshold={pred.threshold} />}
-                {pred && <span className="sr-only">threshold {pct(pred.threshold)}</span>}
+              <td className="px-1 py-2 align-top max-sm:px-1 max-sm:py-1">
+                <span className="t-meta block sm:hidden">Estimate</span>
+                <span className="block text-[0.9375rem] leading-tight">
+                  <TweenedPercent value={pred?.probability} className="num font-semibold" />
+                  {range && (
+                    <span className="num t-meta ml-1 inline-block">
+                      ({pctRange(range.interval.lo, range.interval.hi)})
+                    </span>
+                  )}
+                </span>
+                {pred ? (
+                  <EstimateBar
+                    p={pred.probability}
+                    threshold={pred.threshold}
+                    range={range?.interval}
+                  />
+                ) : (
+                  // Same height as the bar: the row does not grow when the estimate arrives.
+                  <span aria-hidden className="mt-1 block h-1.5" />
+                )}
+                <PinDelta delta={deltas?.[t.id]} className="mt-1" />
+                {pred && (
+                  <span className="sr-only">
+                    {range &&
+                      `range ${Math.round(range.interval.lo * 100)} to ${Math.round(range.interval.hi * 100)} percent, `}
+                    cut-off {pct(pred.threshold)}
+                  </span>
+                )}
               </td>
-              <td className="px-1 py-2 align-top">
-                {pred ? (pred.positive ? 'Likely' : 'Unlikely') : '—'}
+              <td className="px-1 py-2 align-top text-[0.8125rem] leading-snug max-sm:px-1 max-sm:py-1">
+                <span className="t-meta block sm:hidden">Model</span>
+                {/* Two lines reserved (verdict + qualifier) so the ranges arriving do not shift the page. */}
+                <div className="min-h-[2.6em]">
+                  {range ? (
+                    <>
+                      <span className="block">{thresholdParts(range).main}</span>
+                      {thresholdParts(range).qualifier && (
+                        <span className="t-meta block">{thresholdParts(range).qualifier}</span>
+                      )}
+                    </>
+                  ) : (
+                    '—'
+                  )}
+                </div>
               </td>
-              <td className="px-1 py-2 align-top">
+              <td className="px-1 py-2 align-top max-sm:col-span-2 max-sm:px-1 max-sm:py-1">
+                <span className="t-meta block sm:hidden">Cath result</span>
                 {actual === undefined ? (
                   <span className="t-meta">—</span>
                 ) : (

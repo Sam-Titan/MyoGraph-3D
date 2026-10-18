@@ -1,4 +1,4 @@
-import { useFeatures, usePredict } from '@/api/queries'
+import { useFeatures, useIntervals, usePredict } from '@/api/queries'
 import { usePresetTruth } from '@/features/patient/usePresetTruth'
 import { overallTarget, vesselTargets } from '@/lib/features'
 import { useAppStore } from '@/store/app'
@@ -8,6 +8,8 @@ export function useResults() {
   const features = useFeatures()
   const predictValues = useAppStore((s) => s.predictValues)
   const predict = usePredict(predictValues)
+  const intervalValues = useAppStore((s) => s.intervalValues)
+  const intervals = useIntervals(intervalValues)
   const selected = useAppStore((s) => s.selectedTarget)
   const setSelected = useAppStore((s) => s.setSelectedTarget)
   const { truth, edited } = usePresetTruth()
@@ -15,6 +17,10 @@ export function useResults() {
   return {
     features,
     predict,
+    /** Ranges with the above/below side and uncertain flag; arrive after the point estimate. */
+    ranges: intervals.data?.targets,
+    rangesStale:
+      intervals.isFetching || intervals.isPlaceholderData || intervalValues !== predictValues,
     selected,
     setSelected,
     // Truth only applies to the preset as loaded; once edited it no longer describes the patient.

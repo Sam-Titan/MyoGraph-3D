@@ -115,8 +115,10 @@ Pydantic models are the source of truth. `make types` dumps the schema offline (
 | `GET /api/features` | Form schema: `targets[{id, label, role, node}]` (`role` = `overall | vessel` from `features.yaml`; node from `anatomy.yaml`), groups, and per-input `{id, label, group, kind, unit, input{min,max,step}, options[], reference{low,high}, observed{min,max}, default, help}`. Built from `features.yaml` + `anatomy.yaml` + `feature_stats.json`. |
 | `GET /api/presets` | `[{id, label, description, values{input_id: value}, truth{CAD,LAD,LCX,RCA: bool}}]` |
 | `POST /api/predict` | Body `{values: {input_id: value}}` (all 49 inputs; derived fields are ignored if sent) → response below |
-| `POST /api/summary` | Body = `/api/predict` body plus optional `selected_target` (default: overall; unknown id → 422). Re-runs predict server-side (client numbers are never trusted), builds a `facts` object (per target: probability %, threshold %, Likely/Unlikely, probability %, threshold %, Likely/Unlikely for every target; top 3 increasing and top 3 decreasing `label: value` factors only for the overall target and the selected target, each block labelled with its target id; out-of-training-range warnings) and returns `{text, source: "groq" \| "template", model?}`. See §5.1. |
+| `POST /api/intervals` | Same body as `/api/predict`. Returns `{model_version, targets{ID: {interval{lo,hi,level,method,n_models}, side: above\|below, uncertain: bool}}}`: the middle `level` share of the bootstrap replicates (config/uncertainty.yaml); `side` compares the POINT estimate with the target's threshold (`above` if p >= threshold); `uncertain` is true when the range crosses it (`lo < threshold <= hi`). Wording ("Above the model's cut-off" / "Below the model's cut-off" + "· uncertain") is served by `GET /api/display` from `config/display.yaml`. A separate call because ranges added ~65-105 ms p95 to `/api/predict` on the Docker image (budget +30 ms). |
+| `POST /api/summary` | Body = `/api/predict` body plus optional `selected_target` (default: overall; unknown id → 422). Re-runs predict server-side (client numbers are never trusted), builds a `facts` object (per target: probability %, threshold %, range %, side above/below and uncertain flag for every target; top 3 increasing and top 3 decreasing `label: value` factors only for the overall target and the selected target, each block labelled with its target id; out-of-training-range warnings) and returns `{text, source: "groq" \| "template", model?}`. See §5.1. |
 | `GET /api/metrics` | Contents of `metrics.json` (typed) plus `stability` (contents of `stability.json`: per-target median/IQR/min/max and the seed-42 percentile) and `excluded_inputs` (from `features.yaml`) |
+| `GET /api/benchmark` | Contents of `benchmark.json` (typed, precomputed by `make benchmark`; nothing is trained at request time): same-protocol model comparison (logistic regression, random forest, XGBoost; TabPFN optional, offline, skipped when not installed) and an XGBoost ablation by feature group (`config/benchmark.yaml`). Paired per-fold differences use the Nadeau-Bengio corrected resampled t-test (`within_noise` = corrected CI contains 0); hold-out ROC-AUC is reported only. `/api/intervals` and `/api/summary` answer 503 + `Retry-After` until the bootstrap replicates, loaded in a background thread after startup, are ready. |
 
 `POST /api/predict` response:
 ```jsonc
@@ -146,7 +148,7 @@ Pydantic models are the source of truth. `make types` dumps the schema offline (
 - `positive` is `probability >= threshold`, where `threshold` is the target's tuned (Youden, train OOF) threshold from `calibration.json`. `breakdown` lists numeric inputs, derived BMI/obesity and binaries (categories only appear in `explanations`).
 - Validation: out-of-`input` bounds, non-finite numbers (NaN/±Infinity), missing inputs and unknown options are rejected (422) with field-level messages. Values outside the *observed* training range are allowed but produce a warning.
 - Latency target: < 50 ms per predict on CPU (4 models + contributions for 1 row).
-- CORS: allow `http://localhost:5173` in dev. In Docker, nginx proxies `/api`, so it's same-origin.
+- CORS: allow `http://localhost:$WEB_PORT` and `http://127.0.0.1:$WEB_PORT` in dev (default 5180; the API runs on `API_PORT`, default 8010). In Docker, nginx proxies `/api`, so it's same-origin.
 
 ### 5.1 Summary endpoint
 - **Structure** (template and Groq alike): S1 overall estimate; S2 vessel estimates in API order (every percentage stated); S3 the selected target named, with its main factors; an optional training-range caveat; then the disclaimer.
@@ -156,7 +158,7 @@ Pydantic models are the source of truth. `make types` dumps the schema offline (
 
 ## 6. Frontend
 
-**Stack**: React 19, Vite, TypeScript (strict), Tailwind v4, shadcn/ui (+ shadcn charts / Recharts), lucide-react, sonner, Motion, Zustand, TanStack Query, react-hook-form + zod, three + @react-three/fiber v9 + @react-three/drei v10 + @react-three/postprocessing. Lint/format: Biome.
+**Stack**: React 19, Vite, TypeScript (strict), Tailwind v4, shadcn/ui (+ shadcn charts / Recharts), lucide-react, sonner, Motion, Zustand, TanStack Query, react-hook-form + zod, three + @react-three/fiber v9 + @react-three/drei v10. Lint/format: Biome.
 
 ### 6.1 Layout (single page, desktop-first, min width 1280; graceful stacking below)
 
@@ -168,7 +170,7 @@ Pydantic models are the source of truth. `make types` dumps the schema offline (
 │ MyoGraph 3D        [Patient Workspace] [Model Performance] [About & Method]│
 ├──────────────┬────────────────────────────────┬────────────────────────────┤
 │ PATIENT      │  3D HEART                       │ PREDICTIONS                │
-│ Preset ▾     │  LAD/LCX/RCA coloured by risk   │ Overall CAD 78% ● Likely   │
+│ Preset ▾     │  LAD/LCX/RCA coloured by risk   │ Overall CAD 78% ● Above      │
 │ ▸ Demograph. │  hover: name + %                │ [LAD 81%] [LCX 34%] [RCA 62%]
 │ ▸ History    │  click: select + glow + fly-to  │ ⓘ disagreement note (cond.)│
 │ ▸ Exam       │  [Reset] [Labels] [X-ray] [Spin]│ WHY · <selected target>    │
@@ -189,7 +191,7 @@ Pydantic models are the source of truth. `make types` dumps the schema offline (
 - **Live updates**: on any valid change, debounce 300 ms → `POST /api/predict` via TanStack Query v5 (query key = debounced values, `placeholderData: keepPreviousData`, pass the `signal` to fetch so stale requests abort). Invalid form (zod) → no request, field errors shown. A small "live" indicator pulses while fetching.
 - **Selection** (Zustand `selectedTarget: 'CAD'|'LAD'|'LCX'|'RCA'`, default `CAD`) is shared by the 3D scene, vessel cards and the WHY panel. Click a card ⇄ click a vessel do the same thing.
 - **Summary**: a "Summarise" button in the predictions panel (never automatic; disabled while the form is invalid) calls `POST /api/summary`. The text is cached per prediction values and selected target, and shown with a badge "AI-generated wording" (`groq`) or "Template summary", plus "Inputs are sent to Groq to word this summary." when the source is `groq`.
-- **Disagreement note**: shown when the tuned verdicts conflict: overall CAD is Unlikely but any vessel is Likely, or overall CAD is Likely but no vessel is (each vs its own tuned threshold, i.e. the `positive` flags the cards show). Text: *"Overall CAD and each vessel are predicted by separate models and can disagree. In the training data, almost every patient with a stenotic vessel was labelled CAD."*
+- **Disagreement note**: shown when the labels conflict: overall CAD is below its cut-off but any vessel is above its own, or overall CAD is above but no vessel is (each vs its own tuned threshold, i.e. the `positive` flags the cards show). Text: *"Overall CAD and each vessel are predicted by separate models and can disagree. In the training data, almost every patient with a stenotic vessel was labelled CAD."*
 - **WHY panel**: horizontal diverging bars (red = increases risk, teal = decreases; contribution colours are distinct from the risk scale). Top 10 inputs + an aggregated "N other features" bar. Rendered as HTML rows (not a chart): left "<label>: <display value>" wrapping to at most 2 lines, right a diverging bar centred at 0 with the signed log-odds number; the row tooltip repeats label, value and logit. Header: `Average patient (model baseline) 71% → this patient 78%` (the base is the model's mean prediction over training patients, not the prevalence). Axis label: "contribution (log-odds)".
 - **Physiological breakdown**: table of numeric measurements and key binaries.
   - Columns: value + unit, reference range, status chip (low / normal / high), contribution to the *selected* target as a signed mini-bar.
@@ -206,21 +208,20 @@ Pydantic models are the source of truth. `make types` dumps the schema offline (
   - LM and aorta: neutral. Veins: hidden by default, shown by a toolbar toggle (neutral blue-grey, not clickable). The toggle appears for any optional, default-hidden node in the GLB extras.
 - **Interaction**:
   - drei `CameraControls`: rotate / zoom / pan, with min/max distance clamped.
-  - Hover → pointer cursor + `<Html>` tooltip (name, %).
-  - Click a vessel → select + outline (postprocessing `Outline` / `Selection`) + the camera orbits to that node's view direction (`viewDir` extra: optional `view_dir`, else derived from `expect_side`: anterior front, right front-right ~45°, left left-lateral ~110°) and fits its bounding box.
+  - Hover → pointer cursor + DOM tooltip (name, %).
+  - Click a vessel → select + thicker, lighter outline (drei `<Outlines>`, see v2.0) + the camera orbits to that node's view direction (`viewDir` extra: optional `view_dir`, else derived from `expect_side`: anterior front, right front-right ~45°, left left-lateral ~110°) and fits its bounding box.
   - Click heart body → select CAD.
   - Click empty space / Reset → default view.
   - Optional auto-spin.
-- **Labels**: `<Html>` anchored at each vessel's `anchor` (glTF node extras, written by `build_heart_glb.py`: a point ON the vessel surface, not the centroid, which can lie inside the heart): "LAD 81%". Toggleable; the legend and result cards always show the numbers.
+- **Labels** (v2.0: DOM chips with leader lines, see below; originally drei `<Html>`) anchored at each vessel's `anchor` (glTF node extras, written by `build_heart_glb.py`: a point ON the vessel surface, not the centroid, which can lie inside the heart): "LAD 81%". Toggleable; the legend and result cards always show the numbers.
 - **No-GPU performance**:
   - `dpr={[1, 1.5]}`, `frameloop="demand"` (invalidate on change and interaction), no shadows.
   - Small `Environment` preset or simple 3-light rig.
   - Total < 80k triangles. `useGLTF(url, false)`: no Draco decoder fetch.
-  - Selection is always shown by an emissive boost on the selected node (no postprocessing needed). The
-    postprocessing `Outline` is rendered only while the frame budget is OK; when it declines, the
-    `EffectComposer` is unmounted and dpr stays at 1. The budget monitor (`FrameBudget.tsx`) replaces drei's
-    `PerformanceMonitor`, which counts frames per wall-clock window and so misreads idle time under
-    `frameloop="demand"` as a slow GPU.
+  - No post-processing. Selection is shown by an emissive boost and a thicker, lighter outline. The budget
+    monitor (`FrameBudget.tsx`) lowers dpr one rung per decline (1.5/1.25 -> 1 -> 0.75), never back up; it
+    replaces drei's `PerformanceMonitor`, which counts frames per wall-clock window and so misreads idle time
+    under `frameloop="demand"` as a slow GPU.
   - Click/drag: a press that travels >= 5 px is a drag; vessel, heart and empty-space clicks only fire for
     real clicks, so orbiting never changes selection or camera.
   - The workspace tab stays mounted while hidden; the canvas invalidates (without re-framing) when shown again.
@@ -274,7 +275,7 @@ myograph-3d/
 │  └─ tests/            test_leakage.py · test_preprocess.py · test_api.py · test_explain_additivity.py · test_anatomy.py
 ├─ scripts/             build_heart_glb.py
 ├─ frontend/
-│  ├─ package.json  vite.config.ts (proxy /api → :8000)  biome.json  Dockerfile  nginx.conf
+│  ├─ package.json  vite.config.ts (port 5180 strict, proxy /api → :8010)  biome.json  Dockerfile  nginx.conf
 │  ├─ public/models/    heart.glb  LICENSE-ASSETS.md
 │  └─ src/
 │     ├─ api/           schema.d.ts (generated) · client.ts · queries.ts
@@ -315,3 +316,218 @@ Nothing else hard-codes feature or vessel lists.
 ## 10. Credits to include (README + About + report)
 - Dataset (license CC BY 4.0, so committing it with attribution is fine): Alizadehsani, R., Roshanzamir, M., & Sani, Z. (2013). *extention of Z-Alizadeh sani dataset* [Dataset]. UCI Machine Learning Repository. https://doi.org/10.24432/C5461K
 - 3D anatomy (BodyParts3D 4.0): "BodyParts3D, © The Database Center for Life Science licensed under CC Attribution 4.0 International". The BodyParts3D site states CC BY 4.0, but the source OBJ headers still embed CC BY-SA 2.1 Japan. The derived `heart.glb` is therefore released under CC BY-SA 4.0, which satisfies both; the repo's code remains MIT (`public/models/LICENSE-ASSETS.md`).
+
+## v2.0
+
+### Phase 16b: story mode
+- **`config/stories.yaml`** (validated by `backend/ml/stories.py` at startup and in `tests/test_stories.py`, served by
+  `GET /api/stories`): `stories[{id, title, blurb, preset, steps[{id, camera?{target}, highlight?{target, direction
+  up|down, top}, reveal_truth, parts[{text, when[]}]}]}]`. `preset` must be a hold-out preset; targets are target ids
+  (the browser maps them to mesh nodes through `/api/features`). Four stories: a low estimate (no-cad), one artery
+  stands out (lad-only), three arteries, one patient (3-vessel), when the model is confidently wrong (hard-case).
+- **Text rules (enforced):** no digits or `%` (every number is a token filled from the API at runtime); a part that
+  states an outcome or comparison (agree, miss, above/below, far, well, wrong, ...) needs a `when`; a step keeps one
+  part with no `when` and no factor token; `{truth:ID}` only on a `reveal_truth` step; no ranking of arteries; no
+  clinical advice. Tokens: `{p:ID}`, `{thr:ID}`, `{truth:ID}` ("narrowing (stenosis) found" / "no narrowing found"),
+  `{name:ID}`, `{plain:ID}`, `{where:ID}`, `{n_patients}` (dataset size, `factor_note` only), `{factors_up:N}`, `{factors_down:N}` (up to N signed factors of the
+  highlight target, each as `label: value` (the API `display_value`), joined; a part whose list is empty is skipped). Conditions: `above_threshold`, `below_threshold`,
+  `well_above_threshold`, `well_below_threshold` (0.25 beyond the threshold), `agrees`, `disagrees` (model verdict vs real
+  result), `all_agree`, `any_disagrees`.
+- **`factor_note`** (top-level key of `stories.yaml`, same text rules): one closing sentence appended to every step that
+  renders a `{factors_*}` list.
+- **`unit_singular`** (optional, `features.yaml`, needs `unit`): unit text used when the value is exactly 1 (Region RWMA:
+  `regions` / `region`); exposed on `/api/features` and `breakdown` rows.
+- **`help`** (required per feature, `features.yaml`): plain-language text for the info popover beside each input, served on
+  `/api/features`. No digits are typed into it: `{min}`/`{max}` (number inputs) and `{key}` from the feature's
+  `help_values` are filled from config (`test_help_text.py`).
+- **Pin and compare** (`frontend/src/features/results`): "Pin this result" stores the point estimates and ranges; later
+  edits show `81% → 64% ▼17` (rounded point estimates) on the headline, vessel table and 3D chips, plus "within the
+  model's uncertainty" when the new point estimate is inside the pinned range. Kept across preset changes, cleared when a
+  story starts. Client-only; no analytics event, no share link.
+- **Player** (`frontend/src/features/story`): a card under the heart with Back / Next (Finish) / Exit, arrow keys and Esc;
+  offered once per browser as a toast ("See how it works · 1 min", `localStorage` key `myograph.story-seen`),
+  replayable from the header button "How it works". Starting loads the story's hold-out patient into the form
+  (`preset_loaded` with `source: "story"`); each step selects and frames its target (instant cut under reduced
+  motion), marks the factors it names in the results panel and keeps the real result hidden (preset name, cath
+  column) until a reveal step. Exit or Finish restores the patient from before (values, preset, edited flag, selection).
+  The story's numbers come from its own prediction of the preset (same `/api/predict`).
+- Analytics: `story_started {story}` on start, `story_completed {story}` on Finish (not on early exit).
+- Dev-only test seam: `window.__trackLog` (installed by Playwright) records `track()` calls.
+
+### Phase 16a2: balanced supply regions
+- BodyParts3D has no circumflex branches beyond FMA3895 (the left marginal vein is a vein), so `anatomy.yaml` nodes may
+  override `territory_falloff_mm` / `territory_max_mm`; LCX uses 22 / 45 mm (global 12 / 30). Share of heart vertices with
+  weight > 0.5: LAD 20 %, LCX 22 %, RCA 29 % (LCX was 8 %). A test requires every channel to reach at least half of the largest.
+
+### Phase 16a: scene (outlines, focus, supply regions, labels)
+- **Colour = risk only.** Vessel identity comes from outlines, name chips with leader lines, position, the
+  vessel key and interaction, so three vessels at nearly the same probability stay distinguishable. The number
+  is always shown next to a colour (chips, key, tooltip).
+- **Outlines:** drei `<Outlines>` (inverted hull, no post-processing, `@react-three/postprocessing` removed) on
+  every vessel mesh: thin dark by default, thicker and light for the selected / hovered vessel.
+- **Materials:** `MeshPhysicalMaterial`; heart muted rose, rough, light sheen, darker than the vessels; vessels
+  risk colour + risk-scaled emissive + light clearcoat. 3 directional lights + ambient + a soft cool rim. No
+  shadows.
+- **Focus mode:** with a vessel selected the other vessels fade to 35 % and lose 65 % of their saturation, the
+  heart dims slightly (tween 300 ms, instant under `prefers-reduced-motion`). Reset / selecting the heart (CAD)
+  restores everything.
+- **Supply-region shading** (toolbar "Supply area", default on): the heart's `_territory` attribute (exposed as
+  `territory`) channel of the selected vessel, found through the heart node's `territoryChannels` extra, tints
+  the surface with that vessel's risk colour (max 70 %). Caption: "Shaded area: approximate region the <id>
+  supplies". None for overall CAD. Never a clinical map.
+- **Labels:** one DOM chip per vessel target ("LAD · 81%", "LAD 81%" on phones) outside the heart's projected
+  silhouette with an SVG leader line and anchor dot; positions are written to the DOM every frame (no re-render);
+  per-side vertical relaxation prevents overlap; where the canvas is too narrow the chip is clamped inside the
+  view. A vessel behind the heart (X-ray off) keeps a dashed chip, line and hollow dot. Chips are buttons: tap /
+  click / Enter select.
+- **View presets:** Front / Left side / Underside (anatomical axes; if exactly one vessel's `viewDir` extra
+  points along the axis, that vessel's own `viewDir` is used) plus Reset, and a tiny A/P/L/R compass that follows
+  the camera azimuth.
+- **Vessel key:** inside the legend, one row per target from `/api/features` (`id`, `where` from anatomy.yaml,
+  risk dot and %). `targets[].where` is a new, additive API field. Row click selects and flies to the vessel.
+- **Keyboard:** Tab reaches the chips and key rows (visible focus ring), Enter / Space select, Esc resets.
+- **No-GPU:** `frameloop="demand"`; software GL (SwiftShader/llvmpipe, detected from the renderer string)
+  starts at dpr 1 with MSAA off, which is the largest single cost on a CPU rasteriser. Phones and coarse
+  pointers load `heart.mobile.glb` and cap dpr at 1.25.
+- **Console:** the Playwright check (`make e2e`) fails on any console error/warning. The allow-list is in
+  `frontend/e2e/helpers.ts`; one entry: R3F 9.8.x creates `new THREE.Clock()`, which three 0.186 warns about.
+- Charts mount only while the Performance tab is active (Recharts measured 0x0 in a hidden panel).
+
+### Phase 15: heart asset v2
+- **Two GLBs** from one build (`make assets`): `heart.glb` (< 80k triangles, <= 2 MB) and `heart.mobile.glb`
+  (< 40k, <= 1 MB). Same node names and extras; per-node budgets `max_triangles` / `max_triangles_mobile`.
+- **Thicker vessels:** per-node `inflate` (source mm) along smoothed vertex normals, duplicate vertices merged
+  first, displacement capped at `inflate_edge_ratio` x local edge length. The build reports requested vs applied
+  and warns when the cap removes more than half.
+- **Supply regions:** the heart mesh carries a custom `_TERRITORY` vertex attribute (three.js:
+  `geometry.attributes._territory`), one 0-1 channel per `territory: true` node, from the distance to that
+  artery (`territory.falloff_mm`, `territory.max_mm`), computed on each LOD's final heart vertices. Channel
+  order is in the heart node's `territoryChannels` extra. It is an *approximate, nearest-artery illustration*
+  of the region each artery supplies, never a clinical map.
+- `config/anatomy.yaml` is validated by `backend/ml/anatomy.py`; `scripts/inspect_glb.py` prints both files.
+
+### Phase 14: visitor analytics and real client IPs
+- **Client IP** (`app/core/client_ip.py`): `x-nf-client-connection-ip`, else the left-most globally routable
+  `X-Forwarded-For` entry, else the socket peer; malformed values ignored. `TRUST_PROXY_HEADERS` (default
+  `true`; `false` = socket peer only). `LOG_IP_MODE=full|truncated` (truncated zeroes the last IPv4 octet or the
+  last 80 bits of IPv6). Forgeable by direct callers of the Render URL: analytics only, never a security input.
+- **Access log** (`app/core/access_log.py`): pure ASGI middleware, registered outermost (CORS preflights and
+  unhandled exceptions, logged as `status=500`, are included). One line per request:
+  `access ip= method= path= status= ms= rid= [rid_nf=] ua= ref=`. Never query strings or bodies; UA cut to 120
+  chars and escaped; referer reduced to scheme+host+path; `X-Request-ID` response header; `/api/health` at DEBUG.
+  Logger `myograph.access` is configured explicitly (INFO, stdout, `propagate=False`) because uvicorn runs with
+  `--no-access-log` and the root logger would otherwise hide it. `rid_nf` is Netlify's `x-nf-request-id`.
+- **Analytics** (`src/lib/analytics.ts`, PostHog, lazy-loaded after first paint): active only for a production
+  build with `VITE_POSTHOG_KEY` set and `location.hostname` in `VITE_POSTHOG_DOMAINS`. Config: `cookieless_mode:
+  "always"`, `person_profiles: "never"`, `autocapture: false`, session recording, heatmaps, dead clicks and
+  surveys off, `respect_dnt`, pageview and pageleave on. `before_send` strips `?query` and `#hash` from
+  `$current_url`, `$referrer`, `$pathname` and URL-like `$initial_*` / `$prev_*` properties.
+- **Events** (property allow-list enforced in `track()`): `preset_loaded {preset, source: auto|user|story}`,
+  `target_selected {target, source: 3d|list}`, `tab_viewed {tab}`, `form_edited` (once per session),
+  `summary_requested`, `view_toggled {control}`, `story_started {story}`, `story_completed {story}`. Never a field value, probability or free text.
+  The optional share link was not built, so there are no events for it.
+- No Netlify `/ingest` reverse proxy: events from ad-blocking visitors are lost, which is accepted.
+- `netlify.toml` sets no CSP, so no allow-listing was needed. `render.yaml` carries `TRUST_PROXY_HEADERS` and
+  `LOG_IP_MODE` as plain values. Frontend unit tests use vitest (`npm test`, part of `make test`).
+
+
+### Phase 16.5: uncertainty ranges
+- **`config/uncertainty.yaml`** (`method: bootstrap`, `n_models`, `level`, `seed`; validated by `backend/ml/uncertainty.py`).
+  `make train` refits each target `n_models` times on a stratified bootstrap resample of the train patients (same fixed
+  params), Platt-calibrated on each replicate's out-of-bag patients (own-model coefficients if the OOB set has < 5 of a
+  class). Stored as `backend/artifacts/models/replicates/{T}.bin.gz` (deterministic bytes). The point estimate stays the
+  main model; the range is the replicates' 5th-95th percentile. `metrics.json` gains `uncertainty` (hold-out mean width and
+  how often the point estimate lies outside its own range).
+- Served by `POST /api/intervals` (see API table); the frontend shows the point first and the range when it arrives.
+- Meaning, everywhere: "The range shows how much the estimate depends on which patients the model learned from. It is not a
+  guarantee, and not the range of your true risk." `positive` (point >= threshold) still drives agree/miss against the cath
+  result; the main label compares the point estimate with the threshold (Above / Below the model's cut-off), with an "uncertain" qualifier when the range crosses it (Phase 16.5c). `metrics.json` `uncertainty.targets[T]` also has `n_uncertain` / `uncertain_fraction` (hold-out range crosses the threshold), shown on the Performance tab.
+- Stories: token `{range:ID}`; conditions `range_crosses_threshold:ID`, `range_clear_of_threshold:ID`.
+
+### Phase 17: plain-language results and waterfall
+- **`config/display.yaml`** (validated by `backend/ml/display.py`, served by `GET /api/display`): threshold labels, headline,
+  base-rate note, waterfall/dot captions, performance one-liners, trust box, glossary. Unknown keys or placeholders fail at startup.
+- **`outcome_phrase`** (optional per target in `features.yaml`, in `TargetInfo`): "probability of <outcome_phrase>".
+- **Waterfall** (`ml/waterfall.py`, `TargetExplanation.waterfall`): starts at the model baseline `sigmoid(base)` (not the dataset
+  prevalence; each target has its own), adds factors largest |log-odds| first (id tie-break), top `waterfall_top_n` (6) as steps
+  plus one "N other factors" step; the last `to_p` equals the served probability (the chain closes to 1e-6, tested). Step sizes
+  depend on order. This replaces the SHAP-bar WHY view of 6.2 as the default; the log-odds bars live under "Technical details".
+- Base-rate note and baseline caption use the selected target's own prevalence from `metrics.json`. Dot picture: solid dots to the
+  start of the range, lighter dots across it, ring on the estimate, number always printed. Story factor tokens use waterfall steps
+  (never the "other factors" row); `/api/summary` facts use them too and the validator requires the "trained on N patients" sentence.
+
+### Phase 20a: cold start, first paint, first screen
+- **Wake window** (`frontend/src/lib/wake.ts`): the API may be asleep (Render free). `/api/health` is the probe, fired on first
+  render and retried with backoff (1, 2, 4, then 8 s) for 150 s; every other query retries 5xx/network errors (never 4xx) while the
+  window is open. No toast. Status: quiet for 1.5 s, then "Starting the prediction server (up to a minute on the free plan)…",
+  after 60 s "Still starting, this can take a couple of minutes on the free plan…", after 150 s an error with "Try again".
+- The heart renders at once in neutral grey without targets (context nodes) and takes the risk colours when `/api/features` and
+  the first estimate arrive; a caption says why it is grey (rule 8). Stories and "How it works" wait for the presets.
+- First paint: Performance/Benchmark/About are lazy chunks (Recharts no longer in the entry bundle); the three.js scene loads after
+  the first estimate has painted (at most 2.5 s); the GLB is preloaded from `index.html`; the results column shows a skeleton of
+  its final height and the headline/table reserve their space (CLS). The header no longer shows the model version (tooltip only).
+- `.github/workflows/keepalive.yml`: cron every 14 min, `GET /api/health` on the Render URL from `netlify.toml`.
+
+### Phase 20b: intro, social preview, print, a11y
+- **Intro strip** (`features/layout/IntroStrip.tsx`): what the app is, three steps, "Guided tour · 1 min"; open on a first visit
+  (closed by default below 768 px), choice in `localStorage` `myograph.intro-collapsed`. The disclaimer banner is separate and unchanged.
+- **Live predict waits for the first-visit preset** (`presetSettled` in the store), so a load costs one predict + one intervals call
+  instead of three + two; `usePredict` has `staleTime: Infinity` (same values, same estimate).
+- **Social preview:** Open Graph + Twitter tags use the live Netlify URL (`https://myograph-3d.netlify.app/`; change it in
+  `index.html` for another host). `make og` renders `frontend/public/og-image.png` (1200x630) and the PNG icons from the running app.
+  Per-tab `document.title`; `manifest.webmanifest`.
+- **Print/save:** "Save / print summary" prints only `#print-summary` (estimates with ranges, plain sentence, top factors, disclaimer,
+  model version, date); disabled while the numbers lag the form.
+- **Accessibility:** `e2e/a11y.spec.ts` runs axe-core (WCAG A/AA, fails on serious/critical) on every tab at 1440 and 390 px plus the
+  patient sheet; debounced `aria-live` announcement of new estimates; global reduced-motion CSS.
+- `make lighthouse` (npx, not a dependency): mobile + desktop on the production build; reports in `.lighthouse/` (gitignored).
+
+### Phase 20c: instant first result + compact phone headline
+- **`frontend/public/snapshot.json`** (`make snapshot`, also run by `make train`; `backend/app/snapshot.py`): the four static payloads
+  (features, display, presets, stories) plus `/api/predict` and `/api/intervals` for **every preset**, each exactly as the API returns
+  them (through `TestClient`), keyed by preset id with a hash of its input values. It is committed, because Netlify builds with
+  `npm run build` only (no Python); `tests/test_snapshot.py` fails `make check` when it differs from the live API.
+- `api/snapshot.ts`: fetched without blocking render (preloaded from `index.html`), then seeded into the TanStack cache under the
+  keys live predict uses; nothing already delivered by the API is overwritten. Once `/api/health` answers, `model_version` and each
+  preset's values are compared with the live ones and anything stale is reset (that query then refetches). A missing or invalid
+  file falls back silently to the live path. Seeded values skip the 300/400 ms predict/intervals debounce.
+- Editing the patient is a new key, so it uses the live API (and the wake notice) as before.
+- **Phone headline (below `md`):** large `{p}%`, then `Probability of {label} · range {lo}–{hi}%` (`headline_compact`,
+  `headline_range_compact` in `config/display.yaml`; `{label}` comes from `compact_labels`, Phase 21) and the cut-off label only; `md+` keeps the full sentence. Heart height on
+  phones is 38dvh and the pin hint is hidden, so the first vessel row is on the first screen at 390x844.
+- Print summary and banner take the disclaimer from `features/layout/disclaimer.ts`.
+
+### Phase 14.5 / 19: mobile
+- Phone layout (below `md`): bottom navigation with a compact disclaimer that stays pinned, a sticky collapsible heart, an
+  "Edit patient" bottom sheet for the form, stacked vessel tables, `heart.mobile.glb` and dpr <= 1.25 on coarse pointers, rendering
+  paused off-screen. Touch: taps use a tolerance around vessel samples and ignore points behind the first opaque surface (distance is
+  measured to the segments between samples); long-press shows the tooltip. `make dev-lan` serves the app to a phone on the LAN.
+- `scripts/screenshots.mjs` covers 1440x900, 1024x768, 768x1024, 844x390, 390x844 and 360x800 (filters `SHOTS_VIEWS`,
+  `SHOTS_VIEWPORTS`) and runs a DOM probe: no horizontal overflow and a pinned disclaimer on phone widths.
+
+### Phase 17c / 17.5: startup and benchmark
+- Bootstrap replicates load in a background thread: `/api/health` and `/api/predict` are ready without them; `/api/intervals` and
+  `/api/summary` answer 503 + `Retry-After` until loaded and the frontend retries quietly.
+- **`config/benchmark.yaml`** (validated by `backend/ml/benchmark_config.py`, run by `make benchmark`, output
+  `backend/artifacts/benchmark.json`, served by `GET /api/benchmark`): logistic regression, random forest, XGBoost (reference) and
+  optional offline TabPFN under one protocol (the `make prepare` split, 5x3 repeated stratified CV on train, Platt scaling on
+  out-of-fold scores, Youden threshold), plus an XGBoost ablation by feature group (all, no ECG, no echo, neither). Paired per-fold
+  differences use the Nadeau-Bengio corrected resampled t-test; Holm-Bonferroni adjusts p within each family and metric. A gap is
+  "clear" only if the adjusted p < 0.05 and the corrected CI excludes 0. Hold-out ROC-AUC is reported, never used to choose.
+- **Result (artifacts as committed):** 0 of 24 model comparisons and 1 of 36 ablation comparisons is clear (dropping ECG and echo
+  worsens the LAD Brier score by about 0.024). No model or feature set is clearly better than XGBoost with all features. TabPFN is
+  skipped (not installed; PyTorch is never in the API image). The Benchmark tab states this in plain words.
+
+### Phase 18: help text and pin and compare
+- Every feature has a `help` text (see Phase 16b); each input has an info popover. Pin and compare is described under Phase 16b.
+
+### Phase 21: QA, docs, release
+- **Phone labels:** `compact_labels` in `config/display.yaml` (one plain-words entry per target id, enforced by
+  `tests/test_display_labels.py`) fills `{label}` in `headline_compact`.
+- **CI:** `.github/workflows/ci.yml` runs `make check` (ruff, biome, pytest, vitest, tsc) on push and PR to `main` and `v2`: uv with
+  Python 3.14.4, Node 22 (as `netlify.toml`), caches, `permissions: contents: read`, no secrets (Groq tests run without a key).
+  Playwright e2e/perf stay local (`make e2e`, `make perf`, they need `make dev`).
+- **Demo:** `scripts/record-demo.mjs` (Playwright, 1280x720, needs `make dev`) records story mode, an artery with range and waterfall,
+  then pin and compare; `scripts/make-demo-media.sh` (ffmpeg, `TRIM_START` = seconds of loading screen printed by the recorder)
+  writes `docs/media/demo.mp4` and `docs/media/demo.gif` (<= ~5 MB).
+- Release: merge `v2` into `main` with a merge commit, tag `v2.0.0`. `CHANGELOG.md` lists v1.0.0 to v2.0.0.

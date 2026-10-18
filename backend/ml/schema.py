@@ -22,6 +22,9 @@ class Target(_Strict):
     label: str
     role: Literal["overall", "vessel"]
     plain_label: str | None = None  # wording used inside prose summaries; falls back to label
+    #: What the target means in "probability of <outcome_phrase>" (headline, dot caption, summary);
+    #: falls back to plain_label.
+    outcome_phrase: str | None = None
 
 
 class Group(_Strict):
@@ -79,7 +82,23 @@ class _Feature(_Strict):
     group: str
     column: str | None = None
     unit: str | None = None
+    #: Optional singular of `unit` ("region" for "regions"), used when the value is exactly 1.
+    unit_singular: str | None = None
     reference: Reference | None = None
+    #: Plain-language help for the input popover. `{min}`/`{max}` (number inputs) and `{key}` from
+    #: `help_values` are filled from config, so no digit is typed into the text itself.
+    help: str
+    help_values: dict[str, float] = {}
+
+    def help_text(self) -> str:
+        return self.help.format_map(self._help_fields())
+
+    def _help_fields(self) -> dict[str, str]:
+        fields = {k: f"{v:g}" for k, v in self.help_values.items()}
+        bounds = getattr(self, "input", None)
+        if bounds is not None:
+            fields |= {"min": f"{bounds.min:g}", "max": f"{bounds.max:g}"}
+        return fields
 
 
 class NumberFeature(_Feature):
@@ -135,6 +154,12 @@ class FeatureSchema(_Strict):
         for f in self.features:
             if f.group not in groups:
                 raise ValueError(f"feature {f.id!r}: unknown group {f.group!r}")
+            if f.unit_singular is not None and not f.unit:
+                raise ValueError(f"feature {f.id!r}: unit_singular needs a unit")
+            try:
+                f.help_text()
+            except (KeyError, ValueError, IndexError) as e:
+                raise ValueError(f"feature {f.id!r}: bad help placeholder {e}") from e
         roles = [t.role for t in self.targets.values()]
         if roles.count("overall") != 1:
             raise ValueError("exactly one target must have role 'overall'")

@@ -55,6 +55,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/stories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Stories */
+        get: operations["stories_api_stories_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/display": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Display */
+        get: operations["display_api_display_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/predict": {
         parameters: {
             query?: never;
@@ -66,6 +100,23 @@ export interface paths {
         put?: never;
         /** Predict */
         post: operations["predict_api_predict_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/intervals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Intervals */
+        post: operations["intervals_api_intervals_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -109,10 +160,115 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/benchmark": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Benchmark
+         * @description Precomputed by `make benchmark`; nothing is trained at request time.
+         */
+        get: operations["benchmark_api_benchmark_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** BaseRateNote */
+        BaseRateNote: {
+            /** Line1 */
+            line1: string;
+            /** Line2 */
+            line2: string;
+        };
+        /** BenchCell */
+        BenchCell: {
+            cv: components["schemas"]["CvValues"];
+            holdout: components["schemas"]["MetricValues"];
+            vs_reference: components["schemas"]["PairedMetrics"];
+        };
+        /** BenchFeatureSet */
+        BenchFeatureSet: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /** Drop Groups */
+            drop_groups: string[];
+            /** Dropped Columns */
+            dropped_columns: string[];
+            /** N Columns */
+            n_columns: number;
+        };
+        /** BenchModelInfo */
+        BenchModelInfo: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "skipped";
+            /** Note */
+            note: string;
+        };
+        /** BenchProtocol */
+        BenchProtocol: {
+            /** Seed */
+            seed: number;
+            /** Cv */
+            cv: string;
+            /** N Folds */
+            n_folds: number;
+            /** N Train */
+            n_train: number;
+            /** N Test */
+            n_test: number;
+            /** Calibration */
+            calibration: string;
+            /** Threshold */
+            threshold: string;
+            /** Paired Test */
+            paired_test: string;
+            /** Multiplicity */
+            multiplicity: string;
+            /** Confidence Level */
+            confidence_level: number;
+        };
+        /** BenchmarkResponse */
+        BenchmarkResponse: {
+            protocol: components["schemas"]["BenchProtocol"];
+            /** Reference Model */
+            reference_model: string;
+            /** Models */
+            models: components["schemas"]["BenchModelInfo"][];
+            /** Feature Sets */
+            feature_sets: components["schemas"]["BenchFeatureSet"][];
+            /** Comparison */
+            comparison: {
+                [key: string]: {
+                    [key: string]: components["schemas"]["BenchCell"];
+                };
+            };
+            /** Ablation */
+            ablation: {
+                [key: string]: {
+                    [key: string]: components["schemas"]["BenchCell"];
+                };
+            };
+        };
         /** BreakdownRow */
         BreakdownRow: {
             /** Id */
@@ -130,6 +286,8 @@ export interface components {
             value: number;
             /** Unit */
             unit?: string | null;
+            /** Unit Singular */
+            unit_singular?: string | null;
             reference?: components["schemas"]["RangeInfo"] | null;
             /** Status */
             status?: ("low" | "normal" | "high") | null;
@@ -148,6 +306,11 @@ export interface components {
             mean_predicted: number;
             /** N */
             n: number;
+        };
+        /** Camera */
+        Camera: {
+            /** Target */
+            target: string;
         };
         /** Confusion */
         Confusion: {
@@ -196,6 +359,54 @@ export interface components {
                 [key: string]: components["schemas"]["MetricStat"];
             };
         };
+        /** CvValues */
+        CvValues: {
+            roc_auc: components["schemas"]["MeanStd"];
+            brier: components["schemas"]["MeanStd"];
+            recall: components["schemas"]["MeanStd"];
+        };
+        /** DisplayConfig */
+        DisplayConfig: {
+            threshold_labels: components["schemas"]["ThresholdLabels"];
+            /** Waterfall Top N */
+            waterfall_top_n: number;
+            /** Headline */
+            headline: string;
+            /** Headline Range */
+            headline_range: string;
+            /** Headline Compact */
+            headline_compact: string;
+            /** Headline Range Compact */
+            headline_range_compact: string;
+            /** Compact Labels */
+            compact_labels: {
+                [key: string]: string;
+            };
+            /** Cutoff Line */
+            cutoff_line: string;
+            /** Cutoff Crosses */
+            cutoff_crosses: string;
+            base_rate_note: components["schemas"]["BaseRateNote"];
+            /** Range Meaning */
+            range_meaning: string;
+            waterfall: components["schemas"]["WaterfallText"];
+            dots: components["schemas"]["DotsText"];
+            performance: components["schemas"]["PerformanceText"];
+            trust: components["schemas"]["TrustText"];
+            /** Glossary */
+            glossary: components["schemas"]["GlossaryEntry"][];
+        };
+        /** DotsText */
+        DotsText: {
+            /** Caption */
+            caption: string;
+            /** Legend Solid */
+            legend_solid: string;
+            /** Legend Light */
+            legend_light: string;
+            /** Legend Ring */
+            legend_ring: string;
+        };
         /** FeatureInfo */
         FeatureInfo: {
             /** Id */
@@ -211,6 +422,8 @@ export interface components {
             kind: "number" | "binary" | "category" | "composite" | "derived";
             /** Unit */
             unit?: string | null;
+            /** Unit Singular */
+            unit_singular?: string | null;
             input?: components["schemas"]["InputBoundsInfo"] | null;
             /**
              * Options
@@ -221,6 +434,8 @@ export interface components {
             observed?: components["schemas"]["ObservedInfo"] | null;
             /** Default */
             default?: number | string | null;
+            /** Help */
+            help: string;
         };
         /** FeaturesResponse */
         FeaturesResponse: {
@@ -230,6 +445,15 @@ export interface components {
             groups: components["schemas"]["GroupInfo"][];
             /** Features */
             features: components["schemas"]["FeatureInfo"][];
+        };
+        /** GlossaryEntry */
+        GlossaryEntry: {
+            /** Id */
+            id: string;
+            /** Match */
+            match: string[];
+            /** Text */
+            text: string;
         };
         /** GroupInfo */
         GroupInfo: {
@@ -250,6 +474,22 @@ export interface components {
             /** Model Version */
             model_version: string;
         };
+        /** Highlight */
+        Highlight: {
+            /** Target */
+            target: string;
+            /**
+             * Direction
+             * @default up
+             * @enum {string}
+             */
+            direction: "up" | "down";
+            /**
+             * Top
+             * @default 3
+             */
+            top: number;
+        };
         /** ImportanceRow */
         ImportanceRow: {
             /** Id */
@@ -268,12 +508,56 @@ export interface components {
             /** Step */
             step: number;
         };
+        /**
+         * Interval
+         * @description Range of the replicates' calibrated probabilities (config/uncertainty.yaml).
+         */
+        Interval: {
+            /** Lo */
+            lo: number;
+            /** Hi */
+            hi: number;
+            /** Level */
+            level: number;
+            /** Method */
+            method: string;
+            /** N Models */
+            n_models: number;
+        };
+        /**
+         * IntervalsResponse
+         * @description Ranges for every target. A separate call so /api/predict keeps its latency budget.
+         */
+        IntervalsResponse: {
+            /** Model Version */
+            model_version: string;
+            /** Targets */
+            targets: {
+                [key: string]: components["schemas"]["TargetRange"];
+            };
+        };
+        /** MeanStd */
+        MeanStd: {
+            /** Mean */
+            mean: number;
+            /** Std */
+            std: number;
+        };
         /** MetricStat */
         MetricStat: {
             /** Mean */
             mean: number;
             /** Std */
             std: number;
+        };
+        /** MetricValues */
+        MetricValues: {
+            /** Roc Auc */
+            roc_auc: number;
+            /** Brier */
+            brier: number;
+            /** Recall */
+            recall: number;
         };
         /** MetricsResponse */
         MetricsResponse: {
@@ -288,6 +572,7 @@ export interface components {
                 [key: string]: components["schemas"]["ImportanceRow"][];
             };
             stability: components["schemas"]["Stability"];
+            uncertainty: components["schemas"]["UncertaintyMetrics"];
             /** Excluded Inputs */
             excluded_inputs: string[];
         };
@@ -304,6 +589,61 @@ export interface components {
             value: string;
             /** Label */
             label: string;
+        };
+        /** PairedMetrics */
+        PairedMetrics: {
+            roc_auc: components["schemas"]["PairedTest"];
+            brier: components["schemas"]["PairedTest"];
+            recall: components["schemas"]["PairedTest"];
+        };
+        /**
+         * PairedTest
+         * @description Per-fold difference (this minus the reference) with the Nadeau-Bengio corrected CI.
+         */
+        PairedTest: {
+            /** Mean Diff */
+            mean_diff: number;
+            /** Std Diff */
+            std_diff: number;
+            /** Ci Lo */
+            ci_lo: number;
+            /** Ci Hi */
+            ci_hi: number;
+            /** P */
+            p: number;
+            /** P Adj */
+            p_adj: number;
+            /** Within Noise */
+            within_noise: boolean;
+            /** Clear */
+            clear: boolean;
+        };
+        /** Part */
+        Part: {
+            /** Text */
+            text: string;
+            /**
+             * When
+             * @default []
+             */
+            when: string[];
+        };
+        /** PerformanceText */
+        PerformanceText: {
+            /** Roc Auc */
+            roc_auc: string;
+            /** Metric Example */
+            metric_example: string;
+            /** Brier */
+            brier: string;
+            /** Accuracy */
+            accuracy: string;
+            /** Precision */
+            precision: string;
+            /** Recall */
+            recall: string;
+            /** F1 */
+            f1: string;
         };
         /** PredictRequest */
         PredictRequest: {
@@ -414,6 +754,40 @@ export interface components {
             /** Values */
             values: number[];
         };
+        /** Step */
+        Step: {
+            /** Id */
+            id: string;
+            /** Parts */
+            parts: components["schemas"]["Part"][];
+            camera?: components["schemas"]["Camera"] | null;
+            highlight?: components["schemas"]["Highlight"] | null;
+            /**
+             * Reveal Truth
+             * @default false
+             */
+            reveal_truth: boolean;
+        };
+        /** Stories */
+        Stories: {
+            /** Factor Note */
+            factor_note: string;
+            /** Stories */
+            stories: components["schemas"]["Story"][];
+        };
+        /** Story */
+        Story: {
+            /** Id */
+            id: string;
+            /** Title */
+            title: string;
+            /** Blurb */
+            blurb: string;
+            /** Preset */
+            preset: string;
+            /** Steps */
+            steps: components["schemas"]["Step"][];
+        };
         /**
          * SummaryRequest
          * @description Same values as /predict; `selected_target` defaults to the overall target.
@@ -446,6 +820,8 @@ export interface components {
             base_logit: number;
             /** Contributions */
             contributions: components["schemas"]["Contribution"][];
+            /** Waterfall */
+            waterfall: components["schemas"]["WaterfallStep"][];
         };
         /** TargetInfo */
         TargetInfo: {
@@ -455,6 +831,8 @@ export interface components {
             label: string;
             /** Plain Label */
             plain_label: string;
+            /** Outcome Phrase */
+            outcome_phrase: string;
             /**
              * Role
              * @enum {string}
@@ -462,6 +840,8 @@ export interface components {
             role: "overall" | "vessel";
             /** Node */
             node: string;
+            /** Where */
+            where?: string | null;
         };
         /** TargetMetrics */
         TargetMetrics: {
@@ -490,6 +870,17 @@ export interface components {
             /** Threshold */
             threshold: number;
         };
+        /** TargetRange */
+        TargetRange: {
+            interval: components["schemas"]["Interval"];
+            /**
+             * Side
+             * @enum {string}
+             */
+            side: "above" | "below";
+            /** Uncertain */
+            uncertain: boolean;
+        };
         /** TestMetrics */
         TestMetrics: {
             /** Default */
@@ -512,6 +903,58 @@ export interface components {
             /** Tuned */
             tuned: number;
         };
+        /** ThresholdLabels */
+        ThresholdLabels: {
+            /** Above */
+            above: string;
+            /** Below */
+            below: string;
+            /** Uncertain Suffix */
+            uncertain_suffix: string;
+        };
+        /** TrustText */
+        TrustText: {
+            /** Title */
+            title: string;
+            /** Reliable Min Auc */
+            reliable_min_auc: number;
+            /** Rule */
+            rule: string;
+            /** Reliable */
+            reliable: string;
+            /** Weak */
+            weak: string;
+            /** Footer */
+            footer: string;
+        };
+        /** UncertaintyMetrics */
+        UncertaintyMetrics: {
+            /** Method */
+            method: string;
+            /** N Models */
+            n_models: number;
+            /** Level */
+            level: number;
+            /** Targets */
+            targets: {
+                [key: string]: components["schemas"]["UncertaintyTarget"];
+            };
+        };
+        /** UncertaintyTarget */
+        UncertaintyTarget: {
+            /** Mean Width */
+            mean_width: number;
+            /** N Outside */
+            n_outside: number;
+            /** N */
+            n: number;
+            /** Outside Fraction */
+            outside_fraction: number;
+            /** N Uncertain */
+            n_uncertain: number;
+            /** Uncertain Fraction */
+            uncertain_fraction: number;
+        };
         /** ValidationError */
         ValidationError: {
             /** Location */
@@ -524,6 +967,45 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /**
+         * WaterfallStep
+         * @description One step of the probability waterfall: `from_p` -> `to_p` after adding this factor.
+         */
+        WaterfallStep: {
+            /** Feature */
+            feature: string | null;
+            /** Label */
+            label: string;
+            /** Value Display */
+            value_display: string;
+            /** From P */
+            from_p: number;
+            /** To P */
+            to_p: number;
+        };
+        /** WaterfallText */
+        WaterfallText: {
+            /** Title */
+            title: string;
+            /** Start Label */
+            start_label: string;
+            /** End Label */
+            end_label: string;
+            /** Baseline Caption */
+            baseline_caption: string;
+            /** Order Caption */
+            order_caption: string;
+            /** Points */
+            points: string;
+            /** Points One */
+            points_one: string;
+            /** Cutoff Tick */
+            cutoff_tick: string;
+            /** Technical Title */
+            technical_title: string;
+            /** Technical Line */
+            technical_line: string;
         };
     };
     responses: never;
@@ -594,6 +1076,46 @@ export interface operations {
             };
         };
     };
+    stories_api_stories_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Stories"];
+                };
+            };
+        };
+    };
+    display_api_display_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DisplayConfig"];
+                };
+            };
+        };
+    };
     predict_api_predict_post: {
         parameters: {
             query?: never;
@@ -614,6 +1136,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PredictResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    intervals_api_intervals_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PredictRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntervalsResponse"];
                 };
             };
             /** @description Validation Error */
@@ -676,6 +1231,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MetricsResponse"];
+                };
+            };
+        };
+    };
+    benchmark_api_benchmark_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BenchmarkResponse"];
                 };
             };
         };

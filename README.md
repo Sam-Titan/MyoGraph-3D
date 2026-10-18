@@ -1,5 +1,7 @@
 # MyoGraph 3D
 
+[![CI](https://github.com/Sam-Titan/MyoGraph-3D/actions/workflows/ci.yml/badge.svg?branch=v2)](https://github.com/Sam-Titan/MyoGraph-3D/actions/workflows/ci.yml)
+
 MyoGraph 3D turns routine clinical data into an interactive 3D view of coronary artery disease (CAD)
 risk. From 49 clinical inputs (demographics, history, symptoms, ECG, labs, echo; BMI and obesity are
 derived, giving 55 model columns) it estimates the probability of overall CAD and of significant
@@ -12,7 +14,11 @@ the Z-Alizadeh Sani dataset (303 patients).
 > **Disclaimer:** MyoGraph 3D is a research demo, not a medical device. Outputs are model estimates
 > of probability learned from a small public dataset and must not be used for clinical decisions.
 
-![Workspace with the 3-vessel preset](docs/img/workspace-3vessel.png)
+![Demo: story mode, selecting an artery with its range and waterfall, then pinning a result and comparing after an edit](docs/media/demo.gif)
+
+<sub>18-second demo (also as [MP4](docs/media/demo.mp4)): a guided story, the LAD with its range and waterfall, then pin and compare.</sub>
+
+![Desktop workspace: a 3-vessel hold-out patient with the LAD selected, 3D heart, vessel table and estimates](docs/img/v2-desktop-workspace.jpg)
 
 ## Live demo
 
@@ -22,19 +28,40 @@ The app is hosted for free: the frontend on Netlify, the API on Render (free tie
 idle, so the first load can take about a minute while it wakes up. If the first prediction fails, wait a
 few seconds and refresh. Deploy config lives in `render.yaml` and `netlify.toml`.
 
+While the API wakes, the page shows the heart in neutral grey with a "Starting the prediction server…" status and
+retries by itself (for up to about 2.5 minutes). `.github/workflows/keepalive.yml` pings `/api/health` every 14
+minutes to keep it awake. Two limits of GitHub Actions: scheduled workflows run only from the default branch (this
+one starts after `v2` is merged into `main`), and GitHub disables them after about 60 days without repository
+activity (re-enable under Actions). Runs may also be delayed.
+
 ## Features
 
-- **Live predictions:** edit any input and the four calibrated probabilities update immediately.
-- **3D vessel mapping with rotate-to-vessel:** each target is coloured on the heart *and* labelled with
-  its number; selecting a vessel rotates the camera to it (e.g. the LCX, which hides behind the heart).
+- **Live predictions:** edit any input and the four calibrated probabilities (overall CAD, LAD, LCX, RCA) update immediately.
+- **3D vessel mapping:** each probability is coloured on the heart *and* shown as a number. Selecting a vessel rotates
+  the camera to it (the LCX hides behind the heart), fades the others and shades the approximate area it supplies.
+  Runs without a GPU; phones get a lighter model and touch picking.
+- **Uncertainty ranges:** every estimate has a range from 50 bootstrap-refit models, and a result is marked
+  "uncertain" when its range crosses the model's cut-off. The range says how much the estimate depends on the
+  training sample, not how likely it is to be right.
+- **Plain-language results:** one sentence per estimate, a probability waterfall (baseline to estimate, top factors
+  as percentage-point steps), the base rate in the training data, glossary tooltips and per-input help.
+- **Story mode:** four short guided stories on real hold-out patients (a low estimate, one artery standing out,
+  three arteries, a confidently wrong case). The real result is hidden until the reveal step.
+- **Pin and compare:** pin a result, edit the patient, and see `81% → 64% ▼17` on the headline, table and 3D chips,
+  with a note when the change is within the model's uncertainty.
 - **SHAP "why" panel:** per-feature contributions that sum exactly to the calibrated logit.
 - **Physiological breakdown:** each measurement against its reference range, with out-of-range warnings.
 - **Plain-language summary:** deterministic template, optionally reworded by Groq when a key is set.
-- **Validation tab:** CV and hold-out metrics, calibration, ROC, and stability across 20 random splits.
+- **Validation and Benchmark tabs:** CV and hold-out metrics, calibration, ROC, stability across 20 random splits, and
+  a same-protocol comparison of models and feature sets (see Results).
+- **Mobile and print:** bottom navigation and an Edit-patient sheet on phones, a print view, keyboard and
+  screen-reader support, automated axe accessibility checks in `make e2e`.
+- **Fast first screen:** a committed `snapshot.json` (predictions and ranges for every preset) paints a result
+  before a sleeping API has woken up.
 
-![LCX selected, camera rotated to the vessel](docs/img/lcx-rotated.png)
-
-![Model performance tab](docs/img/performance.png)
+| Phone: LAD selected | Phone: story mode | Desktop: LCX, camera rotated |
+|---|---|---|
+| ![Phone workspace with the LAD selected and 85% headline](docs/img/v2-phone-workspace.jpg) | ![Phone story card explaining the LCX estimate](docs/img/v2-phone-story.jpg) | ![Desktop view with the LCX selected and the camera turned to the left side](docs/img/v2-desktop-lcx.jpg) |
 
 ## Setup
 
@@ -73,12 +100,13 @@ in PowerShell instead of `cp`.
 
 ```bash
 make setup    # backend (uv sync --extra assets) and frontend (npm install) dependencies
-make dev      # API on http://localhost:8000, web on http://localhost:5173
+make dev      # API on http://localhost:8010, web on http://localhost:5180
 make check    # ruff, biome, pytest and tsc; run before committing
 ```
 
-Open <http://localhost:5173>. The Vite dev server proxies `/api` to the API on port 8000, so start both
-(`make dev` does). `make dev` stops both with Ctrl+C.
+Open <http://localhost:5180>. The Vite dev server proxies `/api` to the API on port 8010, so start both
+(`make dev` does). `make dev` stops both with Ctrl+C. Ports are fixed so this app does not clash with other
+projects; override with `make dev WEB_PORT=... API_PORT=...`.
 
 ### Windows, option 1 (recommended): WSL2
 
@@ -93,7 +121,7 @@ Open <http://localhost:5173>. The Vite dev server proxies `/api` to the API on p
    `/mnt/c` are served through a slow cross-OS filesystem layer, which makes `npm install`, `uv sync` and
    file watching (hot reload) very slow or unreliable.
 5. Follow *Local development on Linux and macOS* above, or the Docker quick start. Browse to
-   `http://localhost:5173` (or `:8080`) from Windows as usual.
+   `http://localhost:5180` (or `:8080`) from Windows as usual.
 
 ### Windows, option 2: native PowerShell without make
 
@@ -120,18 +148,18 @@ Then run the API and the web server in two separate PowerShell windows, both fro
 (what `make dev` runs):
 
 ```powershell
-# terminal 1: API on :8000
+# terminal 1: API on :8010
 cd backend
-uv run uvicorn app.main:app --reload --port 8000
+uv run uvicorn app.main:app --reload --port 8010
 ```
 
 ```powershell
-# terminal 2: web on :5173 (proxies /api to :8000)
+# terminal 2: web on :5180 (proxies /api to :8010)
 cd frontend
 npm run dev
 ```
 
-Open <http://localhost:5173>. The equivalent of `make check` is `cd backend; uv run ruff check .;
+Open <http://localhost:5180>. The equivalent of `make check` is `cd backend; uv run ruff check .;
 uv run ruff format --check .; uv run pytest` followed by `cd ..\frontend; npm run lint; npm run typecheck`.
 
 ### Optional: Groq plain-language summary
@@ -145,7 +173,43 @@ GROQ_MODEL=            # optional; leave empty for the default
 ```
 
 Restart the API (`docker compose up -d` again, or restart `make dev`). Only the summary facts
-(percentages, verdicts, top factors) are sent to Groq. `.env` is git-ignored; never commit it.
+(percentages, ranges, top factors) are sent to Groq. `.env` is git-ignored; never commit it.
+
+### Analytics (optional)
+
+Visitor analytics use PostHog Cloud, cookieless, and are **off unless all three are true**: a production
+build, `VITE_POSTHOG_KEY` set, and the page's hostname listed in `VITE_POSTHOG_DOMAINS`. Set these as
+build-time environment variables on the frontend host (for example Netlify) and redeploy:
+
+```
+VITE_POSTHOG_KEY=phc_...                       # project API key (public by design)
+VITE_POSTHOG_HOST=https://us.i.posthog.com     # or https://eu.i.posthog.com for an EU project
+VITE_POSTHOG_DOMAINS=your-site.netlify.app     # comma-separated live hostnames
+```
+
+In the PostHog project, turn on the cookieless setting (Settings, Web analytics, "Cookieless server hash
+mode"); without it cookieless events are ignored. Only page views and a few anonymous actions are sent,
+never form values. The API logs one line per request (`access ip=... path=... status=...`) with the visitor
+IP taken from Netlify's `x-nf-client-connection-ip` header, never query strings or bodies. Read it in the
+Render dashboard under the service's Logs. `TRUST_PROXY_HEADERS` (default `true`) and `LOG_IP_MODE`
+(`full` or `truncated`) control this; the headers can be forged, so the IP is for analytics only.
+
+### Environment variables
+
+| Variable | Where | Default | Purpose |
+|---|---|---|---|
+| `GROQ_API_KEY`, `GROQ_MODEL` | API (`.env` or Render) | unset | Optional wording of the summary; the app works without them |
+| `TRUST_PROXY_HEADERS` | API | `true` | Take the visitor IP from Netlify's header for the access log |
+| `LOG_IP_MODE` | API | `full` | `full` or `truncated` (zero the last IPv4 octet) |
+| `WEB_PORT` / `API_PORT` | `make dev` | 5180 / 8010 | Local dev ports |
+| `VITE_POSTHOG_KEY`, `VITE_POSTHOG_HOST`, `VITE_POSTHOG_DOMAINS` | frontend build (Netlify) | unset | Analytics; off unless all conditions in "Analytics" hold |
+
+**Privacy.** Patient values stay in your browser and are sent only to the prediction API, which does not store
+them. Analytics (hosted deployment only) are cookieless PostHog page views and a few anonymous action names;
+never form values, probabilities or free text, and query strings and `#` fragments are stripped from URLs. The API
+access log records the visitor IP, path, status and timing (never query strings or bodies). Only the summary facts
+(percentages, ranges, top factors) go to Groq, and only if you set a key. This is a research demo: do not enter
+real patient data.
 
 ### Optional and advanced
 
@@ -156,7 +220,8 @@ Restart the API (`docker compose up -d` again, or restart `make dev`). Only the 
 | `make assets` | Rebuild `frontend/public/models/heart.glb` from BodyParts3D (needs the download below) |
 | `make types` | Regenerate the TypeScript API types from the OpenAPI schema |
 | `make fmt` / `make lint` / `make test` | Format / lint / backend tests |
-| `make screenshots` | Capture UI screenshots with Playwright; needs `make dev` running and a one-time `cd frontend && npx playwright install chromium` (add `--with-deps` on Linux if system libraries are missing) |
+| `make screenshots` | Capture UI screenshots with Playwright; needs `make dev` running and a one-time `cd frontend && npx playwright install chromium` (add `--with-deps` on Linux if system libraries are missing). Filters (default = all): `SHOTS_VIEWS=workspace-default,about` and `SHOTS_VIEWPORTS=390,1440`; unknown names fail with the valid list. The phone overflow / sticky-disclaimer probe runs for any 360/390 width selected |
+| `make perf` | No-GPU fps tests (Playwright `no-gpu` project); run when the 3D scene changes; needs `make dev` running |
 | `make report` | Refresh the generated numbers in `docs/REPORT.md` and render `docs/REPORT.pdf`; needs `python3` with PyYAML, uv, Node, and the Playwright Chromium above |
 
 `make assets` needs two files from the BodyParts3D 4.0 download page,
@@ -168,10 +233,12 @@ Restart the API (`docker compose up -d` again, or restart `make dev`). Only the 
 
 ### Troubleshooting
 
-- **Port already in use** (8000, 5173 or 8080). Stop whatever holds the port, or for Docker change the
-  left side of `"8080:80"` in `docker-compose.yml`. Find the process with `ss -ltnp | grep :8000`
-  (Linux), `lsof -i :8000` (macOS) or `netstat -ano | findstr :8000` (Windows). Vite moves to the next
-  free port on its own; the API port must stay 8000 because the dev proxy points there.
+- **Port already in use** (8010, 5180 or 8080). Stop whatever holds the port, or for Docker change the
+  left side of `"8080:80"` in `docker-compose.yml`. Find the process with `ss -ltnp | grep :8010`
+  (Linux), `lsof -i :8010` (macOS) or `netstat -ano | findstr :8010` (Windows). Vite refuses to move
+  (`strictPort`), so pick other ports for both servers: `make dev WEB_PORT=5190 API_PORT=8020` (the
+  proxy and the API's CORS list follow these variables). On Windows without make, set `$env:WEB_PORT` /
+  `$env:API_PORT` and use the same port in the uvicorn command.
 - **Docker is not running / `docker compose` cannot connect.** Start Docker Desktop (or
   `sudo systemctl start docker` on Linux). On Windows with WSL2, enable your distribution under
   Settings, Resources, WSL integration in Docker Desktop and restart the terminal.
@@ -191,18 +258,24 @@ flowchart LR
   subgraph Config
     F[config/features.yaml]
     A[config/anatomy.yaml]
+    DS[display.yaml, stories.yaml, uncertainty.yaml]
   end
-  D[(Z-Alizadeh Sani CSV)] --> T[ml: preprocess, split, train, calibrate]
+  D[(Z-Alizadeh Sani CSV)] --> T[ml: preprocess, split, train, calibrate, bootstrap]
   F --> T
   T --> ART[(backend/artifacts)]
-  ART --> API[FastAPI /api]
+  ART --> API["FastAPI /api: predict, intervals, summary, benchmark"]
   F --> API
   A --> API
-  BP[BodyParts3D] --> G[build_heart_glb.py] --> GLB[heart.glb]
+  DS --> API
+  API -->|make snapshot| SNAP[public/snapshot.json]
+  BP[BodyParts3D] --> G[build_heart_glb.py] --> GLB[heart.glb, heart.mobile.glb]
   A --> G
   API -->|OpenAPI types| UI[React + three.js]
+  SNAP -->|first paint, before the API wakes| UI
   GLB --> UI
-  UI -->|nginx proxy| API
+  UI -->|Netlify or nginx proxy| API
+  KA[GitHub Actions keep-alive, every 14 min] -->|GET /api/health| API
+  UI -.->|cookieless events| PH[PostHog]
 ```
 
 The design is config-driven. `config/features.yaml` is the single source of truth for inputs, groups,
@@ -231,6 +304,16 @@ Probabilities are calibrated.
 Cross-validation is 5-fold repeated 3 times on the training split. Across 20 random splits the seed-42
 split is the hardest for overall CAD (hold-out ROC-AUC 0.824 against a median of 0.911), so the hold-out
 number is a conservative estimate.
+
+**Benchmark (Benchmark tab, `make benchmark`).** Logistic regression, random forest and XGBoost (the production
+model) were compared under one protocol (5x3 repeated stratified CV on the training split, Platt scaling, paired
+Nadeau-Bengio corrected tests, Holm-Bonferroni within each family), and XGBoost was refit without the ECG and/or
+echocardiography feature groups. After the corrections **no model and no feature set is clearly better** than
+XGBoost with all features: none of the 24 model comparisons is clear, and 1 of 36 ablation comparisons is (dropping
+both ECG and echo worsens the LAD Brier score by about 0.024). With 303 patients the differences are mostly within
+noise, so XGBoost was kept, not because it won. TabPFN is supported offline but was skipped (not installed).
+
+![Benchmark tab: model comparison and feature-group ablation with corrected paired differences](docs/img/v2-desktop-benchmark.jpg)
 
 **Serving throughput** (`scripts/load_test.py`, laptop, WSL2 Docker, 500 `POST /api/predict` at 20 concurrent,
 0 errors): about **59 predictions/s** at 20 concurrent, with 0 errors. The 340 ms median / 462 ms p95 latency

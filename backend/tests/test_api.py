@@ -16,6 +16,7 @@ SCHEMA = load_schema()
 @pytest.fixture(scope="module")
 def client() -> Iterator[TestClient]:
     with TestClient(app) as c:
+        app.state.predictor.replicates_ready.wait(120)
         yield c
 
 
@@ -115,6 +116,8 @@ def test_features_targets(client: TestClient) -> None:
     for t in targets:
         assert t["role"] == SCHEMA.targets[t["id"]].role
         assert t["node"]
+        if t["role"] == "vessel":  # anatomy.yaml `where`, shown in the 3D vessel key
+            assert t["where"]
 
 
 def test_metrics_includes_stability(client: TestClient) -> None:

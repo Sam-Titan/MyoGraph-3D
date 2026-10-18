@@ -34,49 +34,100 @@
 # default anterior view. The frontend never names a vessel: it reads the extra.
 # The API exposes `nodes[].name` + `target` (via GET /api/features -> targets[].node), so the frontend
 # never hard-codes vessel names. A pytest checks every target in features.yaml has exactly one node here.
+#
+# v2 additions (all optional knobs live here, the build script and the schema in backend/ml/anatomy.py read them):
+#   inflate     per node, source MILLIMETRES. Vertices move along smoothed normals (duplicate vertices are merged
+#               first so seams do not open). Capped per vertex at inflate_edge_ratio x its mean edge length; the
+#               build reports requested vs applied and warns when the cap removes more than half.
+#   role        vessel (model target, coloured by prediction) | muscle (the heart body) | context.
+#   territory   true on role: vessel nodes. Each gets one channel of the heart's `_TERRITORY` vertex attribute:
+#               weight 0-1 from the distance of the heart vertex to that artery (independent channels, not
+#               normalised across vessels), computed on the final vertices of each LOD. Channel order = node order
+#               here; the heart node's extras list it in `territoryChannels`. An APPROXIMATE, nearest-artery
+#               illustration of the region each artery supplies, never a clinical map.
+#   territory_falloff_mm / territory_max_mm   optional per-node override of the global `territory` values below. BodyParts3D has no
+#               branches of the circumflex beyond its trunk (FMA3895; the left marginal vein is a vein), so the short LCX
+#               gets a wider reach instead, to show its region at a strength comparable to LAD and RCA.
+#   where       plain-language location, shown in the vessel key.
+#   max_triangles_mobile   per-node budget of the second GLB (output_mobile); same node names and extras.
+
 
 output: frontend/public/models/heart.glb
+output_mobile: frontend/public/models/heart.mobile.glb
 units: "BodyParts3D is in millimetres in a whole-body frame -> recentre on heart centroid, scale to ~2 scene units tall, convert to Y-up"
+
+territory:
+  falloff_mm: 12      # Gaussian scale of the weight with distance from the artery
+  max_mm: 30          # weight is exactly 0 beyond this distance
+
+# Hard limits the build enforces on each file (strict < for triangles, <= for bytes).
+budget_desktop: {max_triangles: 80000, max_bytes: 2000000}
+budget_mobile: {max_triangles: 40000, max_bytes: 1000000}
+
+inflate_edge_ratio: 2.0
 
 nodes:
   # --- target vessels: node names MUST equal target ids (LAD/LCX/RCA). Colour is driven by predictions. ---
   - name: LAD
     target: LAD
+    role: vessel
+    territory: true
+    where: front of the heart, in the groove between the two lower chambers
     # FMA3862 (anterior interventricular branch) is absent in 4.0; its trunk is FMA74912. Then diagonal,
     # conus, right anterior (first/second/third) and septal branches. FMA3870/13914/13921 are composites.
     fma: [FMA74912, FMA3860, FMA3868, FMA3872, FMA3874, FMA3876, FMA3892]
     expect_side: anterior                     # build-time sanity check vs heart centroid (anterior|posterior|left|right)
+    inflate: 0.8
     max_triangles: 8000
+    max_triangles_mobile: 4000
   - name: LCX
     target: LCX
+    role: vessel
+    territory: true
+    where: left side and back of the heart, wrapping around the left lower chamber
+    territory_falloff_mm: 22
+    territory_max_mm: 45
     fma: [FMA3895]                            # circumflex branch of left coronary artery
     expect_side: left
+    inflate: 0.8
     max_triangles: 8000
+    max_triangles_mobile: 4000
   - name: RCA
     target: RCA
+    role: vessel
+    territory: true
+    where: right side of the heart, running along the lower right edge
     # trunk, marginal, posterior interventricular, first anterior / first posterior ventricular branches
     # (FMA3813/FMA3835 are composites of those first branches)
     fma: [FMA3802, FMA3818, FMA3840, FMA3815, FMA3837]
     expect_side: right                        # patient's right
+    inflate: 0.8
     max_triangles: 10000
+    max_triangles_mobile: 5000
 
   # --- context anatomy: neutral colours, not prediction-driven ---
   - name: LM
     fma: [FMA3855]                            # trunk of left coronary artery (left main stem)
+    inflate: 0.8
     max_triangles: 2000
+    max_triangles_mobile: 1000
   - name: heart
     target: CAD                               # clicking the heart body selects overall CAD
+    role: muscle
     # 4.0 has no whole-heart / wall-of-heart mesh: wall of ventricle + walls of right and left atrium
     # (FMA13883 "wall of atrium" is a composite of the two atrial walls).
     fma: [FMA13884, FMA9457, FMA9531]
     max_triangles: 40000
+    max_triangles_mobile: 20000
   - name: aorta
     fma: [FMA3736]                            # ascending aorta
     max_triangles: 6000
+    max_triangles_mobile: 3000
     optional: true
   - name: veins
     fma: [FMA4706, FMA4707, FMA4713, FMA4714] # coronary sinus + great / middle / small cardiac veins
     max_triangles: 6000
+    max_triangles_mobile: 3000
     optional: true
     default_visible: false
 

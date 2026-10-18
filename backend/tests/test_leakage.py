@@ -32,6 +32,7 @@ def test_schema_rejects_target_used_as_input() -> None:
             "id": "lad_leak",
             "column": "LAD",
             "label": "x",
+            "help": "x",
             "group": "demographics",
             "kind": "binary",
             "source": ["Stenotic"],

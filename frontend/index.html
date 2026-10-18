@@ -3,8 +3,50 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#101a2b" />
+    <script>
+      // Start the heart download before the app bundle runs. Same compact rule as useHeartModel.ts.
+      ;(() => {
+        var l = document.createElement('link')
+        l.rel = 'preload'
+        l.as = 'fetch'
+        l.crossOrigin = 'anonymous'
+        l.href = matchMedia('(pointer: coarse), (max-width: 640px)').matches
+          ? '/models/heart.mobile.glb'
+          : '/models/heart.glb'
+        document.head.appendChild(l)
+      })()
+    </script>
+    <!-- The first screen's numbers (make snapshot): fetched in parallel with the bundle, seeded by api/snapshot.ts. -->
+    <link rel="preload" as="fetch" crossorigin="anonymous" href="/snapshot.json" />
     <title>MyoGraph 3D</title>
+    <meta
+      name="description"
+      content="Model estimates of coronary artery blockage from clinical data, shown on an interactive 3D heart. A research demo, not a diagnosis."
+    />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="MyoGraph 3D" />
+    <meta property="og:title" content="MyoGraph 3D" />
+    <meta
+      property="og:description"
+      content="Model estimates of coronary artery blockage from clinical data, shown on an interactive 3D heart. A research demo, not a diagnosis."
+    />
+    <meta property="og:url" content="https://myograph-3d.netlify.app/" />
+    <meta property="og:image" content="https://myograph-3d.netlify.app/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="A 3D heart with the left anterior descending, left circumflex and right coronary arteries coloured by model estimate." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="MyoGraph 3D" />
+    <meta
+      name="twitter:description"
+      content="Model estimates of coronary artery blockage from clinical data, shown on an interactive 3D heart."
+    />
+    <meta name="twitter:image" content="https://myograph-3d.netlify.app/og-image.png" />
   </head>
   <body>
     <div id="root"></div>

@@ -18,8 +18,10 @@ class TargetInfo(BaseModel):
     id: str
     label: str
     plain_label: str
+    outcome_phrase: str  # "probability of <outcome_phrase>"; falls back to plain_label
     role: Role
     node: str
+    where: str | None = None  # plain-language location (anatomy.yaml), for the vessel key
 
 
 class GroupInfo(BaseModel):
@@ -54,11 +56,13 @@ class FeatureInfo(BaseModel):
     group: str
     kind: Literal["number", "binary", "category", "composite", "derived"]
     unit: str | None = None
+    unit_singular: str | None = None
     input: InputBoundsInfo | None = None
     options: list[OptionInfo] = []
     reference: RangeInfo | None = None
     observed: ObservedInfo | None = None
     default: InputValue | None = None
+    help: str
 
 
 class FeaturesResponse(BaseModel):
@@ -81,10 +85,36 @@ class PredictRequest(BaseModel):
     values: dict[str, InputValue]
 
 
+class Interval(BaseModel):
+    """Range of the replicates' calibrated probabilities (config/uncertainty.yaml)."""
+
+    lo: float
+    hi: float
+    level: float
+    method: str
+    n_models: int
+
+
 class TargetPrediction(BaseModel):
     probability: float
+    #: Point estimate at/above the threshold (compared with the real result in presets and stories).
     positive: bool
     threshold: float
+
+
+class TargetRange(BaseModel):
+    interval: Interval
+    #: Main label: the POINT estimate against the target's threshold (at/above = "above").
+    side: Literal["above", "below"]
+    #: The range crosses the threshold (lo < threshold <= hi): shown as an "uncertain" qualifier.
+    uncertain: bool
+
+
+class IntervalsResponse(BaseModel):
+    """Ranges for every target. A separate call so /api/predict keeps its latency budget."""
+
+    model_version: str
+    targets: dict[str, TargetRange]
 
 
 class Contribution(BaseModel):
@@ -94,10 +124,22 @@ class Contribution(BaseModel):
     logit: float
 
 
+class WaterfallStep(BaseModel):
+    """One step of the probability waterfall: `from_p` -> `to_p` after adding this factor."""
+
+    feature: str | None  # input id; None for the aggregated "N other factors" step
+    label: str
+    value_display: str
+    from_p: float
+    to_p: float
+
+
 class TargetExplanation(BaseModel):
     base_probability: float
     base_logit: float
     contributions: list[Contribution]
+    #: Starts at `base_probability`; the last `to_p` is the predicted probability.
+    waterfall: list[WaterfallStep]
 
 
 class BreakdownRow(BaseModel):
@@ -107,6 +149,7 @@ class BreakdownRow(BaseModel):
     kind: Literal["number", "derived", "binary"]
     value: float
     unit: str | None = None
+    unit_singular: str | None = None
     reference: RangeInfo | None = None
     status: Literal["low", "normal", "high"] | None = None
     outside_training_range: bool
@@ -223,12 +266,29 @@ class SplitInfo(BaseModel):
     stratify_on: list[str]
 
 
+class UncertaintyTarget(BaseModel):
+    mean_width: float
+    n_outside: int
+    n: int
+    outside_fraction: float
+    n_uncertain: int  # hold-out patients whose range crosses the threshold
+    uncertain_fraction: float
+
+
+class UncertaintyMetrics(BaseModel):
+    method: str
+    n_models: int
+    level: float
+    targets: dict[str, UncertaintyTarget]
+
+
 class MetricsResponse(BaseModel):
     cv: CvInfo
     split: SplitInfo
     targets: dict[str, TargetMetrics]
     feature_importance: dict[str, list[ImportanceRow]]
     stability: Stability
+    uncertainty: UncertaintyMetrics
     excluded_inputs: list[str]
 
 

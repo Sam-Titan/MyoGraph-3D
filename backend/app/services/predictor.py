@@ -3,14 +3,16 @@
 import json
 import logging
 import math
+import threading
 import time
+from collections import OrderedDict
 from collections.abc import Mapping
+from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
-import yaml
-
-from app.core.config import ARTIFACTS_DIR, CONFIG_DIR, model_version
+from app.benchmark_schema import BenchmarkResponse
+from app.core.config import ARTIFACTS_DIR, model_version
 from app.schemas import (
     BreakdownRow,
     Contribution,
@@ -19,6 +21,8 @@ from app.schemas import (
     GroupInfo,
     InputBoundsInfo,
     InputValue,
+    Interval,
+    IntervalsResponse,
     MetricsResponse,
     ObservedInfo,
     OptionInfo,
@@ -28,7 +32,11 @@ from app.schemas import (
     TargetExplanation,
     TargetInfo,
     TargetPrediction,
+    TargetRange,
+    WaterfallStep,
 )
+from ml.anatomy import ANATOMY_PATH, load_anatomy
+from ml.display import load_display
 from ml.explain import aggregate_to_inputs
 from ml.models import Calibration, model_class
 from ml.preprocess import inputs_to_matrix
@@ -43,11 +51,14 @@ from ml.schema import (
     load_schema,
 )
 from ml.stats import load_feature_stats
+from ml.stories import Stories, load_stories, validate_stories
+from ml.uncertainty import ReplicateSet, crosses, load_uncertainty, replicate_path, side
+from ml.waterfall import Factor, build_waterfall
 
 logger = logging.getLogger(__name__)
 
-ANATOMY_PATH = CONFIG_DIR / "anatomy.yaml"
 MODEL_NAME = "xgb"
+INTERVALS_CACHE_SIZE = 256
 
 
 def _sigmoid(z: float) -> float:
@@ -64,8 +75,11 @@ def _read(name: str) -> Any:
 
 def anatomy_nodes(path: Path = ANATOMY_PATH) -> dict[str, str]:
     """Target id -> mesh node name."""
-    nodes = yaml.safe_load(path.read_text())["nodes"]
-    return {n["target"]: n["name"] for n in nodes if n.get("target")}
+    return {n.target: n.name for n in load_anatomy(path).nodes if n.target}
+
+
+class RangesLoading(Exception):
+    """The bootstrap replicates are not loaded yet; callers answer 503 + Retry-After."""
 
 
 class Predictor:
@@ -79,17 +93,49 @@ class Predictor:
             t: cls.load(ARTIFACTS_DIR / "models" / f"{t}.ubj", Calibration(**calibration[t]))
             for t in self.schema.targets
         }
+        self.uncertainty = load_uncertainty()
+        # LRU of interval results keyed by the validated inputs (like the summary cache).
+        self._intervals_cache: OrderedDict[str, IntervalsResponse] = OrderedDict()
+        self._intervals_lock = threading.Lock()
+        # Loaded by `start_replicate_loading` after startup: 800 boosters dominate the boot time.
+        self.replicates: dict[str, ReplicateSet] = {}
+        self.replicates_ready = threading.Event()
         self.thresholds = {t: float(calibration[t]["threshold"]) for t in self.schema.targets}
         nodes = anatomy_nodes()
         self.nodes = {t: nodes[t] for t in self.schema.targets}
+        self.where = {n.target: n.where for n in load_anatomy().nodes if n.target and n.where}
         self.presets = [Preset(**p) for p in _read("presets.json")]
+        # Fail fast at startup if a story names a missing preset or target or breaks the rules.
+        self.stories: Stories = load_stories()
+        validate_stories(self.stories, self.schema, {p.id for p in self.presets})
         self.metrics = MetricsResponse(
             **_read("metrics.json"),
             stability=_read("stability.json"),
             excluded_inputs=list(self.schema.excluded_from_inputs),
         )
+        self.benchmark = BenchmarkResponse(**_read("benchmark.json"))
         self.features = self._build_features()
         self._by_id = {f.id: f for f in self.schema.features}
+
+    # --- replicates ---------------------------------------------------------------------------
+    def start_replicate_loading(self) -> threading.Thread:
+        """Load the bootstrap replicates in a daemon thread; /api/predict never waits on them."""
+        thread = threading.Thread(target=self.load_replicates, name="replicates", daemon=True)
+        thread.start()
+        return thread
+
+    def load_replicates(self) -> None:
+        """Blocking load. No lock is held: the finished dict is published in one assignment."""
+        t0 = time.perf_counter()
+        try:
+            loaded = {t: ReplicateSet.load(replicate_path(t)) for t in self.schema.targets}
+        except Exception:
+            # Predictions keep working; ranges and summaries stay 503. Log why, do not die silently.
+            logger.exception("replicates failed to load; ranges and summaries stay unavailable")
+            return
+        self.replicates = loaded
+        self.replicates_ready.set()
+        logger.info("replicates loaded in %.1f s", time.perf_counter() - t0)
 
     # --- features -----------------------------------------------------------------------------
     def _build_features(self) -> FeaturesResponse:
@@ -100,8 +146,10 @@ class Predictor:
                     id=t,
                     label=v.label,
                     plain_label=v.plain_label or v.label,
+                    outcome_phrase=v.outcome_phrase or v.plain_label or v.label,
                     role=v.role,
                     node=self.nodes[t],
+                    where=self.where.get(t),
                 )
                 for t, v in s.targets.items()
             ],
@@ -117,9 +165,11 @@ class Predictor:
             group=f.group,
             kind=f.kind,
             unit=f.unit,
+            unit_singular=f.unit_singular,
             reference=RangeInfo(low=f.reference.low, high=f.reference.high)
             if f.reference
             else None,
+            help=f.help_text(),
         )
         if isinstance(f, NumberFeature):
             info.input = InputBoundsInfo(min=f.input.min, max=f.input.max, step=f.input.step)
@@ -144,7 +194,9 @@ class Predictor:
             return "Yes" if v else "No"
         if not f.unit:
             return _num(v)
-        return f"{_num(v)}{f.unit}" if f.unit == "%" else f"{_num(v)} {f.unit}"
+        if f.unit == "%":
+            return f"{_num(v)}%"
+        return f"{_num(v)} {f.unit_singular if v == 1 and f.unit_singular else f.unit}"
 
     def predict(self, values: Mapping[str, InputValue]) -> PredictResponse:
         t0 = time.perf_counter()
@@ -164,18 +216,26 @@ class Predictor:
             contribs = {i: float(agg[0, k]) for k, i in enumerate(ids)}
             per_target[t] = contribs
             order = sorted(ids, key=lambda i: (-abs(contribs[i]), i))
+            contributions = [
+                Contribution(
+                    id=i,
+                    label=self._by_id[i].label,
+                    display_value=self._display(self._by_id[i], values, row),
+                    logit=contribs[i],
+                )
+                for i in order
+            ]
+            steps = build_waterfall(
+                float(expl.base[0]),
+                [Factor(c.id, c.label, c.display_value, c.logit) for c in contributions],
+                prob,
+                load_display().waterfall_top_n,
+            )
             explanations[t] = TargetExplanation(
                 base_probability=_sigmoid(float(expl.base[0])),
                 base_logit=float(expl.base[0]),
-                contributions=[
-                    Contribution(
-                        id=i,
-                        label=self._by_id[i].label,
-                        display_value=self._display(self._by_id[i], values, row),
-                        logit=contribs[i],
-                    )
-                    for i in order
-                ],
+                contributions=contributions,
+                waterfall=[WaterfallStep(**asdict(s)) for s in steps],
             )
         breakdown, warnings = self._breakdown(row, per_target)
         logger.info("predict took %.1f ms", (time.perf_counter() - t0) * 1000)
@@ -186,6 +246,48 @@ class Predictor:
             breakdown=breakdown,
             warnings=warnings,
         )
+
+    def intervals(self, values: Mapping[str, InputValue]) -> IntervalsResponse:
+        """Bootstrap ranges, point-vs-threshold side and the uncertain flag (a separate call, so
+        /api/predict keeps its latency).
+
+        Cached per input (LRU); `/api/summary` reuses it, so a summary after the live call is free.
+        """
+        if not self.replicates_ready.is_set():
+            raise RangesLoading
+        key = json.dumps(values, sort_keys=True, default=str)
+        with self._intervals_lock:
+            hit = self._intervals_cache.get(key)
+            if hit is not None:
+                self._intervals_cache.move_to_end(key)
+                return hit
+        result = self._compute_intervals(values)
+        with self._intervals_lock:
+            self._intervals_cache[key] = result
+            while len(self._intervals_cache) > INTERVALS_CACHE_SIZE:
+                self._intervals_cache.popitem(last=False)
+        return result
+
+    def _compute_intervals(self, values: Mapping[str, InputValue]) -> IntervalsResponse:
+        t0 = time.perf_counter()
+        X = inputs_to_matrix([values], self.schema)
+        targets: dict[str, TargetRange] = {}
+        for t, rs in self.replicates.items():
+            lo, hi = (float(v[0]) for v in rs.interval(X, self.uncertainty.level))
+            point = float(self.models[t].predict_proba(X)[0])
+            targets[t] = TargetRange(
+                interval=Interval(
+                    lo=lo,
+                    hi=hi,
+                    level=self.uncertainty.level,
+                    method=self.uncertainty.method,
+                    n_models=len(rs),
+                ),
+                side=side(point, self.thresholds[t]),
+                uncertain=crosses(lo, hi, self.thresholds[t]),
+            )
+        logger.info("intervals took %.1f ms", (time.perf_counter() - t0) * 1000)
+        return IntervalsResponse(model_version=self.version, targets=targets)
 
     def _breakdown(
         self, row: Mapping[str, float], per_target: Mapping[str, Mapping[str, float]]
@@ -216,6 +318,7 @@ class Predictor:
                     kind=f.kind,
                     value=v,
                     unit=f.unit,
+                    unit_singular=f.unit_singular,
                     reference=RangeInfo(low=f.reference.low, high=f.reference.high)
                     if f.reference
                     else None,

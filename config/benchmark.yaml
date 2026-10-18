@@ -1,0 +1,26 @@
+# Benchmark and ablation (Phase 17.5). Validated by backend/ml/benchmark_config.py; run with `make benchmark`.
+#
+# Every model gets the same protocol: the train/hold-out split of `make prepare`, the same 5x3 repeated stratified
+# CV on the train patients, Platt scaling on out-of-fold scores, a Youden threshold. Feature sets are defined only by
+# the feature GROUPS of features.yaml: a set drops every model column of every feature in its `drop_groups`.
+
+# Models compared on the full feature set. `xgb` is the production model (fixed params); `tabpfn` is optional and
+# offline only: it is skipped, with the reason recorded, unless the `tabpfn` package is importable.
+models:
+  - { id: logreg, label: "Logistic regression" }
+  - { id: rf,     label: "Random forest" }
+  - { id: xgb,    label: "XGBoost" }
+  - { id: tabpfn, label: "TabPFN", optional: true }
+
+# The reference model the paired differences are measured against.
+reference_model: xgb
+
+# Ablation, run on the reference model only. The first set is the baseline the others are compared with.
+feature_sets:
+  - { id: all,         label: "All features",                  drop_groups: [] }
+  - { id: no_ecg,      label: "Without ECG",                   drop_groups: [ecg] }
+  - { id: no_echo,     label: "Without echocardiography",      drop_groups: [echo] }
+  - { id: no_ecg_echo, label: "Without ECG and echocardiography", drop_groups: [ecg, echo] }
+
+# Paired comparison: Nadeau-Bengio corrected resampled t-test over the repeated-CV folds.
+confidence_level: 0.95

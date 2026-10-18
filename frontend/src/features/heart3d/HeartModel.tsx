@@ -1,95 +1,95 @@
-import { type ThreeEvent, useFrame, useThree } from '@react-three/fiber'
-import { Select } from '@react-three/postprocessing'
-import { useEffect, useLayoutEffect, useMemo } from 'react'
-import { Color, DoubleSide, MeshStandardMaterial, SRGBColorSpace } from 'three'
+import { Outlines } from '@react-three/drei'
+import { createPortal, type ThreeEvent, useFrame, useThree } from '@react-three/fiber'
+import { Fragment, type RefObject, useEffect, useLayoutEffect, useMemo } from 'react'
+import { Color, type Mesh, SRGBColorSpace } from 'three'
+import { track } from '@/lib/analytics'
 import { NEUTRAL, riskEmissive, riskRgb } from '@/lib/riskColor'
 import { useAppStore } from '@/store/app'
+import { HEART_COLOR, makeRig, type Rig } from './rigs'
+import { injectSupply, makeSupplyUniforms, SUPPLY_MAX } from './supplyShader'
+import type { PickVessel } from './TapPicker'
 import type { NodeBinding } from './useHeartModel'
 import type { Probabilities } from './useProbabilities'
 import { focusTarget, useViewState } from './useViewState'
 
 const TWEEN_MS = 400
+const FOCUS_S = 0.3
 const XRAY_OPACITY = 0.25
-/** Always-on selection cue (works without postprocessing): extra emissive on the selected node. */
+/** Extra emissive on the selected / hovered node. */
 const SELECT_BOOST = 0.35
-const HEART_COLOR = '#b58b93' // muted, desaturated rose: not on the risk scale
-const CONTEXT_COLOR = '#aeb6c2'
-/** Optional context nodes hidden by default (veins): neutral blue-grey, never on the risk scale. */
-const OPTIONAL_COLOR = '#7f93ad'
+/** Focus mode: non-selected vessels fade to 35 % and lose 65 % of their saturation. */
+const FOCUS_DIM = 0.65
+const HEART_FOCUS_DIM = 0.18
 const reducedMotion = (): boolean => window.matchMedia('(prefers-reduced-motion: reduce)').matches
 type PointerEvent3D = ThreeEvent<PointerEvent>
 const easeOut = (t: number): number => 1 - (1 - t) ** 3
+const HEART = new Color(HEART_COLOR)
+const grey = new Color()
 
-/** Per-node material + tween state. Vessels (role "vessel") are colour-driven by probability. */
-interface Rig {
-  b: NodeBinding
-  kind: 'risk' | 'heart' | 'context'
-  material: MeshStandardMaterial
-  cur: Color
-  from: Color
-  to: Color
-  curI: number
-  fromI: number
-  toI: number
-  start: number
-  opacity: number
-}
-
-function makeRig(b: NodeBinding): Rig {
-  const kind =
-    b.target?.role === 'vessel' ? 'risk' : b.target?.role === 'overall' ? 'heart' : 'context'
-  const optional = kind === 'context' && b.optional && !b.defaultVisible
-  const base =
-    kind === 'heart'
-      ? HEART_COLOR
-      : kind === 'risk'
-        ? '#8a97ad'
-        : optional
-          ? OPTIONAL_COLOR
-          : CONTEXT_COLOR
-  const material = new MeshStandardMaterial({
-    color: base,
-    emissive: base,
-    emissiveIntensity: 0,
-    roughness: kind === 'heart' ? 0.85 : kind === 'risk' ? 0.45 : 0.6,
-    metalness: 0,
-    side: kind === 'heart' ? DoubleSide : undefined,
-  })
-  const neutral = new Color().setRGB(...NEUTRAL, SRGBColorSpace)
-  return {
-    b,
-    kind,
-    material,
-    cur: neutral.clone(),
-    from: neutral.clone(),
-    to: neutral.clone(),
-    curI: 0.05,
-    fromI: 0.05,
-    toI: 0.05,
-    start: 0,
-    opacity: 1,
-  }
-}
+/** Moves `x` toward `goal` by at most `step`. */
+const approach = (x: number, goal: number, step: number): number =>
+  Math.abs(goal - x) <= step ? goal : x + Math.sign(goal - x) * step
 
 interface Props {
   bindings: NodeBinding[]
   probabilities: Probabilities
   /** From useClickGuard: false when the gesture was a drag. */
   isClick: () => boolean
+  /** Nearest vessel to a screen point within the tap tolerance (touch taps beside a thin artery). */
+  pick?: RefObject<PickVessel>
+}
+
+/** Inverted-hull outline on every mesh of a vessel: thin and dark, thicker and light when active. */
+function VesselOutlines({ rig }: { rig: Rig }) {
+  const id = rig.b.target?.id
+  const active = useAppStore((s) => s.selectedTarget === id)
+  const hot = useViewState((s) => s.hover?.id === id || s.rowHover === id)
+  const on = active || hot
+  return (
+    <>
+      {rig.b.meshes.map((m: Mesh) => (
+        <Fragment key={m.uuid}>
+          {createPortal(
+            <Outlines
+              angle={0}
+              thickness={on ? 4 : 2}
+              color={on ? '#f4f9ff' : '#060b16'}
+              toneMapped={false}
+            />,
+            m,
+          )}
+        </Fragment>
+      ))}
+    </>
+  )
 }
 
 /**
  * Renders the bound nodes with per-node materials. Colour = calibrated probability (animated
- * ~400 ms); x-ray fades the heart to 25 % with depthWrite off; click/hover drive the shared store.
+ * ~400 ms) and nothing else; identity comes from outlines, labels and position. A selected vessel
+ * puts the others into focus mode (faded, desaturated) and tints its supply region on the heart.
  */
-export function HeartModel({ bindings, probabilities, isClick }: Props) {
+export function HeartModel({ bindings, probabilities, isClick, pick }: Props) {
   const invalidate = useThree((s) => s.invalidate)
   const gl = useThree((s) => s.gl)
   const selected = useAppStore((s) => s.selectedTarget)
   const xray = useViewState((s) => s.xray)
+  const supply = useViewState((s) => s.supply)
+  const hoverId = useViewState((s) => s.hover?.id ?? null)
   const rowHover = useViewState((s) => s.rowHover)
   const shownNodes = useViewState((s) => s.shownNodes)
-  const rigs = useMemo(() => bindings.map(makeRig), [bindings])
+  const rigs = useMemo(
+    () =>
+      bindings.map((b) => {
+        const r = makeRig(b)
+        if (r.kind === 'heart') {
+          r.supply = makeSupplyUniforms()
+          injectSupply(r.material, r.supply)
+        }
+        return r
+      }),
+    [bindings],
+  )
 
   useLayoutEffect(() => {
     for (const r of rigs) {
@@ -119,14 +119,16 @@ export function HeartModel({ bindings, probabilities, isClick }: Props) {
     invalidate()
   }, [rigs, probabilities, invalidate])
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: selection/x-ray changes must request a frame
+  // biome-ignore lint/correctness/useExhaustiveDependencies: selection/view changes must request a frame
   useEffect(() => {
     invalidate()
-  }, [selected, xray, rowHover, invalidate])
+  }, [selected, xray, supply, hoverId, rowHover, invalidate])
 
   // frameloop="demand": keep requesting frames only while something is still animating.
-  useFrame(() => {
+  useFrame((_, delta) => {
     const now = performance.now()
+    const step = reducedMotion() ? 1 : Math.min(delta, 0.1) / FOCUS_S
+    const selRig = rigs.find((r) => r.kind === 'risk' && r.b.target?.id === selected)
     let busy = false
     for (const r of rigs) {
       const isSelected = r.b.target !== null && r.b.target.id === selected
@@ -137,10 +139,21 @@ export function HeartModel({ bindings, probabilities, isClick }: Props) {
         const k = easeOut(t)
         r.cur.copy(r.from).lerp(r.to, k)
         r.curI = r.fromI + (r.toI - r.fromI) * k
-        r.material.color.copy(r.cur)
-        r.material.emissive.copy(r.cur)
-        r.material.emissiveIntensity = r.curI + boost
         if (t < 1) busy = true
+        const goal = selRig && !isSelected ? 1 : 0
+        r.focus = approach(r.focus, goal, step)
+        if (r.focus !== goal) busy = true
+        const lum = r.cur.r * 0.2126 + r.cur.g * 0.7152 + r.cur.b * 0.0722
+        r.material.color.copy(r.cur).lerp(grey.setRGB(lum, lum, lum), FOCUS_DIM * r.focus)
+        r.material.emissive.copy(r.material.color)
+        r.material.emissiveIntensity = (r.curI + boost) * (1 - 0.7 * r.focus)
+        const op = 1 - FOCUS_DIM * r.focus
+        const see = op < 1
+        if (r.material.transparent !== see) {
+          r.material.transparent = see
+          r.material.needsUpdate = true
+        }
+        r.material.opacity = op
       } else if (r.kind === 'heart') {
         const goal = xray ? XRAY_OPACITY : 1
         const diff = goal - r.opacity
@@ -153,7 +166,23 @@ export function HeartModel({ bindings, probabilities, isClick }: Props) {
         }
         r.material.opacity = r.opacity
         r.material.depthWrite = !see // posterior vessels must show through
+        const fgoal = selRig ? 1 : 0
+        r.focus = approach(r.focus, fgoal, step)
+        if (r.focus !== fgoal) busy = true
+        r.material.color.copy(HEART).multiplyScalar(1 - HEART_FOCUS_DIM * r.focus)
+        r.material.emissive.copy(HEART)
         r.material.emissiveIntensity = boost * 0.6
+        if (r.supply) {
+          const ch = selRig?.b.target ? r.b.territoryChannels.indexOf(selRig.b.target.id) : -1
+          if (ch >= 0 && selRig) {
+            r.supply.mask.value.set(ch === 0 ? 1 : 0, ch === 1 ? 1 : 0, ch === 2 ? 1 : 0)
+            r.supply.color.value.copy(selRig.cur)
+          }
+          const sgoal = supply && ch >= 0 ? SUPPLY_MAX : 0
+          const cur = r.supply.strength.value
+          r.supply.strength.value = approach(cur, sgoal, step * SUPPLY_MAX)
+          if (r.supply.strength.value !== sgoal) busy = true
+        }
       } else {
         r.material.emissiveIntensity = 0
       }
@@ -171,12 +200,13 @@ export function HeartModel({ bindings, probabilities, isClick }: Props) {
         const target = r.b.target
         if (!target) return <primitive key={r.b.name} object={r.b.object} />
         return (
-          <Select key={r.b.name} enabled={target.id === selected}>
+          <Fragment key={r.b.name}>
             {/* biome-ignore lint/a11y/noStaticElementInteractions: three.js object, not a DOM element */}
             <primitive
               object={r.b.object}
               onPointerOver={(e: PointerEvent3D) => {
                 e.stopPropagation()
+                if (e.nativeEvent.pointerType === 'touch') return // touch: long-press shows the tooltip
                 setCursor('pointer')
                 useViewState.getState().setHover({
                   id: target.id,
@@ -186,6 +216,7 @@ export function HeartModel({ bindings, probabilities, isClick }: Props) {
               }}
               onPointerMove={(e: PointerEvent3D) => {
                 e.stopPropagation()
+                if (e.nativeEvent.pointerType === 'touch') return
                 useViewState.getState().setHover({
                   id: target.id,
                   x: e.nativeEvent.offsetX,
@@ -199,10 +230,20 @@ export function HeartModel({ bindings, probabilities, isClick }: Props) {
               }}
               onClick={(e: PointerEvent3D) => {
                 e.stopPropagation()
-                if (isClick()) focusTarget(target.id)
+                if (isClick()) {
+                  // A finger lands on the heart surface right beside a thin artery: prefer the vessel.
+                  const near =
+                    target.role !== 'vessel' && ['touch', 'pen'].includes(e.nativeEvent.pointerType)
+                      ? pick?.current(e.nativeEvent.clientX, e.nativeEvent.clientY)
+                      : null
+                  const id = near ?? target.id
+                  focusTarget(id)
+                  track('target_selected', { target: id, source: '3d' })
+                }
               }}
             />
-          </Select>
+            {r.kind === 'risk' && <VesselOutlines rig={r} />}
+          </Fragment>
         )
       })}
     </>

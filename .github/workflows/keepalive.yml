@@ -1,0 +1,19 @@
+# Pings the Render free-tier API so it rarely sleeps (it sleeps after ~15 min idle).
+# URL = the proxy target in netlify.toml. GitHub may delay or skip scheduled runs; the app's
+# own wake-up status covers those cases.
+name: keep-alive
+
+on:
+  schedule:
+    - cron: "*/14 * * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: GET /api/health
+        run: curl -fsS --retry 3 --retry-delay 10 --retry-all-errors --max-time 60 https://myograph-api.onrender.com/api/health

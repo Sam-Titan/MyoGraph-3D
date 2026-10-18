@@ -42,9 +42,8 @@ for n in g["nodes"]:
     tri[n["name"]] = sum(g["accessors"][p["indices"]]["count"] // 3 for p in m["primitives"])
 hidden = {n["name"] for n in g["nodes"] if not n.get("extras", {}).get("defaultVisible", True)}
 tot = sum(tri.values()); vis = sum(v for k, v in tri.items() if k not in hidden)
-src = (R / "scripts/build_heart_glb.py").read_text()
-lim_tri = int(re.search(r"TOTAL_TRIANGLE_LIMIT\s*=\s*([\d_]+)", src).group(1).replace("_", ""))
-lim_sz = int(re.search(r"GLB_SIZE_LIMIT\s*=\s*([\d_]+)", src).group(1).replace("_", ""))
+lim_tri = AN["budget_desktop"]["max_triangles"]
+lim_sz = AN["budget_desktop"]["max_bytes"]
 budget = {n["name"]: n["max_triangles"] for n in AN["nodes"]}
 
 # tests

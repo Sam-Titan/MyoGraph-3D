@@ -12,6 +12,7 @@ import {
 import { Switch } from '@/components/ui/switch'
 import { DerivedField, type DerivedState } from './DerivedField'
 import type { FormValues } from './formSchema'
+import { HelpButton } from './HelpButton'
 import { RangeBadge, rangeStatus } from './RangeBadge'
 
 interface Props {
@@ -48,7 +49,7 @@ export function FieldRow({ feature: f, derived }: Props) {
           max={f.input?.max}
           aria-invalid={invalid}
           aria-describedby={invalid ? `${id}-err` : undefined}
-          className="num h-8 w-28"
+          className="num h-8 w-28 pointer-coarse:h-11"
           {...register(f.id, { valueAsNumber: true })}
         />
         {/* Fixed-width unit column so every number input lines up regardless of unit length. */}
@@ -105,9 +106,12 @@ export function FieldRow({ feature: f, derived }: Props) {
   return (
     <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 py-1.5">
       <div className="min-w-0 space-y-1">
-        <Label htmlFor={id} className="text-sm font-normal">
-          {f.label}
-        </Label>
+        <div className="flex items-center gap-1">
+          <Label htmlFor={id} className="text-sm font-normal">
+            {f.label}
+          </Label>
+          <HelpButton label={f.label} help={f.help} />
+        </div>
         {rangeBadge && <div>{rangeBadge}</div>}
       </div>
       <div className="justify-self-end">{control_}</div>

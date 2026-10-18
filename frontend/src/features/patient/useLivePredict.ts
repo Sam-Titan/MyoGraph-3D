@@ -1,11 +1,14 @@
+import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo } from 'react'
 import type { z } from 'zod'
-import { usePredict } from '@/api/queries'
+import { queryKeys, usePredict } from '@/api/queries'
 import { useDebouncedValue } from '@/lib/useDebouncedValue'
 import { useAppStore } from '@/store/app'
 import type { FormValues } from './formSchema'
 
 export const PREDICT_DEBOUNCE_MS = 300
+/** Extra wait before the ranges (about 15x the CPU of a predict) are requested for the same values. */
+export const INTERVALS_EXTRA_DEBOUNCE_MS = 400
 
 export type LiveState = 'live' | 'busy' | 'paused' | 'error'
 
@@ -16,24 +19,46 @@ export type LiveState = 'live' | 'busy' | 'paused' | 'error'
 export function useLivePredict(values: FormValues, schema: z.ZodType<FormValues, FormValues>) {
   // Key on the serialised values: `watch()` returns a fresh object each render.
   const key = JSON.stringify(values)
-  const debouncedKey = useDebouncedValue(key, PREDICT_DEBOUNCE_MS)
+  // Nothing is predicted before the first-visit preset is in the form: the page would otherwise
+  // pay for (and flash) a full estimate of placeholder values.
+  const settled = useAppStore((s) => s.presetSettled)
+  const gatedKey = settled ? key : null
+  const qc = useQueryClient()
+  const trailingKey = useDebouncedValue(gatedKey, PREDICT_DEBOUNCE_MS)
+  // Values whose estimate is already cached (the build-time snapshot, a repeat) skip the wait.
+  const debouncedKey = useMemo(() => {
+    if (gatedKey === null || gatedKey === trailingKey) return trailingKey
+    const parsed = schema.safeParse(JSON.parse(gatedKey))
+    return parsed.success && qc.getQueryData(queryKeys.predict(parsed.data)) !== undefined
+      ? gatedKey
+      : trailingKey
+  }, [gatedKey, trailingKey, schema, qc])
   const setPredictValues = useAppStore((s) => s.setPredictValues)
+  const setIntervalValues = useAppStore((s) => s.setIntervalValues)
 
   const valid = useMemo(() => schema.safeParse(values).success, [schema, values])
   const debounced = useMemo(() => {
+    if (debouncedKey === null) return null
     const parsed = schema.safeParse(JSON.parse(debouncedKey))
     return parsed.success ? parsed.data : null
   }, [schema, debouncedKey])
 
   const query = usePredict(debounced)
   useEffect(() => setPredictValues(debounced), [debounced, setPredictValues])
+  // Ranges follow later; changing the key aborts the superseded request (TanStack passes `signal`).
+  const trailing = useDebouncedValue(debounced, INTERVALS_EXTRA_DEBOUNCE_MS)
+  const slow =
+    debounced && qc.getQueryData(queryKeys.intervals(debounced)) !== undefined
+      ? debounced
+      : trailing
+  useEffect(() => setIntervalValues(slow), [slow, setIntervalValues])
 
-  const pending = key !== debouncedKey
+  const pending = gatedKey !== debouncedKey
   const stale = pending || query.isFetching || query.isPlaceholderData
   let state: LiveState = 'live'
   if (!valid) state = 'paused'
   else if (query.isError) state = 'error'
-  else if (stale) state = 'busy'
+  else if (stale || !settled) state = 'busy'
 
   return { query, valid, state, /** shown data lags the form */ stale }
 }

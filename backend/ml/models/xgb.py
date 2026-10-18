@@ -14,6 +14,8 @@ from ml.evaluate import youden_threshold
 from ml.models.base import Calibration, Explanation, register
 
 SEED = 42
+#: Fewest out-of-bag patients of each class needed to fit a replicate's own Platt scaling.
+MIN_OOB_PER_CLASS = 5
 DEFAULT_PARAMS: dict[str, Any] = {
     "n_estimators": 300,
     "max_depth": 3,
@@ -71,6 +73,30 @@ class XGBRiskModel:
         )
         self._booster = self._classifier(spw).fit(X, y).get_booster()
         self.params_used = {**self.params, "scale_pos_weight": spw}
+
+    def bootstrap_member(
+        self, X: pd.DataFrame, y: np.ndarray, fit_idx: np.ndarray, oob_idx: np.ndarray, seed: int
+    ) -> tuple[bytes, float, float]:
+        """One bootstrap replicate: refit on `fit_idx` (rows may repeat) with this model's fixed
+        params, then Platt-calibrate on the out-of-bag rows. Returns (UBJ bytes, a, b).
+
+        Falls back to this model's own Platt coefficients when the out-of-bag rows hold too few
+        patients of either class to fit one.
+        """
+        _, cal = self._fitted()
+        y = np.asarray(y).astype(int)
+        spw = float(self.params_used["scale_pos_weight"])
+        clf = xgb.XGBClassifier(
+            **self.params, scale_pos_weight=spw, random_state=seed, n_jobs=1, tree_method="hist"
+        ).fit(X.iloc[fit_idx], y[fit_idx])
+        booster = clf.get_booster()
+        a, b = cal.a, cal.b
+        y_oob = y[oob_idx]
+        if min((y_oob == 0).sum(), (y_oob == 1).sum()) >= MIN_OOB_PER_CLASS:
+            margin = booster.predict(xgb.DMatrix(X.iloc[oob_idx]), output_margin=True)
+            platt = LogisticRegression(C=1e6).fit(margin.reshape(-1, 1), y_oob)
+            a, b = float(platt.coef_[0, 0]), float(platt.intercept_[0])
+        return bytes(booster.save_raw(raw_format="ubj")), a, b
 
     def _fitted(self) -> tuple[xgb.Booster, Calibration]:
         if self._booster is None or self.calibration is None:

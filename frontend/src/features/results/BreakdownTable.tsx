@@ -55,6 +55,35 @@ function MiniBar({ value, max }: { value: number; max: number }) {
   )
 }
 
+function SortButton({
+  sort,
+  setSort,
+  id,
+  className,
+}: {
+  sort: SortMode
+  setSort: (update: (s: SortMode) => SortMode) => void
+  id: string
+  className?: string
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => setSort((s) => (s === 'abs-desc' ? 'default' : 'abs-desc'))}
+      aria-pressed={sort === 'abs-desc'}
+      title="Sort by |contribution| within each group"
+      className={cn(
+        'inline-flex items-center gap-1 rounded text-xs hover:text-foreground pointer-coarse:min-h-11',
+        sort === 'abs-desc' ? 'text-foreground' : 'text-muted-foreground',
+        className,
+      )}
+    >
+      ± {id}
+      <ArrowDownWideNarrow className="size-3" aria-hidden />
+    </button>
+  )
+}
+
 interface Props {
   rows: BreakdownRow[]
   groups: GroupInfo[]
@@ -83,6 +112,7 @@ export function BreakdownTable({ rows, groups, target }: Props) {
     <section aria-label="Physiological breakdown" className="rule-t space-y-2 pt-4">
       <div className="flex items-center justify-between gap-2">
         <h3 className="t-section">Physiological breakdown</h3>
+        <SortButton sort={sort} setSort={setSort} id={target.id} className="sm:hidden" />
         <label
           htmlFor={switchId}
           className="flex items-center gap-1.5 text-xs text-muted-foreground"
@@ -97,13 +127,14 @@ export function BreakdownTable({ rows, groups, target }: Props) {
         </label>
       </div>
       <div>
-        <table className="w-full table-fixed border-collapse text-xs">
-          <colgroup>
+        {/* Below sm each row is a two-line card: measure, then reference/status and contribution. */}
+        <table className="w-full table-fixed border-collapse text-xs max-sm:block">
+          <colgroup className="max-sm:hidden">
             <col />
             <col className="w-[5.5rem]" />
             <col className="w-[6.25rem]" />
           </colgroup>
-          <thead>
+          <thead className="max-sm:hidden">
             <tr className="border-b text-left text-muted-foreground">
               <th scope="col" className="py-1.5 pr-2 font-medium">
                 Measure
@@ -116,25 +147,13 @@ export function BreakdownTable({ rows, groups, target }: Props) {
                 className="py-1.5 pl-2 font-medium"
                 aria-sort={sort === 'abs-desc' ? 'descending' : 'none'}
               >
-                <button
-                  type="button"
-                  onClick={() => setSort((s) => (s === 'abs-desc' ? 'default' : 'abs-desc'))}
-                  aria-pressed={sort === 'abs-desc'}
-                  title="Sort by |contribution| within each group"
-                  className={cn(
-                    'inline-flex items-center gap-1 rounded hover:text-foreground',
-                    sort === 'abs-desc' && 'text-foreground',
-                  )}
-                >
-                  ± {target.id}
-                  <ArrowDownWideNarrow className="size-3" aria-hidden />
-                </button>
+                <SortButton sort={sort} setSort={setSort} id={target.id} />
               </th>
             </tr>
           </thead>
           {sections.map((s) => (
-            <tbody key={s.group.id}>
-              <tr>
+            <tbody key={s.group.id} className="max-sm:block">
+              <tr className="max-sm:block">
                 <th
                   scope="colgroup"
                   colSpan={3}
@@ -144,10 +163,13 @@ export function BreakdownTable({ rows, groups, target }: Props) {
                 </th>
               </tr>
               {s.rows.map((r) => (
-                <tr key={r.id} className="border-b last:border-b-0">
+                <tr
+                  key={r.id}
+                  className="border-b last:border-b-0 max-sm:grid max-sm:grid-cols-[minmax(0,1fr)_auto] max-sm:gap-x-3 max-sm:py-1.5"
+                >
                   <th
                     scope="row"
-                    className="min-w-0 break-words py-1.5 pr-2 text-left align-top font-normal"
+                    className="min-w-0 break-words py-1.5 pr-2 text-left align-top font-normal max-sm:col-span-2 max-sm:py-0"
                   >
                     <span className="block">{r.label}</span>
                     <span className="num text-muted-foreground">
@@ -155,11 +177,11 @@ export function BreakdownTable({ rows, groups, target }: Props) {
                       {r.outside_training_range && ', outside training range'}
                     </span>
                   </th>
-                  <td className="px-2 py-1.5 align-top">
+                  <td className="px-2 py-1.5 align-top max-sm:px-0 max-sm:py-0">
                     <span className="num block text-muted-foreground">{formatReference(r)}</span>
                     <StatusChip status={r.status} />
                   </td>
-                  <td className="py-1.5 pl-2 align-top">
+                  <td className="py-1.5 pl-2 align-top max-sm:py-0 max-sm:pl-0">
                     <MiniBar value={contributionOf(r, target.id)} max={max} />
                   </td>
                 </tr>

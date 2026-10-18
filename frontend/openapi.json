@@ -63,6 +63,42 @@
         }
       }
     },
+    "/api/stories": {
+      "get": {
+        "summary": "Stories",
+        "operationId": "stories_api_stories_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Stories"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/display": {
+      "get": {
+        "summary": "Display",
+        "operationId": "display_api_display_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisplayConfig"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/predict": {
       "post": {
         "summary": "Predict",
@@ -84,6 +120,44 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PredictResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/intervals": {
+      "post": {
+        "summary": "Intervals",
+        "operationId": "intervals_api_intervals_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PredictRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntervalsResponse"
                 }
               }
             }
@@ -157,10 +231,252 @@
           }
         }
       }
+    },
+    "/api/benchmark": {
+      "get": {
+        "summary": "Benchmark",
+        "description": "Precomputed by `make benchmark`; nothing is trained at request time.",
+        "operationId": "benchmark_api_benchmark_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BenchmarkResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "BaseRateNote": {
+        "properties": {
+          "line1": {
+            "type": "string",
+            "title": "Line1"
+          },
+          "line2": {
+            "type": "string",
+            "title": "Line2"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "line1",
+          "line2"
+        ],
+        "title": "BaseRateNote"
+      },
+      "BenchCell": {
+        "properties": {
+          "cv": {
+            "$ref": "#/components/schemas/CvValues"
+          },
+          "holdout": {
+            "$ref": "#/components/schemas/MetricValues"
+          },
+          "vs_reference": {
+            "$ref": "#/components/schemas/PairedMetrics"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cv",
+          "holdout",
+          "vs_reference"
+        ],
+        "title": "BenchCell"
+      },
+      "BenchFeatureSet": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "drop_groups": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Drop Groups"
+          },
+          "dropped_columns": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Dropped Columns"
+          },
+          "n_columns": {
+            "type": "integer",
+            "title": "N Columns"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "drop_groups",
+          "dropped_columns",
+          "n_columns"
+        ],
+        "title": "BenchFeatureSet"
+      },
+      "BenchModelInfo": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "skipped"
+            ],
+            "title": "Status"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "status",
+          "note"
+        ],
+        "title": "BenchModelInfo"
+      },
+      "BenchProtocol": {
+        "properties": {
+          "seed": {
+            "type": "integer",
+            "title": "Seed"
+          },
+          "cv": {
+            "type": "string",
+            "title": "Cv"
+          },
+          "n_folds": {
+            "type": "integer",
+            "title": "N Folds"
+          },
+          "n_train": {
+            "type": "integer",
+            "title": "N Train"
+          },
+          "n_test": {
+            "type": "integer",
+            "title": "N Test"
+          },
+          "calibration": {
+            "type": "string",
+            "title": "Calibration"
+          },
+          "threshold": {
+            "type": "string",
+            "title": "Threshold"
+          },
+          "paired_test": {
+            "type": "string",
+            "title": "Paired Test"
+          },
+          "multiplicity": {
+            "type": "string",
+            "title": "Multiplicity"
+          },
+          "confidence_level": {
+            "type": "number",
+            "title": "Confidence Level"
+          }
+        },
+        "type": "object",
+        "required": [
+          "seed",
+          "cv",
+          "n_folds",
+          "n_train",
+          "n_test",
+          "calibration",
+          "threshold",
+          "paired_test",
+          "multiplicity",
+          "confidence_level"
+        ],
+        "title": "BenchProtocol"
+      },
+      "BenchmarkResponse": {
+        "properties": {
+          "protocol": {
+            "$ref": "#/components/schemas/BenchProtocol"
+          },
+          "reference_model": {
+            "type": "string",
+            "title": "Reference Model"
+          },
+          "models": {
+            "items": {
+              "$ref": "#/components/schemas/BenchModelInfo"
+            },
+            "type": "array",
+            "title": "Models"
+          },
+          "feature_sets": {
+            "items": {
+              "$ref": "#/components/schemas/BenchFeatureSet"
+            },
+            "type": "array",
+            "title": "Feature Sets"
+          },
+          "comparison": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "$ref": "#/components/schemas/BenchCell"
+              },
+              "type": "object"
+            },
+            "type": "object",
+            "title": "Comparison"
+          },
+          "ablation": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "$ref": "#/components/schemas/BenchCell"
+              },
+              "type": "object"
+            },
+            "type": "object",
+            "title": "Ablation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "protocol",
+          "reference_model",
+          "models",
+          "feature_sets",
+          "comparison",
+          "ablation"
+        ],
+        "title": "BenchmarkResponse"
+      },
       "BreakdownRow": {
         "properties": {
           "id": {
@@ -198,6 +514,17 @@
               }
             ],
             "title": "Unit"
+          },
+          "unit_singular": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit Singular"
           },
           "reference": {
             "anyOf": [
@@ -271,6 +598,20 @@
           "n"
         ],
         "title": "CalibrationBin"
+      },
+      "Camera": {
+        "properties": {
+          "target": {
+            "type": "string",
+            "title": "Target"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "target"
+        ],
+        "title": "Camera"
       },
       "Confusion": {
         "properties": {
@@ -391,6 +732,146 @@
         ],
         "title": "CvMetrics"
       },
+      "CvValues": {
+        "properties": {
+          "roc_auc": {
+            "$ref": "#/components/schemas/MeanStd"
+          },
+          "brier": {
+            "$ref": "#/components/schemas/MeanStd"
+          },
+          "recall": {
+            "$ref": "#/components/schemas/MeanStd"
+          }
+        },
+        "type": "object",
+        "required": [
+          "roc_auc",
+          "brier",
+          "recall"
+        ],
+        "title": "CvValues"
+      },
+      "DisplayConfig": {
+        "properties": {
+          "threshold_labels": {
+            "$ref": "#/components/schemas/ThresholdLabels"
+          },
+          "waterfall_top_n": {
+            "type": "integer",
+            "maximum": 15.0,
+            "minimum": 1.0,
+            "title": "Waterfall Top N"
+          },
+          "headline": {
+            "type": "string",
+            "title": "Headline"
+          },
+          "headline_range": {
+            "type": "string",
+            "title": "Headline Range"
+          },
+          "headline_compact": {
+            "type": "string",
+            "title": "Headline Compact"
+          },
+          "headline_range_compact": {
+            "type": "string",
+            "title": "Headline Range Compact"
+          },
+          "compact_labels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Compact Labels"
+          },
+          "cutoff_line": {
+            "type": "string",
+            "title": "Cutoff Line"
+          },
+          "cutoff_crosses": {
+            "type": "string",
+            "title": "Cutoff Crosses"
+          },
+          "base_rate_note": {
+            "$ref": "#/components/schemas/BaseRateNote"
+          },
+          "range_meaning": {
+            "type": "string",
+            "title": "Range Meaning"
+          },
+          "waterfall": {
+            "$ref": "#/components/schemas/WaterfallText"
+          },
+          "dots": {
+            "$ref": "#/components/schemas/DotsText"
+          },
+          "performance": {
+            "$ref": "#/components/schemas/PerformanceText"
+          },
+          "trust": {
+            "$ref": "#/components/schemas/TrustText"
+          },
+          "glossary": {
+            "items": {
+              "$ref": "#/components/schemas/GlossaryEntry"
+            },
+            "type": "array",
+            "title": "Glossary"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "threshold_labels",
+          "waterfall_top_n",
+          "headline",
+          "headline_range",
+          "headline_compact",
+          "headline_range_compact",
+          "compact_labels",
+          "cutoff_line",
+          "cutoff_crosses",
+          "base_rate_note",
+          "range_meaning",
+          "waterfall",
+          "dots",
+          "performance",
+          "trust",
+          "glossary"
+        ],
+        "title": "DisplayConfig"
+      },
+      "DotsText": {
+        "properties": {
+          "caption": {
+            "type": "string",
+            "title": "Caption"
+          },
+          "legend_solid": {
+            "type": "string",
+            "title": "Legend Solid"
+          },
+          "legend_light": {
+            "type": "string",
+            "title": "Legend Light"
+          },
+          "legend_ring": {
+            "type": "string",
+            "title": "Legend Ring"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "caption",
+          "legend_solid",
+          "legend_light",
+          "legend_ring"
+        ],
+        "title": "DotsText"
+      },
       "FeatureInfo": {
         "properties": {
           "id": {
@@ -426,6 +907,17 @@
               }
             ],
             "title": "Unit"
+          },
+          "unit_singular": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit Singular"
           },
           "input": {
             "anyOf": [
@@ -481,6 +973,10 @@
               }
             ],
             "title": "Default"
+          },
+          "help": {
+            "type": "string",
+            "title": "Help"
           }
         },
         "type": "object",
@@ -488,7 +984,8 @@
           "id",
           "label",
           "group",
-          "kind"
+          "kind",
+          "help"
         ],
         "title": "FeatureInfo"
       },
@@ -523,6 +1020,34 @@
           "features"
         ],
         "title": "FeaturesResponse"
+      },
+      "GlossaryEntry": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "match": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Match"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "match",
+          "text"
+        ],
+        "title": "GlossaryEntry"
       },
       "GroupInfo": {
         "properties": {
@@ -573,6 +1098,36 @@
         ],
         "title": "HealthResponse"
       },
+      "Highlight": {
+        "properties": {
+          "target": {
+            "type": "string",
+            "title": "Target"
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "up",
+              "down"
+            ],
+            "title": "Direction",
+            "default": "up"
+          },
+          "top": {
+            "type": "integer",
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "title": "Top",
+            "default": 3
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "target"
+        ],
+        "title": "Highlight"
+      },
       "ImportanceRow": {
         "properties": {
           "id": {
@@ -619,6 +1174,80 @@
         ],
         "title": "InputBoundsInfo"
       },
+      "Interval": {
+        "properties": {
+          "lo": {
+            "type": "number",
+            "title": "Lo"
+          },
+          "hi": {
+            "type": "number",
+            "title": "Hi"
+          },
+          "level": {
+            "type": "number",
+            "title": "Level"
+          },
+          "method": {
+            "type": "string",
+            "title": "Method"
+          },
+          "n_models": {
+            "type": "integer",
+            "title": "N Models"
+          }
+        },
+        "type": "object",
+        "required": [
+          "lo",
+          "hi",
+          "level",
+          "method",
+          "n_models"
+        ],
+        "title": "Interval",
+        "description": "Range of the replicates' calibrated probabilities (config/uncertainty.yaml)."
+      },
+      "IntervalsResponse": {
+        "properties": {
+          "model_version": {
+            "type": "string",
+            "title": "Model Version"
+          },
+          "targets": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/TargetRange"
+            },
+            "type": "object",
+            "title": "Targets"
+          }
+        },
+        "type": "object",
+        "required": [
+          "model_version",
+          "targets"
+        ],
+        "title": "IntervalsResponse",
+        "description": "Ranges for every target. A separate call so /api/predict keeps its latency budget."
+      },
+      "MeanStd": {
+        "properties": {
+          "mean": {
+            "type": "number",
+            "title": "Mean"
+          },
+          "std": {
+            "type": "number",
+            "title": "Std"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mean",
+          "std"
+        ],
+        "title": "MeanStd"
+      },
       "MetricStat": {
         "properties": {
           "mean": {
@@ -636,6 +1265,29 @@
           "std"
         ],
         "title": "MetricStat"
+      },
+      "MetricValues": {
+        "properties": {
+          "roc_auc": {
+            "type": "number",
+            "title": "Roc Auc"
+          },
+          "brier": {
+            "type": "number",
+            "title": "Brier"
+          },
+          "recall": {
+            "type": "number",
+            "title": "Recall"
+          }
+        },
+        "type": "object",
+        "required": [
+          "roc_auc",
+          "brier",
+          "recall"
+        ],
+        "title": "MetricValues"
       },
       "MetricsResponse": {
         "properties": {
@@ -665,6 +1317,9 @@
           "stability": {
             "$ref": "#/components/schemas/Stability"
           },
+          "uncertainty": {
+            "$ref": "#/components/schemas/UncertaintyMetrics"
+          },
           "excluded_inputs": {
             "items": {
               "type": "string"
@@ -680,6 +1335,7 @@
           "targets",
           "feature_importance",
           "stability",
+          "uncertainty",
           "excluded_inputs"
         ],
         "title": "MetricsResponse"
@@ -719,6 +1375,142 @@
           "label"
         ],
         "title": "OptionInfo"
+      },
+      "PairedMetrics": {
+        "properties": {
+          "roc_auc": {
+            "$ref": "#/components/schemas/PairedTest"
+          },
+          "brier": {
+            "$ref": "#/components/schemas/PairedTest"
+          },
+          "recall": {
+            "$ref": "#/components/schemas/PairedTest"
+          }
+        },
+        "type": "object",
+        "required": [
+          "roc_auc",
+          "brier",
+          "recall"
+        ],
+        "title": "PairedMetrics"
+      },
+      "PairedTest": {
+        "properties": {
+          "mean_diff": {
+            "type": "number",
+            "title": "Mean Diff"
+          },
+          "std_diff": {
+            "type": "number",
+            "title": "Std Diff"
+          },
+          "ci_lo": {
+            "type": "number",
+            "title": "Ci Lo"
+          },
+          "ci_hi": {
+            "type": "number",
+            "title": "Ci Hi"
+          },
+          "p": {
+            "type": "number",
+            "title": "P"
+          },
+          "p_adj": {
+            "type": "number",
+            "title": "P Adj"
+          },
+          "within_noise": {
+            "type": "boolean",
+            "title": "Within Noise"
+          },
+          "clear": {
+            "type": "boolean",
+            "title": "Clear"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mean_diff",
+          "std_diff",
+          "ci_lo",
+          "ci_hi",
+          "p",
+          "p_adj",
+          "within_noise",
+          "clear"
+        ],
+        "title": "PairedTest",
+        "description": "Per-fold difference (this minus the reference) with the Nadeau-Bengio corrected CI."
+      },
+      "Part": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Text"
+          },
+          "when": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "When",
+            "default": []
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "title": "Part"
+      },
+      "PerformanceText": {
+        "properties": {
+          "roc_auc": {
+            "type": "string",
+            "title": "Roc Auc"
+          },
+          "metric_example": {
+            "type": "string",
+            "title": "Metric Example"
+          },
+          "brier": {
+            "type": "string",
+            "title": "Brier"
+          },
+          "accuracy": {
+            "type": "string",
+            "title": "Accuracy"
+          },
+          "precision": {
+            "type": "string",
+            "title": "Precision"
+          },
+          "recall": {
+            "type": "string",
+            "title": "Recall"
+          },
+          "f1": {
+            "type": "string",
+            "title": "F1"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "roc_auc",
+          "metric_example",
+          "brier",
+          "accuracy",
+          "precision",
+          "recall",
+          "f1"
+        ],
+        "title": "PerformanceText"
       },
       "PredictRequest": {
         "properties": {
@@ -1024,6 +1816,116 @@
         ],
         "title": "StabilityStat"
       },
+      "Step": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "parts": {
+            "items": {
+              "$ref": "#/components/schemas/Part"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Parts"
+          },
+          "camera": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Camera"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "highlight": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Highlight"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reveal_truth": {
+            "type": "boolean",
+            "title": "Reveal Truth",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "parts"
+        ],
+        "title": "Step"
+      },
+      "Stories": {
+        "properties": {
+          "factor_note": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Factor Note"
+          },
+          "stories": {
+            "items": {
+              "$ref": "#/components/schemas/Story"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Stories"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "factor_note",
+          "stories"
+        ],
+        "title": "Stories"
+      },
+      "Story": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "blurb": {
+            "type": "string",
+            "title": "Blurb"
+          },
+          "preset": {
+            "type": "string",
+            "title": "Preset"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/Step"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Steps"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "blurb",
+          "preset",
+          "steps"
+        ],
+        "title": "Story"
+      },
       "SummaryRequest": {
         "properties": {
           "values": {
@@ -1111,13 +2013,21 @@
             },
             "type": "array",
             "title": "Contributions"
+          },
+          "waterfall": {
+            "items": {
+              "$ref": "#/components/schemas/WaterfallStep"
+            },
+            "type": "array",
+            "title": "Waterfall"
           }
         },
         "type": "object",
         "required": [
           "base_probability",
           "base_logit",
-          "contributions"
+          "contributions",
+          "waterfall"
         ],
         "title": "TargetExplanation"
       },
@@ -1135,6 +2045,10 @@
             "type": "string",
             "title": "Plain Label"
           },
+          "outcome_phrase": {
+            "type": "string",
+            "title": "Outcome Phrase"
+          },
           "role": {
             "type": "string",
             "enum": [
@@ -1146,6 +2060,17 @@
           "node": {
             "type": "string",
             "title": "Node"
+          },
+          "where": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Where"
           }
         },
         "type": "object",
@@ -1153,6 +2078,7 @@
           "id",
           "label",
           "plain_label",
+          "outcome_phrase",
           "role",
           "node"
         ],
@@ -1235,6 +2161,32 @@
         ],
         "title": "TargetPrediction"
       },
+      "TargetRange": {
+        "properties": {
+          "interval": {
+            "$ref": "#/components/schemas/Interval"
+          },
+          "side": {
+            "type": "string",
+            "enum": [
+              "above",
+              "below"
+            ],
+            "title": "Side"
+          },
+          "uncertain": {
+            "type": "boolean",
+            "title": "Uncertain"
+          }
+        },
+        "type": "object",
+        "required": [
+          "interval",
+          "side",
+          "uncertain"
+        ],
+        "title": "TargetRange"
+      },
       "TestMetrics": {
         "properties": {
           "default": {
@@ -1287,6 +2239,140 @@
         ],
         "title": "ThresholdInfo"
       },
+      "ThresholdLabels": {
+        "properties": {
+          "above": {
+            "type": "string",
+            "title": "Above"
+          },
+          "below": {
+            "type": "string",
+            "title": "Below"
+          },
+          "uncertain_suffix": {
+            "type": "string",
+            "title": "Uncertain Suffix"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "above",
+          "below",
+          "uncertain_suffix"
+        ],
+        "title": "ThresholdLabels"
+      },
+      "TrustText": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "reliable_min_auc": {
+            "type": "number",
+            "exclusiveMaximum": 1.0,
+            "exclusiveMinimum": 0.5,
+            "title": "Reliable Min Auc"
+          },
+          "rule": {
+            "type": "string",
+            "title": "Rule"
+          },
+          "reliable": {
+            "type": "string",
+            "title": "Reliable"
+          },
+          "weak": {
+            "type": "string",
+            "title": "Weak"
+          },
+          "footer": {
+            "type": "string",
+            "title": "Footer"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "title",
+          "reliable_min_auc",
+          "rule",
+          "reliable",
+          "weak",
+          "footer"
+        ],
+        "title": "TrustText"
+      },
+      "UncertaintyMetrics": {
+        "properties": {
+          "method": {
+            "type": "string",
+            "title": "Method"
+          },
+          "n_models": {
+            "type": "integer",
+            "title": "N Models"
+          },
+          "level": {
+            "type": "number",
+            "title": "Level"
+          },
+          "targets": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/UncertaintyTarget"
+            },
+            "type": "object",
+            "title": "Targets"
+          }
+        },
+        "type": "object",
+        "required": [
+          "method",
+          "n_models",
+          "level",
+          "targets"
+        ],
+        "title": "UncertaintyMetrics"
+      },
+      "UncertaintyTarget": {
+        "properties": {
+          "mean_width": {
+            "type": "number",
+            "title": "Mean Width"
+          },
+          "n_outside": {
+            "type": "integer",
+            "title": "N Outside"
+          },
+          "n": {
+            "type": "integer",
+            "title": "N"
+          },
+          "outside_fraction": {
+            "type": "number",
+            "title": "Outside Fraction"
+          },
+          "n_uncertain": {
+            "type": "integer",
+            "title": "N Uncertain"
+          },
+          "uncertain_fraction": {
+            "type": "number",
+            "title": "Uncertain Fraction"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mean_width",
+          "n_outside",
+          "n",
+          "outside_fraction",
+          "n_uncertain",
+          "uncertain_fraction"
+        ],
+        "title": "UncertaintyTarget"
+      },
       "ValidationError": {
         "properties": {
           "loc": {
@@ -1326,6 +2412,106 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "WaterfallStep": {
+        "properties": {
+          "feature": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Feature"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "value_display": {
+            "type": "string",
+            "title": "Value Display"
+          },
+          "from_p": {
+            "type": "number",
+            "title": "From P"
+          },
+          "to_p": {
+            "type": "number",
+            "title": "To P"
+          }
+        },
+        "type": "object",
+        "required": [
+          "feature",
+          "label",
+          "value_display",
+          "from_p",
+          "to_p"
+        ],
+        "title": "WaterfallStep",
+        "description": "One step of the probability waterfall: `from_p` -> `to_p` after adding this factor."
+      },
+      "WaterfallText": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "start_label": {
+            "type": "string",
+            "title": "Start Label"
+          },
+          "end_label": {
+            "type": "string",
+            "title": "End Label"
+          },
+          "baseline_caption": {
+            "type": "string",
+            "title": "Baseline Caption"
+          },
+          "order_caption": {
+            "type": "string",
+            "title": "Order Caption"
+          },
+          "points": {
+            "type": "string",
+            "title": "Points"
+          },
+          "points_one": {
+            "type": "string",
+            "title": "Points One"
+          },
+          "cutoff_tick": {
+            "type": "string",
+            "title": "Cutoff Tick"
+          },
+          "technical_title": {
+            "type": "string",
+            "title": "Technical Title"
+          },
+          "technical_line": {
+            "type": "string",
+            "title": "Technical Line"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "title",
+          "start_label",
+          "end_label",
+          "baseline_caption",
+          "order_caption",
+          "points",
+          "points_one",
+          "cutoff_tick",
+          "technical_title",
+          "technical_line"
+        ],
+        "title": "WaterfallText"
       }
     }
   }

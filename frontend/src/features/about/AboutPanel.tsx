@@ -27,7 +27,7 @@ export function AboutPanel() {
           <li>
             Colour is the calibrated probability for that vessel; the number is always shown too.
           </li>
-          <li>Legend ticks mark each target’s decision threshold.</li>
+          <li>Legend ticks mark each target’s cut-off.</li>
           <li>Selecting a vessel rotates the heart to it.</li>
           <li>Dashed labels mark a vessel that sits behind the heart.</li>
         </ul>
@@ -107,6 +107,17 @@ export function AboutPanel() {
           This is decision-support and educational software. Outputs are model estimates of
           probability, not a diagnosis, and are not a substitute for diagnostic imaging or clinical
           judgement.
+        </p>
+      </section>
+
+      <section className="space-y-2">
+        <h3 className={H3}>Privacy</h3>
+        <p>
+          The site counts page views and anonymous actions (such as which tab or preset was opened)
+          with cookieless analytics that also shows country and device type. No cookies are set. The
+          server logs the IP address and browser string of each request. Nothing typed into the
+          patient form is ever stored, logged or sent to analytics. The optional AI summary sends
+          the model’s results to Groq, as described next to that button.
         </p>
       </section>
 

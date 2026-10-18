@@ -1,0 +1,219 @@
+import { describe, expect, it } from 'vitest'
+import type { PredictResponse, StoryStep, TargetInfo } from '@/api/client'
+import { evalCondition, highlightedFactors, renderStep, type StoryContext } from './storyText'
+
+const targets: TargetInfo[] = [
+  {
+    id: 'CAD',
+    label: 'CAD',
+    plain_label: 'coronary artery disease',
+    outcome_phrase: 'coronary artery disease',
+    role: 'overall',
+    node: 'heart',
+  },
+  {
+    id: 'AAA',
+    label: 'AAA',
+    plain_label: 'some artery',
+    outcome_phrase: 'a narrowing in some artery',
+    role: 'vessel',
+    node: 'a',
+    where: 'front of the heart',
+  },
+]
+
+const response = {
+  targets: {
+    CAD: { probability: 0.98, positive: true, threshold: 0.48 },
+    AAA: { probability: 0.2, positive: false, threshold: 0.5 },
+  },
+  explanations: {
+    CAD: {
+      base_probability: 0.6,
+      base_logit: 0.4,
+      contributions: [
+        { id: 'a', label: 'Age', display_value: '70', logit: 1.2 },
+        { id: 'b', label: 'Chest pain type', display_value: 'None', logit: -0.9 },
+        { id: 'c', label: 'T inversion', display_value: 'Yes', logit: 0.7 },
+      ],
+      waterfall: [
+        { feature: 'a', label: 'Age', value_display: '70', from_p: 0.6, to_p: 0.72 },
+        { feature: 'b', label: 'Chest pain type', value_display: 'None', from_p: 0.72, to_p: 0.65 },
+        { feature: 'c', label: 'T inversion', value_display: 'Yes', from_p: 0.65, to_p: 0.8 },
+        { feature: null, label: '5 other factors', value_display: '', from_p: 0.8, to_p: 0.98 },
+      ],
+    },
+  },
+} as unknown as PredictResponse
+
+const interval = (lo: number, hi: number) => ({
+  lo,
+  hi,
+  level: 0.9,
+  method: 'bootstrap',
+  n_models: 50,
+})
+const ranges = {
+  CAD: { interval: interval(0.9, 1), side: 'above', uncertain: false },
+  AAA: { interval: interval(0.05, 0.55), side: 'below', uncertain: true },
+} as StoryContext['ranges']
+
+const ctx = (truth: Record<string, boolean> | null): StoryContext => ({
+  targets,
+  response,
+  ranges,
+  truth,
+  factorNote: 'Patterns found in {n_patients} patients.',
+  patients: 303,
+})
+
+const step = (over: Partial<StoryStep>): StoryStep => ({
+  id: 's',
+  reveal_truth: false,
+  parts: [{ text: 'x', when: [] }],
+  camera: null,
+  highlight: null,
+  ...over,
+})
+
+describe('ranges', () => {
+  it('fills {range:ID} from the interval', () => {
+    const s = step({ parts: [{ text: 'CAD {range:CAD}, AAA {range:AAA}.', when: [] }] })
+    expect(renderStep(s, ctx(null))).toEqual(['CAD 90–100%, AAA 5–55%.'])
+  })
+
+  it('knows whether a range crosses its threshold', () => {
+    expect(evalCondition('range_crosses_threshold:AAA', ctx(null))).toBe(true)
+    expect(evalCondition('range_crosses_threshold:CAD', ctx(null))).toBe(false)
+    expect(evalCondition('range_clear_of_threshold:CAD', ctx(null))).toBe(true)
+    expect(evalCondition('range_clear_of_threshold:AAA', ctx(null))).toBe(false)
+    expect(evalCondition('has_range:CAD', ctx(null))).toBe(true)
+    expect(evalCondition('has_range:CAD', { ...ctx(null), ranges: {} })).toBe(false)
+    expect(evalCondition('range_crosses_threshold:NOPE', ctx(null))).toBe(false)
+    expect(evalCondition('range_clear_of_threshold:NOPE', ctx(null))).toBe(false)
+  })
+})
+
+describe('conditions', () => {
+  it('compares with the threshold and the margin', () => {
+    expect(evalCondition('above_threshold:CAD', ctx(null))).toBe(true)
+    expect(evalCondition('well_above_threshold:CAD', ctx(null))).toBe(true)
+    expect(evalCondition('below_threshold:AAA', ctx(null))).toBe(true)
+    expect(evalCondition('well_below_threshold:AAA', ctx(null))).toBe(true)
+    expect(evalCondition('well_below_threshold:CAD', ctx(null))).toBe(false)
+  })
+
+  it('agrees / disagrees need the real result', () => {
+    expect(evalCondition('disagrees:CAD', ctx(null))).toBe(false)
+    expect(evalCondition('agrees:CAD', ctx(null))).toBe(false)
+    expect(evalCondition('disagrees:CAD', ctx({ CAD: false }))).toBe(true)
+    expect(evalCondition('agrees:AAA', ctx({ AAA: false }))).toBe(true)
+    expect(evalCondition('any_disagrees', ctx({ CAD: false, AAA: false }))).toBe(true)
+    expect(evalCondition('all_agree', ctx({ CAD: true, AAA: false }))).toBe(true)
+    expect(evalCondition('all_agree', ctx(null))).toBe(false)
+  })
+})
+
+describe('rendering', () => {
+  it('fills numbers from the response, never from the text', () => {
+    const s = step({
+      parts: [
+        { text: 'It is {p:CAD} against {thr:CAD}; {name:AAA} on the {where:AAA}.', when: [] },
+      ],
+    })
+    expect(renderStep(s, ctx(null))).toEqual([
+      'It is 98% against 48%; AAA on the front of the heart.',
+    ])
+  })
+
+  it('skips parts whose condition fails and keeps the rest', () => {
+    const s = step({
+      parts: [
+        { text: 'Always.', when: [] },
+        { text: 'Far above.', when: ['well_above_threshold:CAD'] },
+        { text: 'Below.', when: ['below_threshold:CAD'] },
+      ],
+    })
+    expect(renderStep(s, ctx(null))).toEqual(['Always.', 'Far above.'])
+  })
+
+  it('reads direction-aware factors and still reads right with fewer than asked', () => {
+    const up = step({
+      highlight: { target: 'CAD', direction: 'up', top: 3 },
+      parts: [
+        { text: 'Base.', when: [] },
+        { text: 'Raised it: {factors_up:3}.', when: [] },
+      ],
+    })
+    expect(renderStep(up, ctx(null))).toEqual([
+      'Base.',
+      'Raised it: Age: 70 and T inversion: Yes.',
+      'Patterns found in 303 patients.',
+    ])
+    const down = step({
+      highlight: { target: 'CAD', direction: 'down', top: 3 },
+      parts: [
+        { text: 'Base.', when: [] },
+        { text: 'Lowered it: {factors_down:3}.', when: [] },
+      ],
+    })
+    expect(renderStep(down, ctx(null))).toEqual([
+      'Base.',
+      'Lowered it: Chest pain type: None.',
+      'Patterns found in 303 patients.',
+    ])
+    expect(highlightedFactors(down, ctx(null)).map((c) => c.id)).toEqual(['b'])
+  })
+
+  it('never lists the "N other factors" step, even when it raised the estimate most', () => {
+    const up = step({ highlight: { target: 'CAD', direction: 'up', top: 9 } })
+    expect(highlightedFactors(up, ctx(null)).map((c) => c.id)).toEqual(['a', 'c'])
+  })
+
+  it('drops a factor sentence when nothing pushed in that direction', () => {
+    const none = {
+      ...response,
+      explanations: { CAD: { ...response.explanations.CAD, waterfall: [] } },
+    } as unknown as PredictResponse
+    const s = step({
+      highlight: { target: 'CAD', direction: 'up', top: 3 },
+      parts: [
+        { text: 'Base.', when: [] },
+        { text: 'Raised it: {factors_up:3}.', when: [] },
+      ],
+    })
+    expect(renderStep(s, { ...ctx(null), response: none })).toEqual(['Base.'])
+  })
+
+  it('renders the real result in plain words', () => {
+    const s = step({ reveal_truth: true, parts: [{ text: '{truth:CAD}; {truth:AAA}.', when: [] }] })
+    expect(renderStep(s, ctx({ CAD: true, AAA: false }))).toEqual([
+      'narrowing (stenosis) found; no narrowing found.',
+    ])
+  })
+})
+
+describe('without ranges (intervals failed or slow)', () => {
+  const noRanges = { ...ctx(null), ranges: {} }
+  const steps: StoryStep[] = [
+    step({
+      parts: [
+        { text: 'Estimate {p:CAD}, range {range:CAD}.', when: [] },
+        { text: 'The range crosses it.', when: ['range_crosses_threshold:CAD'] },
+        { text: 'Estimate {p:CAD}.', when: [] },
+      ],
+    }),
+  ]
+
+  it('skips range sentences and keeps the rest', () => {
+    expect(renderStep(steps[0], noRanges)).toEqual(['Estimate 98%.'])
+  })
+
+  it('never leaves an unfilled token or an empty step for the shipped story shapes', () => {
+    for (const s of steps) {
+      const out = renderStep(s, noRanges).join(' ')
+      expect(out).not.toMatch(/[{}]|undefined|NaN/)
+      expect(out.length).toBeGreaterThan(0)
+    }
+  })
+})
