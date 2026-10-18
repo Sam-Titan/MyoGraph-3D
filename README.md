@@ -176,7 +176,8 @@ Render dashboard under the service's Logs. `TRUST_PROXY_HEADERS` (default `true`
 | `make assets` | Rebuild `frontend/public/models/heart.glb` from BodyParts3D (needs the download below) |
 | `make types` | Regenerate the TypeScript API types from the OpenAPI schema |
 | `make fmt` / `make lint` / `make test` | Format / lint / backend tests |
-| `make screenshots` | Capture UI screenshots with Playwright; needs `make dev` running and a one-time `cd frontend && npx playwright install chromium` (add `--with-deps` on Linux if system libraries are missing) |
+| `make screenshots` | Capture UI screenshots with Playwright; needs `make dev` running and a one-time `cd frontend && npx playwright install chromium` (add `--with-deps` on Linux if system libraries are missing). Filters (default = all): `SHOTS_VIEWS=workspace-default,about` and `SHOTS_VIEWPORTS=390,1440`; unknown names fail with the valid list. The phone overflow / sticky-disclaimer probe runs for any 360/390 width selected |
+| `make perf` | No-GPU fps tests (Playwright `no-gpu` project); run when the 3D scene changes; needs `make dev` running |
 | `make report` | Refresh the generated numbers in `docs/REPORT.md` and render `docs/REPORT.pdf`; needs `python3` with PyYAML, uv, Node, and the Playwright Chromium above |
 
 `make assets` needs two files from the BodyParts3D 4.0 download page,

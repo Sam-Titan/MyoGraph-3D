@@ -2,7 +2,7 @@ WEB_PORT ?= 5180
 API_PORT ?= 8010
 export WEB_PORT API_PORT
 
-.PHONY: setup dev dev-api dev-web prepare train stability benchmark assets types lint fmt test check docker screenshots e2e report
+.PHONY: setup dev dev-api dev-web prepare train stability benchmark assets types lint fmt test check docker screenshots e2e perf report
 
 setup:
 	cd backend && uv sync --extra assets
@@ -43,9 +43,13 @@ report:
 screenshots:
 	cd frontend && node ../scripts/screenshots.mjs
 
-# Playwright end-to-end checks (console clean, scene screenshots, no-GPU fps). Expects `make dev` running.
+# Playwright end-to-end checks (console clean, scene, stories). Expects `make dev` running.
 e2e:
-	cd frontend && npx playwright test
+	cd frontend && npx playwright test --project=default
+
+# No-GPU fps tests; run only when the 3D scene changes. Expects `make dev` running.
+perf:
+	cd frontend && npx playwright test --project=no-gpu
 
 lint:
 	cd backend && uv run ruff check . && uv run ruff format --check .

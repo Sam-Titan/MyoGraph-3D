@@ -1,4 +1,5 @@
 // Screenshot harness. Expects `make dev` to be running. Usage: make screenshots
+// Filters (default = all): SHOTS_VIEWS=workspace-default,about  SHOTS_VIEWPORTS=390,1440
 import { mkdirSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -132,6 +133,22 @@ const VIEWS = [
   },
 ]
 
+// Comma-separated env filter -> the matching items; unknown names fail with the valid list.
+function pick(envName, all, key) {
+  const raw = process.env[envName]?.trim()
+  if (!raw) return all
+  const want = raw.split(',').map((x) => x.trim()).filter(Boolean)
+  const valid = all.map((x) => String(key(x)))
+  const bad = want.filter((w) => !valid.includes(w))
+  if (bad.length) {
+    console.error(`screenshots: unknown ${envName} value(s): ${bad.join(', ')}. Valid: ${valid.join(', ')}`)
+    process.exit(1)
+  }
+  return all.filter((x) => want.includes(String(key(x))))
+}
+const SELECTED_VIEWS = pick('SHOTS_VIEWS', VIEWS, (v) => v.name)
+const SELECTED_VIEWPORTS = pick('SHOTS_VIEWPORTS', VIEWPORTS, (v) => v.width)
+
 await preflight()
 mkdirSync(OUT, { recursive: true })
 
@@ -145,9 +162,9 @@ try {
   process.exit(2)
 }
 
-for (const vp of VIEWPORTS) {
+for (const vp of SELECTED_VIEWPORTS) {
   const { width, height } = vp
-  for (const view of VIEWS) {
+  for (const view of SELECTED_VIEWS) {
     const ctx = await browser.newContext({
       storageState: SEEN,
       viewport: { width, height },
@@ -182,7 +199,7 @@ for (const vp of VIEWPORTS) {
 // after scrolling to the bottom, on every tab at the two phone widths.
 const TAB_NAMES = ['Patient workspace', 'Model performance', 'Benchmark', 'About and method']
 const failures = []
-for (const vp of VIEWPORTS.filter((v) => v.mobile)) {
+for (const vp of SELECTED_VIEWPORTS.filter((v) => v.mobile)) {
   const ctx = await browser.newContext({
     storageState: SEEN,
     viewport: { width: vp.width, height: vp.height },
@@ -230,4 +247,9 @@ if (failures.length) {
   console.error(`screenshots: DOM probe failed:\n  ${failures.join('\n  ')}`)
   process.exit(1)
 }
-console.log('DOM probe ok: no horizontal overflow, disclaimer pinned (360, 390)')
+const probed = SELECTED_VIEWPORTS.filter((v) => v.mobile).map((v) => v.width)
+console.log(
+  probed.length
+    ? `DOM probe ok: no horizontal overflow, disclaimer pinned (${probed.join(', ')})`
+    : 'DOM probe skipped: no phone width selected',
+)
