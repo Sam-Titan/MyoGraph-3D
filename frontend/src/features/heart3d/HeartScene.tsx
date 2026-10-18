@@ -328,7 +328,7 @@ export default function HeartScene({ targets }: { targets: TargetInfo[] }) {
         <HoverTooltip targets={targets} probabilities={probabilities} ranges={ranges} />
       </div>
       <div className="pointer-events-none absolute inset-0 z-20 flex flex-col justify-between p-3 max-md:p-2">
-        <div className="pointer-events-auto flex items-start justify-between gap-2 max-xl:h-11 max-xl:items-center">
+        <div className="pointer-events-auto flex items-center justify-between gap-2">
           <Toolbar overallId={overall?.id ?? null} />
           <OrientationMarker />
         </div>
