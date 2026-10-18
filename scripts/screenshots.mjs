@@ -15,6 +15,7 @@ const SEEN = { cookies: [], origins: [{ origin: BASE, localStorage: [{ name: 'my
 // Phones use mobile emulation (isMobile + hasTouch + high DPR); desktops are plain contexts.
 const VIEWPORTS = [
   { width: 1440, height: 900 },
+  { width: 1280, height: 800 },
   { width: 1024, height: 768 },
   { width: 768, height: 1024, mobile: true, scale: 2 },
   { width: 844, height: 390, mobile: true, scale: 3 }, // landscape phone
