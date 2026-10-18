@@ -2,7 +2,7 @@ WEB_PORT ?= 5180
 API_PORT ?= 8010
 export WEB_PORT API_PORT
 
-.PHONY: setup dev dev-lan dev-api dev-web dev-web-lan prepare train stability benchmark assets types lint fmt test check docker screenshots og lighthouse e2e perf report
+.PHONY: setup dev dev-lan dev-api dev-web dev-web-lan prepare train stability benchmark assets types snapshot lint fmt test check docker screenshots og lighthouse e2e perf report
 
 setup:
 	cd backend && uv sync --extra assets
@@ -29,6 +29,7 @@ prepare:
 
 train: prepare
 	cd backend && uv run python -m ml.train
+	$(MAKE) snapshot
 
 stability:
 	cd backend && uv run python -m ml.stability
@@ -43,6 +44,11 @@ assets:
 types:
 	cd backend && uv run python -m app.export_openapi > ../frontend/openapi.json
 	cd frontend && npx openapi-typescript openapi.json -o src/api/schema.d.ts
+
+# Static first screen (predict + intervals for every preset) so the app paints before a sleeping API wakes.
+# Committed; tests/test_snapshot.py fails when it is stale. Run after anything that changes model output.
+snapshot:
+	cd backend && uv run python -m app.snapshot ../frontend/public/snapshot.json
 
 report:
 	python3 scripts/report_numbers.py && node scripts/report_pdf.mjs

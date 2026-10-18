@@ -1,6 +1,11 @@
 import { Printer } from 'lucide-react'
 import { useDisplay, useFeatures, useHealth } from '@/api/queries'
 import { Button } from '@/components/ui/button'
+import {
+  DISCLAIMER_BODY,
+  DISCLAIMER_LEAD,
+  DISCLAIMER_PRINT_EXTRA,
+} from '@/features/layout/disclaimer'
 import { pct, pctRange } from '@/lib/format'
 import { useAppStore } from '@/store/app'
 import { HeadlineSentence } from './HeadlineSentence'
@@ -57,8 +62,7 @@ export function PrintSummary() {
         {health && ` · model ${health.model_version}`}
       </p>
       <p className="mt-3 border border-black p-2 text-sm font-semibold">
-        Decision support / educational only. Not a substitute for diagnostic imaging or clinical
-        judgement. These are model estimates, not a diagnosis.
+        {DISCLAIMER_LEAD} {DISCLAIMER_BODY} {DISCLAIMER_PRINT_EXTRA}
       </p>
       {data && display && (
         <>

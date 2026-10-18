@@ -90,7 +90,7 @@ export function WorkspaceLayout() {
               // 17rem = banner, intro strip, header, bottom nav, gutter and the Edit-patient bar around the heart.
               storyActive
                 ? 'h-[calc(100dvh-17rem)]'
-                : 'h-[calc(46dvh-5rem)] md:h-[calc(100dvh-17rem)]',
+                : 'h-[calc(38dvh-4.5rem)] md:h-[calc(100dvh-17rem)]',
               'short:h-[30rem]',
               folded && 'max-md:hidden',
             )}

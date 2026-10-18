@@ -1,6 +1,7 @@
 import { TriangleAlert } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
+import { DISCLAIMER_BODY, DISCLAIMER_LEAD } from './disclaimer'
 
 /**
  * Always visible on every tab. Not dismissible by design (CLAUDE.md hard rule 5). On phones it is
@@ -15,11 +16,8 @@ export function DisclaimerBanner() {
     >
       <TriangleAlert aria-hidden className="size-4 shrink-0" />
       <p className={cn('min-w-0 flex-1', !open && 'max-sm:truncate')}>
-        <strong className="font-semibold">Decision support / educational only.</strong>
-        <span className={cn(!open && 'max-sm:hidden')}>
-          {' '}
-          Not a substitute for diagnostic imaging or clinical judgement.
-        </span>
+        <strong className="font-semibold">{DISCLAIMER_LEAD}</strong>
+        <span className={cn(!open && 'max-sm:hidden')}> {DISCLAIMER_BODY}</span>
       </p>
       <button
         type="button"

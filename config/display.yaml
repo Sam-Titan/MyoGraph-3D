@@ -16,6 +16,9 @@ waterfall_top_n: 6
 # Placeholders: {p} estimate, {outcome} the target's outcome phrase, {range} e.g. 65–87%, {thr} the target's cut-off.
 headline: "The model estimates a {p} probability of {outcome}{range}."
 headline_range: " (range {range})"
+# Phones (below md): the big number, then "<label> · <range>" on one line under it. {label} is the target's short label.
+headline_compact: "{label} probability"
+headline_range_compact: "range {range}"
 cutoff_line: "The model's cut-off for this estimate is {thr}."
 cutoff_crosses: "The range crosses the cut-off."
 

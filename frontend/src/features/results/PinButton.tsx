@@ -1,6 +1,7 @@
 import { Pin, PinOff } from 'lucide-react'
 import { useIntervals, usePredict } from '@/api/queries'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import { useAppStore } from '@/store/app'
 import { makePin } from './pinModel'
 
@@ -26,8 +27,8 @@ export function PinButton() {
     setPinned(makePin(probabilities, intervals.data?.targets))
   }
   return (
-    <div className="flex items-center justify-between gap-2 px-3">
-      <p className="t-meta">
+    <div className="flex items-center justify-between gap-2 px-3 max-md:justify-end">
+      <p className={cn('t-meta', !pinned && 'max-md:hidden')}>
         {pinned
           ? 'Pinned. Edits now show their change against the pinned estimates.'
           : 'Pin these estimates to see what a change does.'}

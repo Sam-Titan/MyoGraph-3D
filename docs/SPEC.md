@@ -481,3 +481,18 @@ Nothing else hard-codes feature or vessel lists.
 - **Accessibility:** `e2e/a11y.spec.ts` runs axe-core (WCAG A/AA, fails on serious/critical) on every tab at 1440 and 390 px plus the
   patient sheet; debounced `aria-live` announcement of new estimates; global reduced-motion CSS.
 - `make lighthouse` (npx, not a dependency): mobile + desktop on the production build; reports in `.lighthouse/` (gitignored).
+
+### Phase 20c: instant first result + compact phone headline
+- **`frontend/public/snapshot.json`** (`make snapshot`, also run by `make train`; `backend/app/snapshot.py`): the four static payloads
+  (features, display, presets, stories) plus `/api/predict` and `/api/intervals` for **every preset**, each exactly as the API returns
+  them (through `TestClient`), keyed by preset id with a hash of its input values. It is committed, because Netlify builds with
+  `npm run build` only (no Python); `tests/test_snapshot.py` fails `make check` when it differs from the live API.
+- `api/snapshot.ts`: fetched without blocking render (preloaded from `index.html`), then seeded into the TanStack cache under the
+  keys live predict uses; nothing already delivered by the API is overwritten. Once `/api/health` answers, `model_version` and each
+  preset's values are compared with the live ones and anything stale is reset (that query then refetches). A missing or invalid
+  file falls back silently to the live path. Seeded values skip the 300/400 ms predict/intervals debounce.
+- Editing the patient is a new key, so it uses the live API (and the wake notice) as before.
+- **Phone headline (below `md`):** large `{p}%`, then `{label} probability · range {lo}–{hi}%` (`headline_compact`,
+  `headline_range_compact` in `config/display.yaml`) and the cut-off label only; `md+` keeps the full sentence. Heart height on
+  phones is 38dvh and the pin hint is hidden, so the first vessel row is on the first screen at 390x844.
+- Print summary and banner take the disclaimer from `features/layout/disclaimer.ts`.

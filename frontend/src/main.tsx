@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from '@/App'
+import { loadSnapshot } from '@/api/snapshot'
 import { initAnalytics } from '@/lib/analytics'
 import { retryWhileWaking, wakeDelayMs } from '@/lib/wake'
 import '@/index.css'
@@ -20,4 +21,6 @@ createRoot(root).render(
   </StrictMode>,
 )
 
+// Not awaited: the first screen renders now and the snapshot fills the cache when it arrives.
+void loadSnapshot(queryClient)
 initAnalytics()

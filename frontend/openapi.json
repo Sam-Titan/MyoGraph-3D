@@ -771,6 +771,14 @@
             "type": "string",
             "title": "Headline Range"
           },
+          "headline_compact": {
+            "type": "string",
+            "title": "Headline Compact"
+          },
+          "headline_range_compact": {
+            "type": "string",
+            "title": "Headline Range Compact"
+          },
           "cutoff_line": {
             "type": "string",
             "title": "Cutoff Line"
@@ -813,6 +821,8 @@
           "waterfall_top_n",
           "headline",
           "headline_range",
+          "headline_compact",
+          "headline_range_compact",
           "cutoff_line",
           "cutoff_crosses",
           "base_rate_note",

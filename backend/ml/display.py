@@ -20,6 +20,8 @@ DISPLAY_PATH = CONFIG_DIR / "display.yaml"
 ALLOWED: dict[str, frozenset[str]] = {
     "headline": frozenset({"p", "outcome", "range"}),
     "headline_range": frozenset({"range"}),
+    "headline_compact": frozenset({"label"}),
+    "headline_range_compact": frozenset({"range"}),
     "cutoff_line": frozenset({"thr"}),
     "cutoff_crosses": frozenset(),
     "base_rate_note.line1": frozenset({"n_total", "prev", "outcome"}),
@@ -119,6 +121,8 @@ class DisplayConfig(_Strict):
     waterfall_top_n: int = Field(ge=1, le=15)
     headline: str
     headline_range: str
+    headline_compact: str
+    headline_range_compact: str
     cutoff_line: str
     cutoff_crosses: str
     base_rate_note: BaseRateNote

@@ -1,6 +1,7 @@
+import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo } from 'react'
 import type { z } from 'zod'
-import { usePredict } from '@/api/queries'
+import { queryKeys, usePredict } from '@/api/queries'
 import { useDebouncedValue } from '@/lib/useDebouncedValue'
 import { useAppStore } from '@/store/app'
 import type { FormValues } from './formSchema'
@@ -22,7 +23,16 @@ export function useLivePredict(values: FormValues, schema: z.ZodType<FormValues,
   // pay for (and flash) a full estimate of placeholder values.
   const settled = useAppStore((s) => s.presetSettled)
   const gatedKey = settled ? key : null
-  const debouncedKey = useDebouncedValue(gatedKey, PREDICT_DEBOUNCE_MS)
+  const qc = useQueryClient()
+  const trailingKey = useDebouncedValue(gatedKey, PREDICT_DEBOUNCE_MS)
+  // Values whose estimate is already cached (the build-time snapshot, a repeat) skip the wait.
+  const debouncedKey = useMemo(() => {
+    if (gatedKey === null || gatedKey === trailingKey) return trailingKey
+    const parsed = schema.safeParse(JSON.parse(gatedKey))
+    return parsed.success && qc.getQueryData(queryKeys.predict(parsed.data)) !== undefined
+      ? gatedKey
+      : trailingKey
+  }, [gatedKey, trailingKey, schema, qc])
   const setPredictValues = useAppStore((s) => s.setPredictValues)
   const setIntervalValues = useAppStore((s) => s.setIntervalValues)
 
@@ -36,7 +46,11 @@ export function useLivePredict(values: FormValues, schema: z.ZodType<FormValues,
   const query = usePredict(debounced)
   useEffect(() => setPredictValues(debounced), [debounced, setPredictValues])
   // Ranges follow later; changing the key aborts the superseded request (TanStack passes `signal`).
-  const slow = useDebouncedValue(debounced, INTERVALS_EXTRA_DEBOUNCE_MS)
+  const trailing = useDebouncedValue(debounced, INTERVALS_EXTRA_DEBOUNCE_MS)
+  const slow =
+    debounced && qc.getQueryData(queryKeys.intervals(debounced)) !== undefined
+      ? debounced
+      : trailing
   useEffect(() => setIntervalValues(slow), [slow, setIntervalValues])
 
   const pending = gatedKey !== debouncedKey

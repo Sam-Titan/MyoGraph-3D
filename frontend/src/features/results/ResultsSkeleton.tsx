@@ -3,8 +3,8 @@ export function ResultsSkeleton() {
   return (
     <div role="status" aria-busy className="space-y-4" data-testid="results-skeleton">
       <div className="space-y-2 px-3 py-2">
-        <div className="h-6 w-5/6 animate-pulse rounded bg-muted" />
-        <div className="h-6 w-2/3 animate-pulse rounded bg-muted" />
+        <div className="h-10 w-24 animate-pulse rounded bg-muted md:h-6 md:w-5/6" />
+        <div className="h-6 w-2/3 animate-pulse rounded bg-muted max-md:hidden" />
         <div className="h-3 w-1/2 animate-pulse rounded bg-muted" />
       </div>
       <div className="space-y-2">

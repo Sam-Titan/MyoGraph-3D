@@ -140,6 +140,8 @@ test('plays every story end to end', async ({ page }) => {
 })
 
 test('every story still reads fully when /api/intervals fails', async ({ page }) => {
+  // The snapshot carries every preset's ranges; without it the failing endpoint is what the story sees.
+  await page.route('**/snapshot.json', (route) => route.abort())
   await page.route('**/api/intervals', (route) => route.fulfill({ status: 500, body: '{}' }))
   await page.goto('/')
   await waitReady(page)

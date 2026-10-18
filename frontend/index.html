@@ -18,6 +18,8 @@
         document.head.appendChild(l)
       })()
     </script>
+    <!-- The first screen's numbers (make snapshot): fetched in parallel with the bundle, seeded by api/snapshot.ts. -->
+    <link rel="preload" as="fetch" crossorigin="anonymous" href="/snapshot.json" />
     <title>MyoGraph 3D</title>
     <meta
       name="description"
