@@ -41,6 +41,15 @@ test('story keys: Escape and arrows inside a popover do not exit or move the sto
   expect(c.problems).toEqual([])
 })
 
+test('story keys: Escape still exits after a tab was clicked', async ({ page }) => {
+  await page.goto('/')
+  await waitReady(page)
+  await startFirstStory(page)
+  await page.getByRole('tab', { name: 'Patient workspace' }).click()
+  await page.keyboard.press('Escape')
+  await expect(card(page)).toHaveCount(0)
+})
+
 test('story exit restores the previous tab and pin', async ({ page }) => {
   await page.goto('/')
   await waitReady(page)

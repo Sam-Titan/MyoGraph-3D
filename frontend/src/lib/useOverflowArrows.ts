@@ -28,14 +28,22 @@ export function useOverflowArrows(ref: RefObject<HTMLElement | null>) {
   useEffect(() => {
     const el = ref.current
     if (!el) return
-    measure()
     el.addEventListener('scroll', measure, { passive: true })
     const ro = new ResizeObserver(measure)
-    ro.observe(el)
-    for (const child of Array.from(el.children)) ro.observe(child)
+    const observeChildren = () => {
+      ro.disconnect()
+      ro.observe(el)
+      for (const child of Array.from(el.children)) ro.observe(child)
+      measure()
+    }
+    observeChildren()
+    // Items that mount later (e.g. toggles read from the GLB) change scrollWidth, not the scroller's box.
+    const mo = new MutationObserver(observeChildren)
+    mo.observe(el, { childList: true })
     return () => {
       el.removeEventListener('scroll', measure)
       ro.disconnect()
+      mo.disconnect()
     }
   }, [ref, measure])
 
