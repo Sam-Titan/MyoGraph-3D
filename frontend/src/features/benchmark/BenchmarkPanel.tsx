@@ -51,9 +51,10 @@ function Body({ b }: { b: BenchmarkResponse }) {
             {p.calibration}; cut-off from {p.threshold}.
           </li>
           <li>
-            Differences are paired per fold. A gap is “larger than the noise” only if its{' '}
+            Differences are paired per fold. A gap is a “clear difference” only if its{' '}
             {Math.round(p.confidence_level * 100)}% interval ({p.paired_test}, which allows for the
-            folds sharing patients) excludes 0.
+            folds sharing patients) excludes 0 <em>and</em> its p-value, adjusted for multiple
+            comparisons, is below {(1 - p.confidence_level).toFixed(2)}. {p.multiplicity}.
           </li>
           <li>
             Hold-out ROC-AUC is shown for reference only. It rests on {p.n_test} patients and was
@@ -86,7 +87,7 @@ function Body({ b }: { b: BenchmarkResponse }) {
         </div>
         <p className="text-xs text-muted-foreground">
           Brier: lower is better. Recall is at each fold’s own tuned cut-off. [low, high] is the
-          corrected interval of the paired ROC-AUC gap.
+          corrected interval of the paired ROC-AUC gap; adj. p is adjusted for multiple comparisons.
         </p>
       </Section>
 

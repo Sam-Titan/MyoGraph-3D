@@ -39,7 +39,7 @@ const gap = (d: number): string => {
   return v === '0.00' ? 'about the same' : `${v} ${d > 0 ? 'higher' : 'lower'}`
 }
 
-const noise = (within: boolean): string => (within ? 'within the noise' : 'larger than the noise')
+const noise = (clear: boolean): string => (clear ? 'a clear difference' : 'within the noise')
 
 export interface Takeaways {
   intro: string
@@ -48,7 +48,8 @@ export interface Takeaways {
 
 /**
  * Which model? One sentence per target from the paired ROC-AUC differences against the reference
- * model. "Within the noise" means the corrected confidence interval contains 0.
+ * model. A gap is "clear" only if its Holm-adjusted p is below the threshold and the corrected
+ * confidence interval excludes 0; everything else is "within the noise".
  */
 export function comparisonTakeaways(b: BenchmarkResponse): Takeaways {
   const refLabel = b.models.find((m) => m.id === b.reference_model)?.label ?? b.reference_model
@@ -57,20 +58,20 @@ export function comparisonTakeaways(b: BenchmarkResponse): Takeaways {
   const lines = Object.keys(b.comparison).map((target) => {
     const others = comparisonRows(b, target).filter((r) => !r.isReference)
     compared += others.length
-    const bigger = others.filter((r) => !r.cell.vs_reference.roc_auc.within_noise)
+    const bigger = others.filter((r) => r.cell.vs_reference.roc_auc.clear)
     clear += bigger.length
     const parts = (rows: Row[]) =>
       rows.map((r) => `${lcFirst(r.label)} ${gap(r.cell.vs_reference.roc_auc.mean_diff)}`)
     if (bigger.length === 0) {
       return {
         target,
-        text: `no model is clearly different from ${refLabel}: ${joinList(parts(others))}, all within the noise.`,
+        text: `no model is clearly different from ${refLabel} (adjusted for multiple comparisons): ${joinList(parts(others))}, all within the noise.`,
       }
     }
-    const rest = others.filter((r) => r.cell.vs_reference.roc_auc.within_noise)
+    const rest = others.filter((r) => !r.cell.vs_reference.roc_auc.clear)
     return {
       target,
-      text: `${joinList(parts(bigger))} than ${refLabel} in ROC-AUC, a gap ${noise(false)}${
+      text: `${joinList(parts(bigger))} than ${refLabel} in ROC-AUC, ${noise(true)} after adjusting for multiple comparisons${
         rest.length ? `; ${joinList(parts(rest))}, within the noise` : ''
       }.`,
     }
@@ -78,8 +79,8 @@ export function comparisonTakeaways(b: BenchmarkResponse): Takeaways {
   const level = Math.round(b.protocol.confidence_level * 100)
   const intro =
     clear === 0
-      ? `Across ${compared} comparisons, no gap in ROC-AUC is larger than the noise, so the data cannot say which model is best.`
-      : `Across ${compared} comparisons, ${clear} ROC-AUC gap${clear > 1 ? 's are' : ' is'} larger than the noise (the ${level}% interval excludes 0). With this many comparisons and only ${b.protocol.n_train} training patients, a gap or two can appear by chance, so read them as hints, not rankings.`
+      ? `Across ${compared} comparisons, no gap in ROC-AUC is clear once adjusted for multiple comparisons, so the data cannot say which model is best.`
+      : `Across ${compared} comparisons, ${clear} ROC-AUC gap${clear > 1 ? 's are' : ' is'} clear after adjusting for multiple comparisons (adjusted p below ${(1 - b.protocol.confidence_level).toFixed(2)} and the ${level}% interval excludes 0). With this many comparisons and only ${b.protocol.n_train} training patients, a gap or two can appear by chance, so read them as hints, not rankings.`
   return { intro, lines }
 }
 
@@ -95,15 +96,15 @@ export function ablationTakeaways(b: BenchmarkResponse): Takeaways {
     const parts = rows.map((r) => {
       const t = r.cell.vs_reference.roc_auc
       dropped += 1
-      if (!t.within_noise) clear += 1
-      return `${lcFirst(r.label)}, ROC-AUC ${gap(t.mean_diff)} (${noise(t.within_noise)})`
+      if (t.clear) clear += 1
+      return `${lcFirst(r.label)}, ROC-AUC ${gap(t.mean_diff)} (${noise(t.clear)})`
     })
     return { target, text: `${parts.join('; ')}.` }
   })
   const intro =
     clear === 0
-      ? 'Removing the ECG and echo results changes ROC-AUC by less than the noise for every target, so these data do not show the model leaning on them.'
-      : `Removing test results changes ROC-AUC by more than the noise in ${clear} of ${dropped} cases. Where the gap is within the noise, the model may still use those results; there are too few patients to tell.`
+      ? 'Removing the ECG and echo results changes ROC-AUC by less than the noise for every target (adjusted for multiple comparisons), so these data do not show the model leaning on them.'
+      : `Removing test results changes ROC-AUC by a clear amount in ${clear} of ${dropped} cases (adjusted for multiple comparisons). Where the gap is within the noise, the model may still use those results; there are too few patients to tell.`
   return { intro, lines }
 }
 

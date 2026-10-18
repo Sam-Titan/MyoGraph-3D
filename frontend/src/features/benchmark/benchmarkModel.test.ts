@@ -8,7 +8,9 @@ const test = (mean: number, within: boolean) => ({
   ci_lo: mean - 0.03,
   ci_hi: mean + 0.03,
   p: within ? 0.4 : 0.01,
+  p_adj: within ? 0.8 : 0.03,
   within_noise: within,
+  clear: !within,
 })
 const cell = (auc: number, diff: number, within: boolean): BenchCell =>
   ({
@@ -43,13 +45,23 @@ describe('benchmark takeaways', () => {
   it('says plainly when a gap is within the noise, and when it is not', () => {
     const t = comparisonTakeaways(b)
     expect(t.lines[0].text).toBe(
-      'no model is clearly different from XGBoost: logistic regression 0.02 lower, all within the noise.',
+      'no model is clearly different from XGBoost (adjusted for multiple comparisons): logistic regression 0.02 lower, all within the noise.',
     )
     expect(t.lines[1].text).toBe(
-      'logistic regression 0.05 higher than XGBoost in ROC-AUC, a gap larger than the noise.',
+      'logistic regression 0.05 higher than XGBoost in ROC-AUC, a clear difference after adjusting for multiple comparisons.',
     )
-    expect(t.intro).toContain('1 ROC-AUC gap is larger than the noise')
+    expect(t.intro).toContain('1 ROC-AUC gap is clear after adjusting for multiple comparisons')
     expect(t.intro).toContain('242 training patients')
+  })
+
+  it('treats a gap whose CI excludes 0 but whose adjusted p is too large as within the noise', () => {
+    const weak = cell(0.8, 0.05, false)
+    weak.vs_reference.roc_auc = { ...weak.vs_reference.roc_auc, p_adj: 0.2, clear: false }
+    const t = comparisonTakeaways({
+      ...b,
+      comparison: { LAD: { lr: weak, xgb: cell(0.75, 0, true) } },
+    })
+    expect(t.lines[0].text).toContain('all within the noise')
   })
 
   it('skips models without a result (TabPFN not installed)', () => {
@@ -59,7 +71,7 @@ describe('benchmark takeaways', () => {
   it('describes ablation changes with the noise verdict', () => {
     const t = ablationTakeaways(b)
     expect(t.lines[0].text).toBe('without ECG, ROC-AUC 0.01 lower (within the noise).')
-    expect(t.lines[1].text).toBe('without ECG, ROC-AUC 0.05 lower (larger than the noise).')
+    expect(t.lines[1].text).toBe('without ECG, ROC-AUC 0.05 lower (a clear difference).')
     expect(t.intro).toContain('1 of 2 cases')
   })
 

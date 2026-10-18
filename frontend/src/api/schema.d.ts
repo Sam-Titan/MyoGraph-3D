@@ -242,6 +242,8 @@ export interface components {
             threshold: string;
             /** Paired Test */
             paired_test: string;
+            /** Multiplicity */
+            multiplicity: string;
             /** Confidence Level */
             confidence_level: number;
         };
@@ -599,8 +601,12 @@ export interface components {
             ci_hi: number;
             /** P */
             p: number;
+            /** P Adj */
+            p_adj: number;
             /** Within Noise */
             within_noise: boolean;
+            /** Clear */
+            clear: boolean;
         };
         /** Part */
         Part: {

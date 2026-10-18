@@ -80,6 +80,30 @@ def corrected_paired_test(
     }
 
 
+def holm_adjust(p: list[float]) -> list[float]:
+    """Holm-Bonferroni adjusted p-values, returned in the input order."""
+    m = len(p)
+    order = sorted(range(m), key=lambda i: p[i])
+    adj = [0.0] * m
+    running = 0.0
+    for rank, i in enumerate(order):
+        running = max(running, min(1.0, (m - rank) * p[i]))
+        adj[i] = running
+    return adj
+
+
+def apply_holm(cells: list[dict[str, Any]], level: float) -> None:
+    """Add `p_adj` and `clear` to every paired test; one Holm family per metric.
+
+    "Clear" needs the adjusted p below 1 - level and the (unadjusted) corrected CI to exclude 0.
+    """
+    for m in METRICS:
+        tests = [c["vs_reference"][m] for c in cells]
+        for t, a in zip(tests, holm_adjust([t["p"] for t in tests]), strict=True):
+            t["p_adj"] = a
+            t["clear"] = bool(a < 1 - level and not t["within_noise"])
+
+
 # --- one (model, feature set, target) run ---------------------------------------------------------
 @dataclass(frozen=True)
 class Task:
@@ -215,6 +239,15 @@ def run_benchmark(
         ablation[t] = {
             s.id: _cell(by_key[(ref, s.id, t)], ref_res, level) for s in cfg.feature_sets
         }
+    # Families: the model comparisons (all targets), and the ablation comparisons (all targets).
+    # The reference's own cell is compared with itself (p = 1) and stays out of the family.
+    for family, ref_id in ((comparison, ref), (ablation, base.id)):
+        cells = [c for t in family.values() for k, c in t.items() if k != ref_id]
+        apply_holm(cells, level)
+    for family, ref_id in ((comparison, ref), (ablation, base.id)):
+        for t in family.values():
+            for m in METRICS:
+                t[ref_id]["vs_reference"][m].update(p_adj=1.0, clear=False)
     d = _data()
     return {
         "protocol": {
@@ -226,6 +259,7 @@ def run_benchmark(
             "calibration": "Platt scaling on out-of-fold scores",
             "threshold": "Youden's J on out-of-fold calibrated probabilities",
             "paired_test": "Nadeau-Bengio corrected resampled t-test",
+            "multiplicity": "Holm-Bonferroni within each family (models, ablation), per metric",
             "confidence_level": level,
         },
         "reference_model": ref,

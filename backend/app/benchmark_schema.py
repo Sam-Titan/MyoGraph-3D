@@ -30,7 +30,9 @@ class PairedTest(BaseModel):
     ci_lo: float
     ci_hi: float
     p: float
+    p_adj: float  # Holm-Bonferroni adjusted within its family
     within_noise: bool  # the corrected CI contains 0
+    clear: bool  # adjusted p below 1 - confidence_level and the CI excludes 0
 
 
 class PairedMetrics(BaseModel):
@@ -54,6 +56,7 @@ class BenchProtocol(BaseModel):
     calibration: str
     threshold: str
     paired_test: str
+    multiplicity: str
     confidence_level: float
 
 

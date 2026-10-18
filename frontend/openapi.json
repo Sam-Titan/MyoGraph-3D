@@ -398,6 +398,10 @@
             "type": "string",
             "title": "Paired Test"
           },
+          "multiplicity": {
+            "type": "string",
+            "title": "Multiplicity"
+          },
           "confidence_level": {
             "type": "number",
             "title": "Confidence Level"
@@ -413,6 +417,7 @@
           "calibration",
           "threshold",
           "paired_test",
+          "multiplicity",
           "confidence_level"
         ],
         "title": "BenchProtocol"
@@ -1390,9 +1395,17 @@
             "type": "number",
             "title": "P"
           },
+          "p_adj": {
+            "type": "number",
+            "title": "P Adj"
+          },
           "within_noise": {
             "type": "boolean",
             "title": "Within Noise"
+          },
+          "clear": {
+            "type": "boolean",
+            "title": "Clear"
           }
         },
         "type": "object",
@@ -1402,7 +1415,9 @@
           "ci_lo",
           "ci_hi",
           "p",
-          "within_noise"
+          "p_adj",
+          "within_noise",
+          "clear"
         ],
         "title": "PairedTest",
         "description": "Per-fold difference (this minus the reference) with the Nadeau-Bengio corrected CI."

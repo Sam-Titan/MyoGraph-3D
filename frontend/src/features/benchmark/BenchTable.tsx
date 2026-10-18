@@ -11,6 +11,8 @@ interface Props {
   versus: string
 }
 
+const pValue = (p: number): string => (p < 0.001 ? '<0.001' : p.toFixed(3))
+
 /** One target: a dot-and-whisker (cross-validated ROC-AUC, mean ± std) beside the other numbers. */
 export function BenchTable({ targetId, targetLabel, color, rows, versus }: Props) {
   const { at, lo, hi } = makeScale(rows)
@@ -94,9 +96,10 @@ export function BenchTable({ targetId, targetLabel, color, rows, versus }: Props
                           [{fixed(d.ci_lo)}, {fixed(d.ci_hi)}]
                         </span>
                         <br />
-                        <span className={d.within_noise ? 'text-muted-foreground' : 'font-medium'}>
-                          {d.within_noise ? 'within the noise' : 'larger than the noise'}
+                        <span className={d.clear ? 'font-medium' : 'text-muted-foreground'}>
+                          {d.clear ? 'clear difference' : 'within the noise'}
                         </span>
+                        <span className="text-muted-foreground"> · adj. p {pValue(d.p_adj)}</span>
                       </>
                     )}
                   </td>

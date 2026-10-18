@@ -25,24 +25,30 @@
           "brier": {
             "ci_hi": 0.0,
             "ci_lo": 0.0,
+            "clear": false,
             "mean_diff": 0.0,
             "p": 1.0,
+            "p_adj": 1.0,
             "std_diff": 0.0,
             "within_noise": true
           },
           "recall": {
             "ci_hi": 0.0,
             "ci_lo": 0.0,
+            "clear": false,
             "mean_diff": 0.0,
             "p": 1.0,
+            "p_adj": 1.0,
             "std_diff": 0.0,
             "within_noise": true
           },
           "roc_auc": {
             "ci_hi": 0.0,
             "ci_lo": 0.0,
+            "clear": false,
             "mean_diff": 0.0,
             "p": 1.0,
+            "p_adj": 1.0,
             "std_diff": 0.0,
             "within_noise": true
           }
@@ -72,24 +78,30 @@
           "brier": {
             "ci_hi": 0.012266,
             "ci_lo": -0.001981,
+            "clear": false,
             "mean_diff": 0.005142,
             "p": 0.143864,
+            "p_adj": 1.0,
             "std_diff": 0.005902,
             "within_noise": true
           },
           "recall": {
             "ci_hi": 0.022499,
             "ci_lo": -0.080651,
+            "clear": false,
             "mean_diff": -0.029076,
             "p": 0.246635,
+            "p_adj": 1.0,
             "std_diff": 0.042732,
             "within_noise": true
           },
           "roc_auc": {
             "ci_hi": 0.001361,
             "ci_lo": -0.017415,
+            "clear": false,
             "mean_diff": -0.008027,
             "p": 0.088002,
+            "p_adj": 0.724059,
             "std_diff": 0.007778,
             "within_noise": true
           }
@@ -119,24 +131,30 @@
           "brier": {
             "ci_hi": 0.024808,
             "ci_lo": 0.000721,
+            "clear": false,
             "mean_diff": 0.012765,
             "p": 0.039289,
+            "p_adj": 0.432174,
             "std_diff": 0.009978,
             "within_noise": false
           },
           "recall": {
             "ci_hi": 0.040988,
             "ci_lo": -0.071913,
+            "clear": false,
             "mean_diff": -0.015462,
             "p": 0.566241,
+            "p_adj": 1.0,
             "std_diff": 0.046772,
             "within_noise": true
           },
           "roc_auc": {
             "ci_hi": -0.004792,
             "ci_lo": -0.052503,
+            "clear": false,
             "mean_diff": -0.028647,
             "p": 0.021996,
+            "p_adj": 0.263949,
             "std_diff": 0.019765,
             "within_noise": false
           }
@@ -166,24 +184,30 @@
           "brier": {
             "ci_hi": 0.019707,
             "ci_lo": -0.006853,
+            "clear": false,
             "mean_diff": 0.006427,
             "p": 0.316888,
+            "p_adj": 1.0,
             "std_diff": 0.011003,
             "within_noise": true
           },
           "recall": {
             "ci_hi": 0.039165,
             "ci_lo": -0.062246,
+            "clear": false,
             "mean_diff": -0.011541,
             "p": 0.632994,
+            "p_adj": 1.0,
             "std_diff": 0.042011,
             "within_noise": true
           },
           "roc_auc": {
             "ci_hi": -0.001271,
             "ci_lo": -0.027877,
+            "clear": false,
             "mean_diff": -0.014574,
             "p": 0.033986,
+            "p_adj": 0.339856,
             "std_diff": 0.011022,
             "within_noise": false
           }
@@ -215,24 +239,30 @@
           "brier": {
             "ci_hi": 0.0,
             "ci_lo": 0.0,
+            "clear": false,
             "mean_diff": 0.0,
             "p": 1.0,
+            "p_adj": 1.0,
             "std_diff": 0.0,
             "within_noise": true
           },
           "recall": {
             "ci_hi": 0.0,
             "ci_lo": 0.0,
+            "clear": false,
             "mean_diff": 0.0,
             "p": 1.0,
+            "p_adj": 1.0,
             "std_diff": 0.0,
             "within_noise": true
           },
           "roc_auc": {
             "ci_hi": 0.0,
             "ci_lo": 0.0,
+            "clear": false,
             "mean_diff": 0.0,
             "p": 1.0,
+            "p_adj": 1.0,
             "std_diff": 0.0,
             "within_noise": true
           }
@@ -262,24 +292,30 @@
           "brier": {
             "ci_hi": 0.009349,
             "ci_lo": -0.005141,
+            "clear": false,
             "mean_diff": 0.002104,
             "p": 0.543358,
+            "p_adj": 1.0,
             "std_diff": 0.006003,
             "within_noise": true
           },
           "recall": {
             "ci_hi": 0.047786,
             "ci_lo": -0.075865,
+            "clear": false,
             "mean_diff": -0.014039,
             "p": 0.633766,
+            "p_adj": 1.0,
             "std_diff": 0.051225,
             "within_noise": true
           },
           "roc_auc": {
             "ci_hi": 0.014611,
             "ci_lo": -0.015934,
+            "clear": false,
             "mean_diff": -0.000662,
             "p": 0.927293,
+            "p_adj": 1.0,
             "std_diff": 0.012654,
             "within_noise": true
           }
@@ -309,24 +345,30 @@
           "brier": {
             "ci_hi": 0.037322,
             "ci_lo": 0.011043,
+            "clear": true,
             "mean_diff": 0.024183,
             "p": 0.001459,
+            "p_adj": 0.017508,
             "std_diff": 0.010886,
             "within_noise": false
           },
           "recall": {
             "ci_hi": 0.100491,
             "ci_lo": -0.179473,
+            "clear": false,
             "mean_diff": -0.039491,
             "p": 0.55481,
+            "p_adj": 1.0,
             "std_diff": 0.115981,
             "within_noise": true
           },
           "roc_auc": {
             "ci_hi": -0.006986,
             "ci_lo": -0.095827,
+            "clear": false,
             "mean_diff": -0.051407,
             "p": 0.026363,
+            "p_adj": 0.289994,
             "std_diff": 0.036805,
             "within_noise": false
           }
@@ -356,24 +398,30 @@
           "brier": {
             "ci_hi": 0.027546,
             "ci_lo": 0.000128,
+            "clear": false,
             "mean_diff": 0.013837,
             "p": 0.048173,
+            "p_adj": 0.481732,
             "std_diff": 0.011359,
             "within_noise": false
           },
           "recall": {
             "ci_hi": 0.155358,
             "ci_lo": -0.093454,
+            "clear": false,
             "mean_diff": 0.030952,
             "p": 0.601971,
+            "p_adj": 1.0,
             "std_diff": 0.103076,
             "within_noise": true
           },
           "roc_auc": {
             "ci_hi": 0.004884,
             "ci_lo": -0.075554,
+            "clear": false,
             "mean_diff": -0.035335,
             "p": 0.080451,
+            "p_adj": 0.724059,
             "std_diff": 0.033323,
             "within_noise": true
           }
@@ -405,24 +453,30 @@
           "brier": {
             "ci_hi": 0.0,
             "ci_lo": 0.0,
+            "clear": false,
             "mean_diff": 0.0,
             "p": 1.0,
+            "p_adj": 1.0,
             "std_diff": 0.0,
             "within_noise": true
           },
           "recall": {
             "ci_hi": 0.0,
             "ci_lo": 0.0,
+            "clear": false,
             "mean_diff": 0.0,
             "p": 1.0,
+            "p_adj": 1.0,
             "std_diff": 0.0,
             "within_noise": true
           },
           "roc_auc": {
             "ci_hi": 0.0,
             "ci_lo": 0.0,
+            "clear": false,
             "mean_diff": 0.0,
             "p": 1.0,
+            "p_adj": 1.0,
             "std_diff": 0.0,
             "within_noise": true
           }
@@ -452,24 +506,30 @@
           "brier": {
             "ci_hi": 0.006622,
             "ci_lo": -0.007635,
+            "clear": false,
             "mean_diff": -0.000506,
             "p": 0.881096,
+            "p_adj": 1.0,
             "std_diff": 0.005906,
             "within_noise": true
           },
           "recall": {
             "ci_hi": 0.125718,
             "ci_lo": -0.135075,
+            "clear": false,
             "mean_diff": -0.004678,
             "p": 0.939752,
+            "p_adj": 1.0,
             "std_diff": 0.108039,
             "within_noise": true
           },
           "roc_auc": {
             "ci_hi": 0.032792,
             "ci_lo": -0.027282,
+            "clear": false,
             "mean_diff": 0.002755,
             "p": 0.846871,
+            "p_adj": 1.0,
             "std_diff": 0.024887,
             "within_noise": true
           }
@@ -499,24 +559,30 @@
           "brier": {
             "ci_hi": 0.007288,
             "ci_lo": -0.011477,
+            "clear": false,
             "mean_diff": -0.002095,
             "p": 0.639462,
+            "p_adj": 1.0,
             "std_diff": 0.007774,
             "within_noise": true
           },
           "recall": {
             "ci_hi": 0.185925,
             "ci_lo": -0.122377,
+            "clear": false,
             "mean_diff": 0.031774,
             "p": 0.665179,
+            "p_adj": 1.0,
             "std_diff": 0.127721,
             "within_noise": true
           },
           "roc_auc": {
             "ci_hi": 0.048362,
             "ci_lo": -0.027206,
+            "clear": false,
             "mean_diff": 0.010578,
             "p": 0.557788,
+            "p_adj": 1.0,
             "std_diff": 0.031306,
             "within_noise": true
           }
@@ -546,24 +612,30 @@
           "brier": {
             "ci_hi": 0.006372,
             "ci_lo": -0.010416,
+            "clear": false,
             "mean_diff": -0.002022,
             "p": 0.613486,
+            "p_adj": 1.0,
             "std_diff": 0.006955,
             "within_noise": true
           },
           "recall": {
             "ci_hi": 0.152399,
             "ci_lo": -0.036999,
+            "clear": false,
             "mean_diff": 0.0577,
             "p": 0.212336,
+            "p_adj": 1.0,
             "std_diff": 0.078462,
             "within_noise": true
           },
           "roc_auc": {
             "ci_hi": 0.04526,
             "ci_lo": -0.019555,
+            "clear": false,
             "mean_diff": 0.012853,
             "p": 0.409301,
+            "p_adj": 1.0,
             "std_diff": 0.026851,
             "within_noise": true
           }
@@ -595,24 +667,30 @@
           "brier": {
             "ci_hi": 0.0,
             "ci_lo": 0.0,
+            "clear": false,
             "mean_diff": 0.0,
             "p": 1.0,
+            "p_adj": 1.0,
             "std_diff": 0.0,
             "within_noise": true
           },
           "recall": {
             "ci_hi": 0.0,
             "ci_lo": 0.0,
+            "clear": false,
             "mean_diff": 0.0,
             "p": 1.0,
+            "p_adj": 1.0,
             "std_diff": 0.0,
             "within_noise": true
           },
           "roc_auc": {
             "ci_hi": 0.0,
             "ci_lo": 0.0,
+            "clear": false,
             "mean_diff": 0.0,
             "p": 1.0,
+            "p_adj": 1.0,
             "std_diff": 0.0,
             "within_noise": true
           }
@@ -642,24 +720,30 @@
           "brier": {
             "ci_hi": 0.004318,
             "ci_lo": -0.005372,
+            "clear": false,
             "mean_diff": -0.000527,
             "p": 0.818975,
+            "p_adj": 1.0,
             "std_diff": 0.004015,
             "within_noise": true
           },
           "recall": {
             "ci_hi": 0.08848,
             "ci_lo": -0.111482,
+            "clear": false,
             "mean_diff": -0.011501,
             "p": 0.808708,
+            "p_adj": 1.0,
             "std_diff": 0.082839,
             "within_noise": true
           },
           "roc_auc": {
             "ci_hi": 0.02155,
             "ci_lo": -0.022745,
+            "clear": false,
             "mean_diff": -0.000598,
             "p": 0.954654,
+            "p_adj": 1.0,
             "std_diff": 0.01835,
             "within_noise": true
           }
@@ -689,24 +773,30 @@
           "brier": {
             "ci_hi": 0.006049,
             "ci_lo": -0.00566,
+            "clear": false,
             "mean_diff": 0.000195,
             "p": 0.944165,
+            "p_adj": 1.0,
             "std_diff": 0.004851,
             "within_noise": true
           },
           "recall": {
             "ci_hi": 0.031669,
             "ci_lo": -0.061299,
+            "clear": false,
             "mean_diff": -0.014815,
             "p": 0.505409,
+            "p_adj": 1.0,
             "std_diff": 0.038514,
             "within_noise": true
           },
           "roc_auc": {
             "ci_hi": 0.03038,
             "ci_lo": -0.035136,
+            "clear": false,
             "mean_diff": -0.002378,
             "p": 0.878487,
+            "p_adj": 1.0,
             "std_diff": 0.027142,
             "within_noise": true
           }
@@ -736,24 +826,30 @@
           "brier": {
             "ci_hi": 0.004458,
             "ci_lo": -0.004141,
+            "clear": false,
             "mean_diff": 0.000158,
             "p": 0.938174,
+            "p_adj": 1.0,
             "std_diff": 0.003562,
             "within_noise": true
           },
           "recall": {
             "ci_hi": 0.078055,
             "ci_lo": -0.121719,
+            "clear": false,
             "mean_diff": -0.021832,
             "p": 0.646438,
+            "p_adj": 1.0,
             "std_diff": 0.082761,
             "within_noise": true
           },
           "roc_auc": {
             "ci_hi": 0.01565,
             "ci_lo": -0.021277,
+            "clear": false,
             "mean_diff": -0.002814,
             "p": 0.748629,
+            "p_adj": 1.0,
             "std_diff": 0.015298,
             "within_noise": true
           }
@@ -787,24 +883,30 @@
           "brier": {
             "ci_hi": 0.040768,
             "ci_lo": -0.004,
+            "clear": false,
             "mean_diff": 0.018384,
             "p": 0.099968,
+            "p_adj": 0.699776,
             "std_diff": 0.018546,
             "within_noise": true
           },
           "recall": {
             "ci_hi": 0.048075,
             "ci_lo": -0.153509,
+            "clear": false,
             "mean_diff": -0.052717,
             "p": 0.280828,
+            "p_adj": 1.0,
             "std_diff": 0.083511,
             "within_noise": true
           },
           "roc_auc": {
             "ci_hi": 0.019478,
             "ci_lo": -0.057541,
+            "clear": false,
             "mean_diff": -0.019032,
             "p": 0.307106,
+            "p_adj": 1.0,
             "std_diff": 0.031907,
             "within_noise": true
           }
@@ -834,24 +936,30 @@
           "brier": {
             "ci_hi": 0.00685,
             "ci_lo": -0.023743,
+            "clear": false,
             "mean_diff": -0.008447,
             "p": 0.256014,
+            "p_adj": 1.0,
             "std_diff": 0.012674,
             "within_noise": true
           },
           "recall": {
             "ci_hi": 0.072899,
             "ci_lo": -0.081078,
+            "clear": false,
             "mean_diff": -0.00409,
             "p": 0.91091,
+            "p_adj": 1.0,
             "std_diff": 0.063788,
             "within_noise": true
           },
           "roc_auc": {
             "ci_hi": 0.033577,
             "ci_lo": -0.009007,
+            "clear": false,
             "mean_diff": 0.012285,
             "p": 0.236259,
+            "p_adj": 1.0,
             "std_diff": 0.017641,
             "within_noise": true
           }
@@ -881,24 +989,30 @@
           "brier": {
             "ci_hi": 0.0,
             "ci_lo": 0.0,
+            "clear": false,
             "mean_diff": 0.0,
             "p": 1.0,
+            "p_adj": 1.0,
             "std_diff": 0.0,
             "within_noise": true
           },
           "recall": {
             "ci_hi": 0.0,
             "ci_lo": 0.0,
+            "clear": false,
             "mean_diff": 0.0,
             "p": 1.0,
+            "p_adj": 1.0,
             "std_diff": 0.0,
             "within_noise": true
           },
           "roc_auc": {
             "ci_hi": 0.0,
             "ci_lo": 0.0,
+            "clear": false,
             "mean_diff": 0.0,
             "p": 1.0,
+            "p_adj": 1.0,
             "std_diff": 0.0,
             "within_noise": true
           }
@@ -930,24 +1044,30 @@
           "brier": {
             "ci_hi": 0.028658,
             "ci_lo": -0.008995,
+            "clear": false,
             "mean_diff": 0.009832,
             "p": 0.281534,
+            "p_adj": 1.0,
             "std_diff": 0.015599,
             "within_noise": true
           },
           "recall": {
             "ci_hi": 0.109688,
             "ci_lo": -0.209852,
+            "clear": false,
             "mean_diff": -0.050082,
             "p": 0.512328,
+            "p_adj": 1.0,
             "std_diff": 0.132376,
             "within_noise": true
           },
           "roc_auc": {
             "ci_hi": 0.020243,
             "ci_lo": -0.051843,
+            "clear": false,
             "mean_diff": -0.0158,
             "p": 0.363052,
+            "p_adj": 1.0,
             "std_diff": 0.029863,
             "within_noise": true
           }
@@ -977,24 +1097,30 @@
           "brier": {
             "ci_hi": -0.003725,
             "ci_lo": -0.027006,
+            "clear": false,
             "mean_diff": -0.015365,
             "p": 0.013338,
+            "p_adj": 0.106705,
             "std_diff": 0.009645,
             "within_noise": false
           },
           "recall": {
             "ci_hi": 0.171898,
             "ci_lo": -0.077481,
+            "clear": false,
             "mean_diff": 0.047209,
             "p": 0.430364,
+            "p_adj": 1.0,
             "std_diff": 0.103311,
             "within_noise": true
           },
           "roc_auc": {
             "ci_hi": 0.055864,
             "ci_lo": 0.001608,
+            "clear": false,
             "mean_diff": 0.028736,
             "p": 0.039388,
+            "p_adj": 0.315105,
             "std_diff": 0.022477,
             "within_noise": false
           }
@@ -1024,24 +1150,30 @@
           "brier": {
             "ci_hi": 0.0,
             "ci_lo": 0.0,
+            "clear": false,
             "mean_diff": 0.0,
             "p": 1.0,
+            "p_adj": 1.0,
             "std_diff": 0.0,
             "within_noise": true
           },
           "recall": {
             "ci_hi": 0.0,
             "ci_lo": 0.0,
+            "clear": false,
             "mean_diff": 0.0,
             "p": 1.0,
+            "p_adj": 1.0,
             "std_diff": 0.0,
             "within_noise": true
           },
           "roc_auc": {
             "ci_hi": 0.0,
             "ci_lo": 0.0,
+            "clear": false,
             "mean_diff": 0.0,
             "p": 1.0,
+            "p_adj": 1.0,
             "std_diff": 0.0,
             "within_noise": true
           }
@@ -1073,24 +1205,30 @@
           "brier": {
             "ci_hi": 0.047869,
             "ci_lo": -0.00522,
+            "clear": false,
             "mean_diff": 0.021325,
             "p": 0.106889,
+            "p_adj": 0.699776,
             "std_diff": 0.021993,
             "within_noise": true
           },
           "recall": {
             "ci_hi": 0.290521,
             "ci_lo": -0.276097,
+            "clear": false,
             "mean_diff": 0.007212,
             "p": 0.957227,
+            "p_adj": 1.0,
             "std_diff": 0.234734,
             "within_noise": true
           },
           "roc_auc": {
             "ci_hi": 0.038538,
             "ci_lo": -0.192235,
+            "clear": false,
             "mean_diff": -0.076849,
             "p": 0.175092,
+            "p_adj": 1.0,
             "std_diff": 0.095603,
             "within_noise": true
           }
@@ -1120,24 +1258,30 @@
           "brier": {
             "ci_hi": 0.01093,
             "ci_lo": -0.007421,
+            "clear": false,
             "mean_diff": 0.001755,
             "p": 0.687919,
+            "p_adj": 1.0,
             "std_diff": 0.007602,
             "within_noise": true
           },
           "recall": {
             "ci_hi": 0.185466,
             "ci_lo": -0.130496,
+            "clear": false,
             "mean_diff": 0.027485,
             "p": 0.714628,
+            "p_adj": 1.0,
             "std_diff": 0.130894,
             "within_noise": true
           },
           "roc_auc": {
             "ci_hi": 0.038664,
             "ci_lo": -0.034285,
+            "clear": false,
             "mean_diff": 0.00219,
             "p": 0.899378,
+            "p_adj": 1.0,
             "std_diff": 0.030221,
             "within_noise": true
           }
@@ -1167,24 +1311,30 @@
           "brier": {
             "ci_hi": 0.0,
             "ci_lo": 0.0,
+            "clear": false,
             "mean_diff": 0.0,
             "p": 1.0,
+            "p_adj": 1.0,
             "std_diff": 0.0,
             "within_noise": true
           },
           "recall": {
             "ci_hi": 0.0,
             "ci_lo": 0.0,
+            "clear": false,
             "mean_diff": 0.0,
             "p": 1.0,
+            "p_adj": 1.0,
             "std_diff": 0.0,
             "within_noise": true
           },
           "roc_auc": {
             "ci_hi": 0.0,
             "ci_lo": 0.0,
+            "clear": false,
             "mean_diff": 0.0,
             "p": 1.0,
+            "p_adj": 1.0,
             "std_diff": 0.0,
             "within_noise": true
           }
@@ -1216,24 +1366,30 @@
           "brier": {
             "ci_hi": 0.010876,
             "ci_lo": -0.013733,
+            "clear": false,
             "mean_diff": -0.001429,
             "p": 0.806954,
+            "p_adj": 1.0,
             "std_diff": 0.010195,
             "within_noise": true
           },
           "recall": {
             "ci_hi": 0.167731,
             "ci_lo": -0.20048,
+            "clear": false,
             "mean_diff": -0.016374,
             "p": 0.851455,
+            "p_adj": 1.0,
             "std_diff": 0.152539,
             "within_noise": true
           },
           "roc_auc": {
             "ci_hi": 0.046534,
             "ci_lo": -0.04782,
+            "clear": false,
             "mean_diff": -0.000643,
             "p": 0.977082,
+            "p_adj": 1.0,
             "std_diff": 0.039088,
             "within_noise": true
           }
@@ -1263,24 +1419,30 @@
           "brier": {
             "ci_hi": 0.004095,
             "ci_lo": -0.017608,
+            "clear": false,
             "mean_diff": -0.006756,
             "p": 0.203044,
+            "p_adj": 1.0,
             "std_diff": 0.008991,
             "within_noise": true
           },
           "recall": {
             "ci_hi": 0.183187,
             "ci_lo": -0.067008,
+            "clear": false,
             "mean_diff": 0.05809,
             "p": 0.336182,
+            "p_adj": 1.0,
             "std_diff": 0.103649,
             "within_noise": true
           },
           "roc_auc": {
             "ci_hi": 0.062233,
             "ci_lo": -0.002324,
+            "clear": false,
             "mean_diff": 0.029955,
             "p": 0.06644,
+            "p_adj": 0.465083,
             "std_diff": 0.026744,
             "within_noise": true
           }
@@ -1310,24 +1472,30 @@
           "brier": {
             "ci_hi": 0.0,
             "ci_lo": 0.0,
+            "clear": false,
             "mean_diff": 0.0,
             "p": 1.0,
+            "p_adj": 1.0,
             "std_diff": 0.0,
             "within_noise": true
           },
           "recall": {
             "ci_hi": 0.0,
             "ci_lo": 0.0,
+            "clear": false,
             "mean_diff": 0.0,
             "p": 1.0,
+            "p_adj": 1.0,
             "std_diff": 0.0,
             "within_noise": true
           },
           "roc_auc": {
             "ci_hi": 0.0,
             "ci_lo": 0.0,
+            "clear": false,
             "mean_diff": 0.0,
             "p": 1.0,
+            "p_adj": 1.0,
             "std_diff": 0.0,
             "within_noise": true
           }
@@ -1427,6 +1595,7 @@
     "calibration": "Platt scaling on out-of-fold scores",
     "confidence_level": 0.95,
     "cv": "5x3 repeated stratified, train patients only",
+    "multiplicity": "Holm-Bonferroni within each family (models, ablation), per metric",
     "n_folds": 15,
     "n_test": 61,
     "n_train": 242,

@@ -27,12 +27,15 @@ export type StoryPart = Schemas['Part']
 export class ApiError extends Error {
   readonly status: number
   readonly detail: unknown
+  /** From the Retry-After header (seconds), in ms; null when absent or not a number. */
+  readonly retryAfterMs: number | null
 
-  constructor(status: number, detail: unknown) {
+  constructor(status: number, detail: unknown, retryAfterMs: number | null = null) {
     super(`API request failed: ${status}`)
     this.name = 'ApiError'
     this.status = status
     this.detail = detail
+    this.retryAfterMs = retryAfterMs
   }
 }
 
@@ -40,7 +43,9 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`/api${path}`, init)
   if (!res.ok) {
     const detail: unknown = await res.json().catch(() => null)
-    throw new ApiError(res.status, detail)
+    const secs = Number(res.headers.get('Retry-After'))
+    const retryAfterMs = res.headers.get('Retry-After') !== null && secs >= 0 ? secs * 1000 : null
+    throw new ApiError(res.status, detail, retryAfterMs)
   }
   return res.json() as Promise<T>
 }

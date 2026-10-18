@@ -75,6 +75,25 @@ def test_corrected_test_is_wider_than_plain_and_flags_noise() -> None:
     assert big["p"] < 0.05
 
 
+def test_holm_matches_hand_computation_and_is_monotone() -> None:
+    # sorted 0.01, 0.02, 0.04 -> 3*0.01, max(.03, 2*.02), max(.04, 1*.04)
+    assert B.holm_adjust([0.04, 0.01, 0.02]) == pytest.approx([0.04, 0.03, 0.04])
+    assert B.holm_adjust([0.9, 0.5]) == pytest.approx([1.0, 1.0])  # capped at 1, monotone
+    assert B.holm_adjust([]) == []
+
+
+def test_clear_needs_adjusted_p_and_ci_excluding_zero() -> None:
+    def cell(p: float, noise: bool) -> dict[str, Any]:
+        t = {"p": p, "within_noise": noise}
+        return {"vs_reference": {m: dict(t) for m in B.METRICS}}
+
+    cells = [cell(0.03, False), cell(0.03, False), cell(0.001, False), cell(0.5, True)]
+    B.apply_holm(cells, 0.95)
+    got = [c["vs_reference"]["roc_auc"] for c in cells]
+    assert [g["clear"] for g in got] == [False, False, True, False]  # 0.03 * 3 > 0.05
+    assert all(g["p_adj"] >= g["p"] for g in got)
+
+
 def test_run_cv_is_deterministic_and_leak_free() -> None:
     d = B._data()
     cols = kept_columns(SCHEMA, ["ecg", "echo"])
@@ -98,6 +117,12 @@ def test_benchmark_json_matches_schema_and_config() -> None:
         ran = {m.id for m in data.models if m.status == "ok"}
         assert set(data.comparison[t]) == ran
         assert set(data.ablation[t]) == {s.id for s in CFG.feature_sets}
+    for fam in (data.comparison, data.ablation):
+        for cells in fam.values():
+            for c in cells.values():
+                for t in (c.vs_reference.roc_auc, c.vs_reference.brier, c.vs_reference.recall):
+                    assert t.p_adj >= t.p
+                    assert not t.clear or (not t.within_noise and t.p_adj < 0.05)
     assert "timestamp" not in json.dumps(raw).lower()
 
 
