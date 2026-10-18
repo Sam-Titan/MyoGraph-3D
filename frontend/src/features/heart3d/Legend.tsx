@@ -34,7 +34,6 @@ export function Legend({
   note?: string
 }) {
   const selected = useAppStore((s) => s.selectedTarget)
-  const labels = useViewState((s) => s.labels)
   const [hidden, setHidden] = useState(initialLegendHidden)
   const toggle = () => {
     const next = !hidden
@@ -54,24 +53,28 @@ export function Legend({
         className="flex min-h-9 flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-lg border border-white/10 bg-slate-950/55 px-2.5 py-1 text-xs text-viewport-foreground backdrop-blur-sm max-md:px-2"
       >
         <span>Colour = estimated probability</span>
-        {/* With labels off the key is the only place the numbers appear, so keep them (rule 8). */}
-        {!labels && (
-          <ul aria-label="Vessel estimates" className="flex gap-2">
-            {targets.map((t) => {
-              const p = probabilities[t.id]
-              return (
-                <li key={t.id} className="num flex items-center gap-1">
-                  <span
-                    aria-hidden
-                    className="size-2 rounded-full border border-white/30"
-                    style={{ background: p === undefined ? 'transparent' : riskCss(p) }}
-                  />
-                  {t.id} {pct(p)}
-                </li>
-              )
-            })}
-          </ul>
-        )}
+        {/* Always the live numbers: a chip can be off-screen or labels off, and colour never goes without one. */}
+        <ul
+          aria-label="Vessel estimates"
+          className="num order-last flex w-full flex-wrap gap-x-1.5 gap-y-0.5 md:order-none md:w-auto"
+        >
+          {targets.map((t) => {
+            const p = probabilities[t.id]
+            return (
+              <li
+                key={t.id}
+                className="flex items-center gap-1 [&:not(:first-child)]:before:mr-0.5 [&:not(:first-child)]:before:text-viewport-muted [&:not(:first-child)]:before:content-['·']"
+              >
+                <span
+                  aria-hidden
+                  className="size-2 rounded-full border border-white/30"
+                  style={{ background: p === undefined ? 'transparent' : riskCss(p) }}
+                />
+                {t.id} {pct(p)}
+              </li>
+            )
+          })}
+        </ul>
         <LegendToggle hidden onClick={toggle} />
       </div>
     )

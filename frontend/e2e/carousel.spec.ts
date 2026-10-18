@@ -60,25 +60,54 @@ test.describe('phone', () => {
     expect(firstInside).toBe(true)
     expect(console_.problems).toEqual([])
   })
+
+  test('focus moves to the opposite arrow when the focused one disables at the end', async ({
+    page,
+  }) => {
+    await page.goto('/')
+    await waitReady(page)
+    const bar = page.getByRole('toolbar', { name: '3D view controls' })
+    await right(page).focus()
+    for (let i = 0; i < 8 && (await right(page).isEnabled()); i++) {
+      await page.keyboard.press('Enter')
+      await page.waitForTimeout(450)
+    }
+    await expect(right(page)).toBeDisabled()
+    await expect(left(page)).toBeFocused()
+    // And back: Enter on "prev" until the start hands focus to "next".
+    for (let i = 0; i < 8 && (await left(page).isEnabled()); i++) {
+      await page.keyboard.press('Enter')
+      await page.waitForTimeout(450)
+    }
+    await expect(left(page)).toBeDisabled()
+    await expect(right(page)).toBeFocused()
+    expect(await bar.evaluate((e) => e.scrollLeft)).toBeLessThanOrEqual(2)
+  })
 })
 
-test('toolbar carousel: one row at desktop width, arrows only when it overflows', async ({
-  page,
-}) => {
-  await page.setViewportSize({ width: 1440, height: 900 })
-  await page.goto('/')
-  await waitReady(page)
-  const bar = page.getByRole('toolbar', { name: '3D view controls' })
-  await expect(bar).toBeVisible()
-  // Single row: every button shares one top edge.
-  const tops = await bar
-    .getByRole('button')
-    .evaluateAll((els) => new Set(els.map((e) => Math.round(e.getBoundingClientRect().top))).size)
-  expect(tops).toBe(1)
-  const overflows = await bar.evaluate((e) => e.scrollWidth > e.clientWidth + 2)
-  await expect(right(page)).toHaveCount(overflows ? 1 : 0)
-  await expect(left(page)).toHaveCount(overflows ? 1 : 0)
-})
+for (const width of [1280, 1366, 1440]) {
+  test(`toolbar carousel: fits one row with no arrows and nothing cut off at ${width}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 })
+    await page.goto('/')
+    await waitReady(page)
+    const bar = page.getByRole('toolbar', { name: '3D view controls' })
+    await expect(bar).toBeVisible()
+    const m = await bar.evaluate((e) => {
+      const rects = Array.from(e.querySelectorAll('button')).map((b) => b.getBoundingClientRect())
+      const box = e.getBoundingClientRect()
+      return {
+        rows: new Set(rects.map((r) => Math.round(r.top))).size,
+        inside: rects.every((r) => r.left >= box.left - 0.5 && r.right <= box.right + 0.5),
+        fits: e.scrollWidth <= e.clientWidth + 1,
+      }
+    })
+    expect(m).toEqual({ rows: 1, inside: true, fits: true })
+    await expect(left(page)).toHaveCount(0)
+    await expect(right(page)).toHaveCount(0)
+  })
+}
 
 test('toolbar carousel: no arrows on a very wide screen', async ({ page }) => {
   await page.setViewportSize({ width: 2200, height: 1000 })

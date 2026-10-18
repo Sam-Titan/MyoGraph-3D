@@ -17,9 +17,12 @@ test('legend: hide/show is remembered and colour keeps its meaning line', async 
   const log = await page.evaluate(() => (window as unknown as { __trackLog: unknown[] }).__trackLog)
   expect(log).toContainEqual(['view_toggled', { control: 'legend' }])
 
-  // Labels off while hidden: the numbers must stay visible somewhere (colour never without a number).
+  // Hidden, labels on or off: the live numbers stay beside the colour meaning (colour never without a number).
+  const nums = page.getByRole('list', { name: 'Vessel estimates' })
+  await expect(nums).toContainText(/CAD \d+%/)
   await page.getByRole('button', { name: 'Labels' }).click()
-  await expect(page.getByRole('list', { name: 'Vessel estimates' })).toContainText('%')
+  await expect(nums).toContainText(/CAD \d+%/)
+  await page.getByRole('button', { name: 'Labels' }).click()
 
   await page.reload()
   await waitReady(page)
