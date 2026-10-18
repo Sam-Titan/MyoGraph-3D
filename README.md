@@ -1,5 +1,7 @@
 # MyoGraph 3D
 
+[![CI](https://github.com/Sam-Titan/MyoGraph-3D/actions/workflows/ci.yml/badge.svg?branch=v2)](https://github.com/Sam-Titan/MyoGraph-3D/actions/workflows/ci.yml)
+
 MyoGraph 3D turns routine clinical data into an interactive 3D view of coronary artery disease (CAD)
 risk. From 49 clinical inputs (demographics, history, symptoms, ECG, labs, echo; BMI and obesity are
 derived, giving 55 model columns) it estimates the probability of overall CAD and of significant
