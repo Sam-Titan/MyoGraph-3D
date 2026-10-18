@@ -29,10 +29,12 @@ export function useThresholds(): Probabilities {
 /** Range (as lo/hi probabilities) per target id from the shared intervals query. */
 export function useRanges(): Readonly<Record<string, { lo: number; hi: number } | undefined>> {
   const values = useAppStore((s) => s.intervalValues)
-  const { data } = useIntervals(values)
+  const { data, isPlaceholderData } = useIntervals(values)
   return useMemo(() => {
     const out: Record<string, { lo: number; hi: number }> = {}
+    // Previous inputs' ranges (keepPreviousData) must not sit beside the new point estimate.
+    if (isPlaceholderData) return out
     for (const [id, r] of Object.entries(data?.targets ?? {})) out[id] = r.interval
     return out
-  }, [data])
+  }, [data, isPlaceholderData])
 }

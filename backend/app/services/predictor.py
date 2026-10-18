@@ -127,7 +127,12 @@ class Predictor:
     def load_replicates(self) -> None:
         """Blocking load. No lock is held: the finished dict is published in one assignment."""
         t0 = time.perf_counter()
-        loaded = {t: ReplicateSet.load(replicate_path(t)) for t in self.schema.targets}
+        try:
+            loaded = {t: ReplicateSet.load(replicate_path(t)) for t in self.schema.targets}
+        except Exception:
+            # Predictions keep working; ranges and summaries stay 503. Log why, do not die silently.
+            logger.exception("replicates failed to load; ranges and summaries stay unavailable")
+            return
         self.replicates = loaded
         self.replicates_ready.set()
         logger.info("replicates loaded in %.1f s", time.perf_counter() - t0)
