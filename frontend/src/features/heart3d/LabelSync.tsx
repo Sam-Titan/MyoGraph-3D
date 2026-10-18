@@ -2,6 +2,7 @@ import { useFrame, useThree } from '@react-three/fiber'
 import { useEffect, useRef } from 'react'
 import { Box3, Raycaster, Vector3 } from 'three'
 import { getEls, type LabelRegistry } from './labelRegistry'
+import { isPhone, PHONE_CHIP_GAP_PX } from './phone'
 import type { NodeBinding } from './useHeartModel'
 import { useViewState } from './useViewState'
 
@@ -122,7 +123,8 @@ export function LabelSync({
       const w = els.chip.offsetWidth
       const h = els.chip.offsetHeight
       const side: 1 | -1 = ax >= mid ? 1 : -1
-      const wanted = side > 0 ? hi + SILHOUETTE_GAP_PX + w / 2 : lo - SILHOUETTE_GAP_PX - w / 2
+      const gap = isPhone() ? PHONE_CHIP_GAP_PX : SILHOUETTE_GAP_PX
+      const wanted = side > 0 ? hi + gap + w / 2 : lo - gap - w / 2
       const x = Math.min(size.width - MARGIN_PX - w / 2, Math.max(MARGIN_PX + w / 2, wanted))
       slots.push({
         id: b.target.id,

@@ -1,16 +1,18 @@
 import { ChevronDown, ChevronUp, Pencil } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { HeartViewport } from '@/features/heart3d/HeartViewport'
 import { IntroStrip } from '@/features/layout/IntroStrip'
 import { Panel } from '@/features/layout/Panel'
+import { PinButton } from '@/features/results/PinButton'
 import { ResultsPanel } from '@/features/results/ResultsPanel'
 import { useStory } from '@/features/story/useStory'
 import { useMediaQuery, WIDE_QUERY } from '@/lib/useMediaQuery'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/store/app'
 import { PatientSlot, usePatientHost } from './PatientHost'
+import { usePinnedStrip } from './usePinnedStrip'
 
 /** "Edit patient" with the form's "N edited / N outside range" summary; opens the bottom sheet. */
 function EditPatientButton({ onOpen }: { onOpen: () => void }) {
@@ -57,18 +59,23 @@ export function WorkspaceLayout() {
   }, [wide])
   // A story needs the heart, so it expands it again.
   const folded = collapsed && !storyActive
+  const card = useRef<HTMLDivElement>(null)
+  usePinnedStrip(card, !folded && !storyActive)
   return (
     <div className="flex h-full min-h-0 flex-col">
       <IntroStrip />
-      <div className="grid min-h-0 min-w-0 flex-1 grid-cols-1 auto-rows-min gap-(--panel-gap) overflow-y-auto overflow-x-hidden p-(--gutter) md:max-xl:grid-cols-2 xl:auto-rows-auto xl:grid-cols-[var(--col-left)_minmax(0,1fr)_var(--col-right)] xl:overflow-hidden">
+      <div className="grid min-h-0 min-w-0 flex-1 grid-cols-1 auto-rows-min gap-(--panel-gap) max-md:gap-2 overflow-y-auto overflow-x-hidden p-(--gutter) md:max-xl:grid-cols-2 xl:auto-rows-auto xl:grid-cols-[var(--col-left)_minmax(0,1fr)_var(--col-right)] xl:overflow-hidden">
         {portal}
         {wide && (
           <Panel title="Patient">
             <PatientSlot host={host} />
           </Panel>
         )}
-        <div className="sticky top-0 z-30 order-1 max-md:-mx-(--gutter) max-md:bg-background max-md:px-(--gutter) md:max-xl:col-start-1 md:max-xl:row-start-1 md:max-xl:self-start short:static xl:contents">
-          <div className="flex h-14 items-center gap-2 py-1.5 xl:hidden">
+        <div
+          ref={card}
+          className="sticky top-0 z-30 order-1 max-md:top-[var(--stick-top,0px)] max-md:-mx-(--gutter) max-md:bg-background max-md:px-(--gutter) md:max-xl:col-start-1 md:max-xl:row-start-1 md:max-xl:self-start short:static xl:contents"
+        >
+          <div className="flex h-14 items-center gap-2 py-1.5 max-md:h-12 max-md:py-0.5 xl:hidden">
             <EditPatientButton onOpen={() => setSheetOpen(true)} />
             <Button
               variant="ghost"
@@ -88,9 +95,8 @@ export function WorkspaceLayout() {
             className={cn(
               'viewport-surface relative overflow-hidden rounded-xl xl:h-auto xl:min-h-0',
               // 17rem = banner, intro strip, header, bottom nav, gutter and the Edit-patient bar around the heart.
-              storyActive
-                ? 'h-[calc(100dvh-17rem)]'
-                : 'h-[calc(38dvh-4.5rem)] md:h-[calc(100dvh-17rem)]',
+              // Phones: the whole card (toolbar, canvas, legend strip) is 44dvh; the canvas gets the rest.
+              storyActive ? 'h-[calc(100dvh-17rem)]' : 'h-[44dvh] md:h-[calc(100dvh-17rem)]',
               'short:h-[30rem]',
               folded && 'max-md:hidden',
             )}
@@ -98,7 +104,15 @@ export function WorkspaceLayout() {
             <HeartViewport />
           </section>
         </div>
-        <Panel title="Model estimates" className="order-3 md:max-xl:col-start-2 xl:order-none">
+        <Panel
+          title="Model estimates"
+          aside={
+            <div className="md:hidden">
+              <PinButton header />
+            </div>
+          }
+          className="order-3 md:max-xl:col-start-2 xl:order-none"
+        >
           <ResultsPanel />
         </Panel>
         <Sheet open={sheetOpen && !wide} onOpenChange={setSheetOpen}>

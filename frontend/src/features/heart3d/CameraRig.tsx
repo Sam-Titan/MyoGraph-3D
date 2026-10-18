@@ -3,6 +3,7 @@ import { useFrame, useThree } from '@react-three/fiber'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { Box3, MathUtils, type PerspectiveCamera, Vector3 } from 'three'
 import { useAppStore } from '@/store/app'
+import { isPhone, PHONE_CHIP_RESERVE_PX } from './phone'
 import type { NodeBinding } from './useHeartModel'
 import { useViewState } from './useViewState'
 
@@ -15,13 +16,19 @@ const FILL_HEIGHT = 0.7
 const FILL_HEIGHT_STACKED = 1.25
 const FILL_WIDTH = 0.9
 const SPIN_RAD_PER_S = 0.35
+/**
+ * Touch pinch zooms by 0.95^(spread px / 8 * dollySpeed). At 1 a 4x spread zoomed only ~1.3x on a
+ * phone; 3.5 makes it roughly proportional. Wheel zoom uses the same speed, so only touch devices change.
+ */
+const DOLLY_SPEED_TOUCH = 3.5
+const DOLLY_SPEED = window.matchMedia('(pointer: coarse)').matches ? DOLLY_SPEED_TOUCH : 1
 
 /**
  * Aspect-aware fit of `box` seen from direction `dir` (target -> camera): project the box corners
  * onto the view's right/up axes, then size the distance so it fills FILL_HEIGHT of the height
  * without exceeding FILL_WIDTH of the width.
  */
-function fitView(box: Box3, dir: Vector3, camera: PerspectiveCamera) {
+function fitView(box: Box3, dir: Vector3, camera: PerspectiveCamera, canvasWidth: number) {
   const centre = box.getCenter(new Vector3())
   const right = new Vector3().crossVectors(UP, dir).normalize()
   const up = new Vector3().crossVectors(dir, right).normalize()
@@ -41,7 +48,12 @@ function fitView(box: Box3, dir: Vector3, camera: PerspectiveCamera) {
   const fillHeight = window.matchMedia('(min-width: 1280px)').matches
     ? FILL_HEIGHT
     : FILL_HEIGHT_STACKED
-  const dist = Math.max(halfH / (tanV * fillHeight), halfW / (tanH * FILL_WIDTH)) + halfD
+  // Phones keep a column free on each side for the label chips, so they never sit on the heart.
+  const fillWidth =
+    isPhone() && canvasWidth > 0
+      ? Math.min(FILL_WIDTH, Math.max(0.4, 1 - PHONE_CHIP_RESERVE_PX / canvasWidth))
+      : FILL_WIDTH
+  const dist = Math.max(halfH / (tanV * fillHeight), halfW / (tanH * fillWidth)) + halfD
   return { eye: centre.clone().addScaledVector(dir, dist), centre }
 }
 
@@ -85,10 +97,10 @@ export function CameraRig({ bindings }: Props) {
       // via the GLB extras) but always frames the whole heart; the vessel is shown by highlight only.
       const vessel = bindings.find((b) => b.target?.id === id && b.target.role === 'vessel')
       const dir = override ? new Vector3(...override).normalize() : (vessel?.viewDir ?? VIEW_DIR)
-      const { eye, centre } = fitView(defaultBox, dir, camera)
+      const { eye, centre } = fitView(defaultBox, dir, camera, width)
       void c.setLookAt(...eye.toArray(), ...centre.toArray(), animate)
     },
-    [bindings, camera, defaultBox, override],
+    [bindings, camera, defaultBox, override, width],
   )
 
   // Selection or Reset changed: re-frame (deferred while the canvas has no size).
@@ -143,6 +155,7 @@ export function CameraRig({ bindings }: Props) {
       maxDistance={9}
       smoothTime={0.25}
       draggingSmoothTime={0.08}
+      dollySpeed={DOLLY_SPEED}
       dollyToCursor={false}
       // Any manual interaction stops auto-spin.
       onControlStart={() => {

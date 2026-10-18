@@ -26,7 +26,12 @@ export function IntroStrip() {
   }
   const tour =
     first && presetsReady ? (
-      <Button variant="outline" size="sm" onClick={() => beginStory(first)}>
+      <Button
+        variant="outline"
+        size="sm"
+        className="max-md:hidden"
+        onClick={() => beginStory(first)}
+      >
         <Play />
         Guided tour · 1 min
       </Button>
