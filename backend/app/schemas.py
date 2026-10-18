@@ -62,6 +62,7 @@ class FeatureInfo(BaseModel):
     reference: RangeInfo | None = None
     observed: ObservedInfo | None = None
     default: InputValue | None = None
+    help: str
 
 
 class FeaturesResponse(BaseModel):

@@ -426,6 +426,8 @@ export interface components {
             observed?: components["schemas"]["ObservedInfo"] | null;
             /** Default */
             default?: number | string | null;
+            /** Help */
+            help: string;
         };
         /** FeaturesResponse */
         FeaturesResponse: {

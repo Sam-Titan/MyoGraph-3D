@@ -1,4 +1,6 @@
 import type { TargetInfo } from '@/api/client'
+import { deltaMark, WITHIN_UNCERTAINTY } from '@/features/results/pinModel'
+import { usePinDeltas } from '@/features/results/usePinDeltas'
 import { track } from '@/lib/analytics'
 import { pct } from '@/lib/format'
 import { cn } from '@/lib/utils'
@@ -23,6 +25,7 @@ export function LabelChips({
 }) {
   const show = useViewState((s) => s.labels)
   const selected = useAppStore((s) => s.selectedTarget)
+  const deltas = usePinDeltas()
   if (!show) return null
   const vessels = targets.filter((t) => t.role === 'vessel')
   return (
@@ -55,14 +58,18 @@ export function LabelChips({
       </svg>
       {vessels.map((t) => {
         const p = probabilities[t.id]
+        const d = deltas[t.id]
+        const change = d
+          ? `, ${deltaMark(d)} since pinned${d.withinUncertainty ? `, ${WITHIN_UNCERTAINTY}` : ''}`
+          : ''
         return (
           <button
             key={t.id}
             type="button"
             data-target-chip={t.id}
             aria-pressed={t.id === selected}
-            aria-label={`${t.label}, model estimate ${pct(p)}`}
-            title={t.plain_label}
+            aria-label={`${t.label}, model estimate ${pct(p)}${change}`}
+            title={`${t.plain_label}${change}`}
             ref={(el) => {
               getEls(registry, t.id).chip = el
             }}
@@ -79,6 +86,7 @@ export function LabelChips({
           >
             {t.id}
             <span className="hidden sm:inline"> ·</span> {pct(p)}
+            {d && d.points !== 0 && <span data-testid="chip-delta"> {deltaMark(d)}</span>}
           </button>
         )
       })}

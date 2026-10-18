@@ -41,19 +41,21 @@ groups:
 
 features:
   # ---------------- Demographics ----------------
-  - { id: age,    column: Age,    label: "Age",    group: demographics, kind: number, unit: "years", input: { min: 18, max: 100, step: 1 } }
+  - { id: age,    column: Age,    label: "Age",    group: demographics, kind: number, unit: "years", input: { min: 18, max: 100, step: 1 }, help: "Age in whole years at the time of the tests." }
   - id: sex
     column: Sex
     label: "Sex"
+    help: "Sex as recorded in the patient's file (male or female)."
     group: demographics
     kind: category
     options: [ { value: male, label: "Male", source: Male }, { value: female, label: "Female", source: Fmale } ]  # dataset typo "Fmale"
     encoding: { type: binary, positive: male, model_column: sex_male }
-  - { id: weight, column: Weight, label: "Weight", group: demographics, kind: number, unit: "kg", input: { min: 30, max: 200, step: 1 } }
-  - { id: height, column: Length, label: "Height", group: demographics, kind: number, unit: "cm", input: { min: 120, max: 220, step: 1 } }  # dataset calls it "Length"
+  - { id: weight, column: Weight, label: "Weight", group: demographics, kind: number, unit: "kg", input: { min: 30, max: 200, step: 1 }, help: "Body weight in kilograms. Used with height to work out BMI." }
+  - { id: height, column: Length, label: "Height", group: demographics, kind: number, unit: "cm", input: { min: 120, max: 220, step: 1 }, help: "Height in centimetres. Used with weight to work out BMI." }  # dataset calls it "Length"
   - id: bmi
     column: BMI
     label: "BMI"
+    help: "Body mass index, calculated as weight divided by height squared. You don't enter it."
     group: demographics
     kind: derived
     unit: "kg/m²"
@@ -62,6 +64,8 @@ features:
   - id: obesity
     column: Obesity
     label: "Obesity"
+    help: "Marked \"yes\" when BMI is above {cutoff}, which is how the training data defines it (most guidelines use {guideline_cutoff}). You don't enter it."
+    help_values: { cutoff: 25, guideline_cutoff: 30 }
     group: demographics
     kind: derived
     formula: "bmi > 25"                  # verified: matches 302/303 rows
@@ -70,10 +74,11 @@ features:
     # row), so training and serving share one code path and the raw-row <-> API round-trip test holds exactly.
 
   # ---------------- Risk factors & history ----------------
-  - { id: dm,  column: DM,  label: "Diabetes mellitus", group: history, kind: binary, source: [1] }
-  - { id: htn, column: HTN, label: "Hypertension",      group: history, kind: binary, source: [1] }
+  - { id: dm,  column: DM,  label: "Diabetes mellitus", group: history, kind: binary, source: [1], help: "Diabetes mellitus: long-term high blood sugar. Usually in the medical history or medication list." }
+  - { id: htn, column: HTN, label: "Hypertension",      group: history, kind: binary, source: [1], help: "Hypertension: long-term high blood pressure. Usually in the medical history or medication list." }
   - id: smoking
     label: "Smoking status"
+    help: "Never, currently smoking, or stopped (former). Asked at an intake or history interview."
     group: history
     kind: composite
     options:
@@ -81,19 +86,20 @@ features:
       - { value: current, label: "Current", sets: { "Current Smoker": 1, "EX-Smoker": 0 } }
       - { value: ex,      label: "Former",  sets: { "Current Smoker": 0, "EX-Smoker": 1 } }
     # verified: no row has both = 1
-  - { id: fh,  column: FH,  label: "Family history of CAD", group: history, kind: binary, source: [1] }
-  - { id: dlp, column: DLP, label: "Dyslipidemia",          group: history, kind: binary, source: [Y] }
-  - { id: crf, column: CRF, label: "Chronic renal failure",  group: history, kind: binary, source: [Y] }
-  - { id: cva, column: CVA, label: "Prior stroke (CVA)",     group: history, kind: binary, source: [Y] }
-  - { id: airway_disease,  column: "Airway disease",  label: "Airway disease",          group: history, kind: binary, source: [Y] }
-  - { id: thyroid_disease, column: "Thyroid Disease", label: "Thyroid disease",         group: history, kind: binary, source: [Y] }
-  - { id: chf, column: CHF, label: "Congestive heart failure", group: history, kind: binary, source: [Y] }
+  - { id: fh,  column: FH,  label: "Family history of CAD", group: history, kind: binary, source: [1], help: "A close relative with coronary artery disease, as recorded in the patient's history. Asked at an intake interview." }
+  - { id: dlp, column: DLP, label: "Dyslipidemia",          group: history, kind: binary, source: [Y], help: "Dyslipidemia: abnormal blood fats such as high LDL or triglycerides. In the history or on a lipid profile." }
+  - { id: crf, column: CRF, label: "Chronic renal failure",  group: history, kind: binary, source: [Y], help: "Chronic renal failure: long-term reduced kidney function. In the medical history." }
+  - { id: cva, column: CVA, label: "Prior stroke (CVA)",     group: history, kind: binary, source: [Y], help: "A previous stroke (cerebrovascular accident). In the medical history." }
+  - { id: airway_disease,  column: "Airway disease",  label: "Airway disease",          group: history, kind: binary, source: [Y], help: "Long-term lung or airway disease such as asthma or COPD. In the medical history." }
+  - { id: thyroid_disease, column: "Thyroid Disease", label: "Thyroid disease",         group: history, kind: binary, source: [Y], help: "A known thyroid condition, over- or under-active. In the medical history." }
+  - { id: chf, column: CHF, label: "Congestive heart failure", group: history, kind: binary, source: [Y], help: "Congestive heart failure: the heart doesn't pump as well as the body needs. In the medical history." }
 
   # ---------------- Symptoms & examination ----------------
-  - { id: bp, column: BP, label: "Systolic blood pressure", group: exam, kind: number, unit: "mmHg", input: { min: 70,  max: 250, step: 1 }, reference: { low: 90, high: 129 } }
-  - { id: pr, column: PR, label: "Pulse rate",              group: exam, kind: number, unit: "bpm",  input: { min: 30,  max: 180, step: 1 }, reference: { low: 60, high: 100 } }
+  - { id: bp, column: BP, label: "Systolic blood pressure", group: exam, kind: number, unit: "mmHg", input: { min: 70,  max: 250, step: 1 }, reference: { low: 90, high: 129 }, help: "Systolic (\"top number\") blood pressure at rest, in mmHg. From a blood pressure reading." }
+  - { id: pr, column: PR, label: "Pulse rate",              group: exam, kind: number, unit: "bpm",  input: { min: 30,  max: 180, step: 1 }, reference: { low: 60, high: 100 }, help: "Pulse rate: heartbeats per minute at rest. From a pulse check or the vital signs." }
   - id: chest_pain
     label: "Chest pain type"
+    help: "The type of chest pain, if any. Typical angina: pressure or tightness brought on by effort and eased by rest. Atypical: some but not all of those features. Non-anginal: chest pain without the usual features of angina. From the symptom history."
     group: exam
     kind: composite
     options:
@@ -102,52 +108,54 @@ features:
       - { value: nonanginal, label: "Non-anginal",     sets: { "Typical Chest Pain": 0, Atypical: N, Nonanginal: Y } }
       - { value: none,       label: "None",            sets: { "Typical Chest Pain": 0, Atypical: N, Nonanginal: N } }
     # verified: the 3 columns are mutually exclusive in all 303 rows
-  - { id: lowth_ang, column: "LowTH Ang", label: "Low-threshold angina", group: exam, kind: binary, source: [Y] }
-  - { id: dyspnea,   column: Dyspnea,     label: "Dyspnea",              group: exam, kind: binary, source: [Y] }
-  - { id: function_class, column: "Function Class", label: "Functional class", group: exam, kind: number, unit: "0–3", input: { min: 0, max: 3, step: 1 } }
-  - { id: edema,                 column: Edema,                   label: "Edema",                 group: exam, kind: binary, source: [1] }
-  - { id: weak_peripheral_pulse, column: "Weak Peripheral Pulse", label: "Weak peripheral pulse", group: exam, kind: binary, source: [Y] }
-  - { id: lung_rales,            column: "Lung rales",            label: "Lung rales",            group: exam, kind: binary, source: [Y] }
-  - { id: systolic_murmur,       column: "Systolic Murmur",       label: "Systolic murmur",       group: exam, kind: binary, source: [Y] }
-  - { id: diastolic_murmur,      column: "Diastolic Murmur",      label: "Diastolic murmur",      group: exam, kind: binary, source: [Y] }
+  - { id: lowth_ang, column: "LowTH Ang", label: "Low-threshold angina", group: exam, kind: binary, source: [Y], help: "Chest pain that comes on with only light effort. From the symptom history." }
+  - { id: dyspnea,   column: Dyspnea,     label: "Dyspnea",              group: exam, kind: binary, source: [Y], help: "Shortness of breath. From the symptom history." }
+  - { id: function_class, column: "Function Class", label: "Functional class", group: exam, kind: number, unit: "0–3", input: { min: 0, max: 3, step: 1 }, help: "How much everyday activity is limited by symptoms, from {min}, not limited, to {max}, most limited. A clinician's rating." }
+  - { id: edema,                 column: Edema,                   label: "Edema",                 group: exam, kind: binary, source: [1], help: "Swelling from fluid, usually in the ankles or legs. Found on examination." }
+  - { id: weak_peripheral_pulse, column: "Weak Peripheral Pulse", label: "Weak peripheral pulse", group: exam, kind: binary, source: [Y], help: "A faint pulse in the arms or legs. Found on examination." }
+  - { id: lung_rales,            column: "Lung rales",            label: "Lung rales",            group: exam, kind: binary, source: [Y], help: "Crackling sounds in the lungs heard through a stethoscope. Found on examination." }
+  - { id: systolic_murmur,       column: "Systolic Murmur",       label: "Systolic murmur",       group: exam, kind: binary, source: [Y], help: "An extra \"whoosh\" sound between the main heart sounds. Heard with a stethoscope." }
+  - { id: diastolic_murmur,      column: "Diastolic Murmur",      label: "Diastolic murmur",      group: exam, kind: binary, source: [Y], help: "An extra \"whoosh\" sound after the second heart sound. Heard with a stethoscope." }
 
   # ---------------- ECG ----------------
-  - { id: q_wave,        column: "Q Wave",        label: "Q wave",        group: ecg, kind: binary, source: [1] }
-  - { id: st_elevation,  column: "St Elevation",  label: "ST elevation",  group: ecg, kind: binary, source: [1] }
-  - { id: st_depression, column: "St Depression", label: "ST depression", group: ecg, kind: binary, source: [1] }
-  - { id: t_inversion,   column: Tinversion,      label: "T inversion",   group: ecg, kind: binary, source: [1] }
-  - { id: lvh,           column: LVH,             label: "LV hypertrophy",group: ecg, kind: binary, source: [Y] }
-  - { id: poor_r_progression, column: "Poor R Progression", label: "Poor R-wave progression", group: ecg, kind: binary, source: [Y] }
+  - { id: q_wave,        column: "Q Wave",        label: "Q wave",        group: ecg, kind: binary, source: [1], help: "A pathological Q wave: a deep early dip that can mark an old area of damaged heart muscle. On the ECG report." }
+  - { id: st_elevation,  column: "St Elevation",  label: "ST elevation",  group: ecg, kind: binary, source: [1], help: "The ST segment sits above the baseline. On the ECG report." }
+  - { id: st_depression, column: "St Depression", label: "ST depression", group: ecg, kind: binary, source: [1], help: "The ST segment sits below the baseline. On the ECG report." }
+  - { id: t_inversion,   column: Tinversion,      label: "T inversion",   group: ecg, kind: binary, source: [1], help: "The T wave points downward instead of upward. On the ECG report." }
+  - { id: lvh,           column: LVH,             label: "LV hypertrophy",group: ecg, kind: binary, source: [Y], help: "Left ventricular hypertrophy: a thickened left pumping chamber, reported from the ECG. On the ECG report." }
+  - { id: poor_r_progression, column: "Poor R Progression", label: "Poor R-wave progression", group: ecg, kind: binary, source: [Y], help: "The R waves don't grow across the chest leads as expected. On the ECG report." }
   - id: bbb
     column: BBB
     label: "Bundle branch block"
+    help: "Bundle branch block: a delay in the heart's electrical wiring, left or right. On the ECG report."
     group: ecg
     kind: category
     options: [ { value: none, label: "None", source: N }, { value: lbbb, label: "Left (LBBB)", source: LBBB }, { value: rbbb, label: "Right (RBBB)", source: RBBB } ]
     encoding: { type: one_hot, drop: none, model_columns: [bbb_lbbb, bbb_rbbb] }
 
   # ---------------- Laboratory ----------------
-  - { id: fbs,   column: FBS,   label: "Fasting blood sugar", group: labs, kind: number, unit: "mg/dL",   input: { min: 40,   max: 600,   step: 1 },    reference: { low: 70,   high: 99 } }
-  - { id: cr,    column: CR,    label: "Creatinine",          group: labs, kind: number, unit: "mg/dL",   input: { min: 0.2,  max: 10,    step: 0.1 },  reference: { low: 0.6,  high: 1.3 } }
-  - { id: tg,    column: TG,    label: "Triglycerides",       group: labs, kind: number, unit: "mg/dL",   input: { min: 20,   max: 1500,  step: 1 },    reference: { low: 0,    high: 149 } }
-  - { id: ldl,   column: LDL,   label: "LDL cholesterol",     group: labs, kind: number, unit: "mg/dL",   input: { min: 10,   max: 400,   step: 1 },    reference: { low: 0,    high: 129 } }
-  - { id: hdl,   column: HDL,   label: "HDL cholesterol",     group: labs, kind: number, unit: "mg/dL",   input: { min: 5,    max: 150,   step: 0.1 },  reference: { low: 40,   high: 150 } }
-  - { id: bun,   column: BUN,   label: "Blood urea nitrogen", group: labs, kind: number, unit: "mg/dL",   input: { min: 2,    max: 150,   step: 1 },    reference: { low: 7,    high: 20 } }
-  - { id: esr,   column: ESR,   label: "ESR",                 group: labs, kind: number, unit: "mm/h",    input: { min: 0,    max: 150,   step: 1 },    reference: { low: 0,    high: 20 } }
-  - { id: hb,    column: HB,    label: "Hemoglobin",          group: labs, kind: number, unit: "g/dL",    input: { min: 4,    max: 22,    step: 0.1 },  reference: { low: 12,   high: 17.5 } }
-  - { id: k,     column: K,     label: "Potassium",           group: labs, kind: number, unit: "mEq/L",   input: { min: 2,    max: 8,     step: 0.1 },  reference: { low: 3.5,  high: 5.0 } }
-  - { id: na,    column: Na,    label: "Sodium",              group: labs, kind: number, unit: "mEq/L",   input: { min: 110,  max: 170,   step: 1 },    reference: { low: 135,  high: 145 } }
-  - { id: wbc,   column: WBC,   label: "White blood cells",   group: labs, kind: number, unit: "/mm³",    input: { min: 1000, max: 40000, step: 100 },  reference: { low: 4000, high: 11000 } }
-  - { id: lymph, column: Lymph, label: "Lymphocytes",         group: labs, kind: number, unit: "%",       input: { min: 1,    max: 90,    step: 1 },    reference: { low: 20,   high: 40 } }
-  - { id: neut,  column: Neut,  label: "Neutrophils",         group: labs, kind: number, unit: "%",       input: { min: 10,   max: 99,    step: 1 },    reference: { low: 40,   high: 70 } }
-  - { id: plt,   column: PLT,   label: "Platelets",           group: labs, kind: number, unit: "×10³/mm³",input: { min: 10,   max: 1000,  step: 1 },    reference: { low: 150,  high: 450 } }
+  - { id: fbs,   column: FBS,   label: "Fasting blood sugar", group: labs, kind: number, unit: "mg/dL",   input: { min: 40,   max: 600,   step: 1 },    reference: { low: 70,   high: 99 }, help: "Fasting blood sugar (glucose), measured after fasting, usually overnight. On a blood glucose or metabolic panel." }
+  - { id: cr,    column: CR,    label: "Creatinine",          group: labs, kind: number, unit: "mg/dL",   input: { min: 0.2,  max: 10,    step: 0.1 },  reference: { low: 0.6,  high: 1.3 }, help: "Creatinine: a waste product cleared by the kidneys. On a kidney or metabolic panel." }
+  - { id: tg,    column: TG,    label: "Triglycerides",       group: labs, kind: number, unit: "mg/dL",   input: { min: 20,   max: 1500,  step: 1 },    reference: { low: 0,    high: 149 }, help: "Triglycerides: a type of blood fat. On a lipid profile." }
+  - { id: ldl,   column: LDL,   label: "LDL cholesterol",     group: labs, kind: number, unit: "mg/dL",   input: { min: 10,   max: 400,   step: 1 },    reference: { low: 0,    high: 129 }, help: "LDL cholesterol, often called \"bad\" cholesterol. On a lipid profile." }
+  - { id: hdl,   column: HDL,   label: "HDL cholesterol",     group: labs, kind: number, unit: "mg/dL",   input: { min: 5,    max: 150,   step: 0.1 },  reference: { low: 40,   high: 150 }, help: "HDL cholesterol, often called \"good\" cholesterol. On a lipid profile." }
+  - { id: bun,   column: BUN,   label: "Blood urea nitrogen", group: labs, kind: number, unit: "mg/dL",   input: { min: 2,    max: 150,   step: 1 },    reference: { low: 7,    high: 20 }, help: "Blood urea nitrogen: another waste product cleared by the kidneys. On a kidney or metabolic panel." }
+  - { id: esr,   column: ESR,   label: "ESR",                 group: labs, kind: number, unit: "mm/h",    input: { min: 0,    max: 150,   step: 1 },    reference: { low: 0,    high: 20 }, help: "Erythrocyte sedimentation rate: how fast red cells settle in a tube, a general marker of inflammation. On a blood test report." }
+  - { id: hb,    column: HB,    label: "Hemoglobin",          group: labs, kind: number, unit: "g/dL",    input: { min: 4,    max: 22,    step: 0.1 },  reference: { low: 12,   high: 17.5 }, help: "Hemoglobin: the oxygen-carrying protein in red blood cells. On a complete blood count (CBC)." }
+  - { id: k,     column: K,     label: "Potassium",           group: labs, kind: number, unit: "mEq/L",   input: { min: 2,    max: 8,     step: 0.1 },  reference: { low: 3.5,  high: 5.0 }, help: "Potassium, a blood salt. On a metabolic panel." }
+  - { id: na,    column: Na,    label: "Sodium",              group: labs, kind: number, unit: "mEq/L",   input: { min: 110,  max: 170,   step: 1 },    reference: { low: 135,  high: 145 }, help: "Sodium, a blood salt. On a metabolic panel." }
+  - { id: wbc,   column: WBC,   label: "White blood cells",   group: labs, kind: number, unit: "/mm³",    input: { min: 1000, max: 40000, step: 100 },  reference: { low: 4000, high: 11000 }, help: "White blood cell count. On a complete blood count (CBC)." }
+  - { id: lymph, column: Lymph, label: "Lymphocytes",         group: labs, kind: number, unit: "%",       input: { min: 1,    max: 90,    step: 1 },    reference: { low: 20,   high: 40 }, help: "Lymphocytes, a type of white cell, as a percent of all white cells. On the CBC differential." }
+  - { id: neut,  column: Neut,  label: "Neutrophils",         group: labs, kind: number, unit: "%",       input: { min: 10,   max: 99,    step: 1 },    reference: { low: 40,   high: 70 }, help: "Neutrophils, a type of white cell, as a percent of all white cells. On the CBC differential." }
+  - { id: plt,   column: PLT,   label: "Platelets",           group: labs, kind: number, unit: "×10³/mm³",input: { min: 10,   max: 1000,  step: 1 },    reference: { low: 150,  high: 450 }, help: "Platelet count: the cells that help blood clot. On a complete blood count (CBC)." }
 
   # ---------------- Echocardiography ----------------
-  - { id: ef_tte,      column: "EF-TTE",      label: "Ejection fraction (TTE)",          group: echo, kind: number, unit: "%",          input: { min: 5, max: 80, step: 1 }, reference: { low: 50, high: 75 } }
-  - { id: region_rwma, column: "Region RWMA", label: "Regions with wall-motion abnormality", group: echo, kind: number, unit: "regions", unit_singular: "region", input: { min: 0, max: 4, step: 1 }, reference: { low: 0, high: 0 } }
+  - { id: ef_tte,      column: "EF-TTE",      label: "Ejection fraction (TTE)",          group: echo, kind: number, unit: "%",          input: { min: 5, max: 80, step: 1 }, reference: { low: 50, high: 75 }, help: "Ejection fraction: the share of blood the left chamber pumps out with each beat, from a transthoracic echo (TTE). On the echo report." }
+  - { id: region_rwma, column: "Region RWMA", label: "Regions with wall-motion abnormality", group: echo, kind: number, unit: "regions", unit_singular: "region", input: { min: 0, max: 4, step: 1 }, reference: { low: 0, high: 0 }, help: "How many of the heart wall's regions ({min}–{max}) move abnormally. On the echo report (\"regional wall-motion abnormality\")." }
   - id: vhd
     column: VHD
     label: "Valvular heart disease"
+    help: "Valvular heart disease: a leaking or narrowed heart valve, graded none to severe. On the echo report."
     group: echo
     kind: category
     options: [ { value: none, label: "None", source: N }, { value: mild, label: "Mild", source: mild }, { value: moderate, label: "Moderate", source: Moderate }, { value: severe, label: "Severe", source: Severe } ]

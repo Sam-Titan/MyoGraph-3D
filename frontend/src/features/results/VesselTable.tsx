@@ -4,6 +4,8 @@ import { useViewState } from '@/features/heart3d/useViewState'
 import { pct, pctRange } from '@/lib/format'
 import { riskCss } from '@/lib/riskColor'
 import { cn } from '@/lib/utils'
+import { PinDelta } from './PinDelta'
+import type { Delta } from './pinModel'
 import { TweenedPercent } from './TweenedPercent'
 import { useThresholdParts } from './verdict'
 
@@ -13,6 +15,7 @@ interface Props {
   vessels: TargetInfo[]
   predictions: Record<string, Prediction> | undefined
   ranges: Record<string, TargetRange> | undefined
+  deltas?: Readonly<Record<string, Delta>>
   /** Actual catheterisation findings (loaded, unedited preset), if known. */
   truth: Record<string, boolean> | null
   selected: string | null
@@ -50,7 +53,15 @@ function EstimateBar({
 }
 
 /** Compact per-vessel table: estimate, where it sits against the model's cut-off, and (unedited preset) the cath result. */
-export function VesselTable({ vessels, predictions, ranges, truth, selected, onSelect }: Props) {
+export function VesselTable({
+  vessels,
+  predictions,
+  ranges,
+  deltas,
+  truth,
+  selected,
+  onSelect,
+}: Props) {
   const setRowHover = useViewState((s) => s.setRowHover)
   const hovered3d = useViewState((s) => s.hover?.id)
   const thresholdParts = useThresholdParts()
@@ -126,6 +137,7 @@ export function VesselTable({ vessels, predictions, ranges, truth, selected, onS
                     range={range?.interval}
                   />
                 )}
+                <PinDelta delta={deltas?.[t.id]} className="mt-1" />
                 {pred && (
                   <span className="sr-only">
                     {range &&

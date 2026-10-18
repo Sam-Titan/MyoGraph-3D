@@ -33,6 +33,7 @@ export function beginStory(story: Story): void {
   }
   const app = useAppStore.getState()
   app.setTab('workspace')
+  app.setPinned(null) // a story is a different patient; comparing against the pin would mislead
   bridge.reset(values)
   app.setSelectedPresetId(story.preset)
   app.setPresetEdited(false)

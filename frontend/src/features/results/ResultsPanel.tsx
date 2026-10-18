@@ -5,8 +5,10 @@ import { BaseRateNote } from './BaseRateNote'
 import { BreakdownTable } from './BreakdownTable'
 import { DisagreementNote, targetsDisagree } from './DisagreementNote'
 import { Headline } from './Headline'
+import { PinButton } from './PinButton'
 import { RangeNote } from './RangeNote'
 import { SummaryPanel } from './SummaryPanel'
+import { usePinDeltas } from './usePinDeltas'
 import { useResults } from './useResults'
 import { VesselTable } from './VesselTable'
 import { WhyPanel } from './WhyPanel'
@@ -25,6 +27,7 @@ export function ResultsPanel() {
     overall,
     vessels,
   } = useResults()
+  const deltas = usePinDeltas()
   const selectFromList = (id: string) => {
     setSelected(id)
     track('target_selected', { target: id, source: 'list' })
@@ -46,11 +49,13 @@ export function ResultsPanel() {
         return (
           <div className="space-y-6">
             <div className={cn('space-y-4 transition-opacity', stale && 'opacity-60')}>
+              {data && <PinButton />}
               {overall && (
                 <Headline
                   target={overall}
                   prediction={data?.targets[overall.id]}
                   range={ranges?.[overall.id]}
+                  delta={deltas[overall.id]}
                   selected={overall.id === selected}
                   onSelect={() => selectFromList(overall.id)}
                 />
@@ -59,6 +64,7 @@ export function ResultsPanel() {
                 vessels={vessels}
                 predictions={data?.targets}
                 ranges={ranges}
+                deltas={deltas}
                 truth={truth}
                 selected={selected}
                 onSelect={selectFromList}

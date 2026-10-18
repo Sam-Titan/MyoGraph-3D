@@ -5,6 +5,8 @@ import { useViewState } from '@/features/heart3d/useViewState'
 import { riskCss } from '@/lib/riskColor'
 import { cn } from '@/lib/utils'
 import { HeadlineSentence } from './HeadlineSentence'
+import { PinDelta } from './PinDelta'
+import type { Delta } from './pinModel'
 import { labelSentence } from './verdict'
 
 type Prediction = components['schemas']['TargetPrediction']
@@ -13,12 +15,13 @@ interface Props {
   target: TargetInfo
   prediction: Prediction | undefined
   range: TargetRange | undefined
+  delta?: Delta
   selected: boolean
   onSelect: () => void
 }
 
 /** The overall estimate as one plain sentence; a button so its WHY can be opened like a vessel's. */
-export function Headline({ target, prediction, range, selected, onSelect }: Props) {
+export function Headline({ target, prediction, range, delta, selected, onSelect }: Props) {
   const setRowHover = useViewState((s) => s.setRowHover)
   const { data: display } = useDisplay()
   return (
@@ -51,6 +54,7 @@ export function Headline({ target, prediction, range, selected, onSelect }: Prop
           />
         </span>
       </span>
+      <PinDelta delta={delta} prefix="Since pinned: " className="mt-1 pl-[1.375rem]" />
       {prediction && range && (
         <span className="t-meta mt-1 block pl-[1.375rem]">
           {labelSentence(range, prediction.threshold, display)}

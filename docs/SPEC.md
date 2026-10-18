@@ -337,6 +337,13 @@ Nothing else hard-codes feature or vessel lists.
   renders a `{factors_*}` list.
 - **`unit_singular`** (optional, `features.yaml`, needs `unit`): unit text used when the value is exactly 1 (Region RWMA:
   `regions` / `region`); exposed on `/api/features` and `breakdown` rows.
+- **`help`** (required per feature, `features.yaml`): plain-language text for the info popover beside each input, served on
+  `/api/features`. No digits are typed into it: `{min}`/`{max}` (number inputs) and `{key}` from the feature's
+  `help_values` are filled from config (`test_help_text.py`).
+- **Pin and compare** (`frontend/src/features/results`): "Pin this result" stores the point estimates and ranges; later
+  edits show `81% → 64% ▼17` (rounded point estimates) on the headline, vessel table and 3D chips, plus "within the
+  model's uncertainty" when the new point estimate is inside the pinned range. Kept across preset changes, cleared when a
+  story starts. Client-only; no analytics event, no share link.
 - **Player** (`frontend/src/features/story`): a card under the heart with Back / Next (Finish) / Exit, arrow keys and Esc;
   offered once per browser as a toast ("See how it works · 1 min", `localStorage` key `myograph.story-seen`),
   replayable from the header button "How it works". Starting loads the story's hold-out patient into the form

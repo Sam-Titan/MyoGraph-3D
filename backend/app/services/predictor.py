@@ -164,6 +164,7 @@ class Predictor:
             reference=RangeInfo(low=f.reference.low, high=f.reference.high)
             if f.reference
             else None,
+            help=f.help_text(),
         )
         if isinstance(f, NumberFeature):
             info.input = InputBoundsInfo(min=f.input.min, max=f.input.max, step=f.input.step)

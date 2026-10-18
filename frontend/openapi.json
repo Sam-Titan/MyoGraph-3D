@@ -955,6 +955,10 @@
               }
             ],
             "title": "Default"
+          },
+          "help": {
+            "type": "string",
+            "title": "Help"
           }
         },
         "type": "object",
@@ -962,7 +966,8 @@
           "id",
           "label",
           "group",
-          "kind"
+          "kind",
+          "help"
         ],
         "title": "FeatureInfo"
       },
