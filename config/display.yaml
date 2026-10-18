@@ -16,8 +16,14 @@ waterfall_top_n: 6
 # Placeholders: {p} estimate, {outcome} the target's outcome phrase, {range} e.g. 65–87%, {thr} the target's cut-off.
 headline: "The model estimates a {p} probability of {outcome}{range}."
 headline_range: " (range {range})"
-# Phones (below md): the big number, then "<label> · <range>" on one line under it. {label} is the target's short label.
-headline_compact: "{label} probability"
+# Phones (below md): the big number, then "<label> · <range>" on one line under it. {label} comes from
+# compact_labels (plain words, no acronyms to decode; keyed by target id, one per target - tests/test_display.py).
+headline_compact: "Probability of {label}"
+compact_labels:
+  CAD: "coronary artery disease"
+  LAD: "a narrowing in the LAD"
+  LCX: "a narrowing in the LCX"
+  RCA: "a narrowing in the RCA"
 headline_range_compact: "range {range}"
 cutoff_line: "The model's cut-off for this estimate is {thr}."
 cutoff_crosses: "The range crosses the cut-off."

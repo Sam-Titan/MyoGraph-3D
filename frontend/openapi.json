@@ -779,6 +779,13 @@
             "type": "string",
             "title": "Headline Range Compact"
           },
+          "compact_labels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Compact Labels"
+          },
           "cutoff_line": {
             "type": "string",
             "title": "Cutoff Line"
@@ -823,6 +830,7 @@
           "headline_range",
           "headline_compact",
           "headline_range_compact",
+          "compact_labels",
           "cutoff_line",
           "cutoff_crosses",
           "base_rate_note",

@@ -71,7 +71,9 @@ export function Headline({ target, prediction, range, delta, selected, onSelect 
               className="num block min-h-[1lh] text-[2.5rem] font-bold leading-none"
             />
             <span className="mt-1.5 block min-h-[1lh] text-[0.8125rem] leading-snug text-muted-foreground">
-              {fillText(display.headline_compact, { label: target.label })}
+              {fillText(display.headline_compact, {
+                label: display.compact_labels[target.id] ?? target.plain_label,
+              })}
               {interval &&
                 ` · ${fillText(display.headline_range_compact, { range: pctRange(interval.lo, interval.hi) })}`}
             </span>

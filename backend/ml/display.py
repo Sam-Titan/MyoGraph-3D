@@ -123,6 +123,7 @@ class DisplayConfig(_Strict):
     headline_range: str
     headline_compact: str
     headline_range_compact: str
+    compact_labels: dict[str, str]
     cutoff_line: str
     cutoff_crosses: str
     base_rate_note: BaseRateNote

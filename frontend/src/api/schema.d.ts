@@ -378,6 +378,10 @@ export interface components {
             headline_compact: string;
             /** Headline Range Compact */
             headline_range_compact: string;
+            /** Compact Labels */
+            compact_labels: {
+                [key: string]: string;
+            };
             /** Cutoff Line */
             cutoff_line: string;
             /** Cutoff Crosses */
