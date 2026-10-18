@@ -14,7 +14,11 @@ the Z-Alizadeh Sani dataset (303 patients).
 > **Disclaimer:** MyoGraph 3D is a research demo, not a medical device. Outputs are model estimates
 > of probability learned from a small public dataset and must not be used for clinical decisions.
 
-![Workspace with the 3-vessel preset](docs/img/workspace-3vessel.png)
+![Demo: story mode, selecting an artery with its range and waterfall, then pinning a result and comparing after an edit](docs/media/demo.gif)
+
+<sub>18-second demo (also as [MP4](docs/media/demo.mp4)): a guided story, the LAD with its range and waterfall, then pin and compare.</sub>
+
+![Desktop workspace: a 3-vessel hold-out patient with the LAD selected, 3D heart, vessel table and estimates](docs/img/v2-desktop-workspace.jpg)
 
 ## Live demo
 
@@ -32,17 +36,32 @@ activity (re-enable under Actions). Runs may also be delayed.
 
 ## Features
 
-- **Live predictions:** edit any input and the four calibrated probabilities update immediately.
-- **3D vessel mapping with rotate-to-vessel:** each target is coloured on the heart *and* labelled with
-  its number; selecting a vessel rotates the camera to it (e.g. the LCX, which hides behind the heart).
+- **Live predictions:** edit any input and the four calibrated probabilities (overall CAD, LAD, LCX, RCA) update immediately.
+- **3D vessel mapping:** each probability is coloured on the heart *and* shown as a number. Selecting a vessel rotates
+  the camera to it (the LCX hides behind the heart), fades the others and shades the approximate area it supplies.
+  Runs without a GPU; phones get a lighter model and touch picking.
+- **Uncertainty ranges:** every estimate has a range from 50 bootstrap-refit models, and a result is marked
+  "uncertain" when its range crosses the model's cut-off. The range says how much the estimate depends on the
+  training sample, not how likely it is to be right.
+- **Plain-language results:** one sentence per estimate, a probability waterfall (baseline to estimate, top factors
+  as percentage-point steps), the base rate in the training data, glossary tooltips and per-input help.
+- **Story mode:** four short guided stories on real hold-out patients (a low estimate, one artery standing out,
+  three arteries, a confidently wrong case). The real result is hidden until the reveal step.
+- **Pin and compare:** pin a result, edit the patient, and see `81% → 64% ▼17` on the headline, table and 3D chips,
+  with a note when the change is within the model's uncertainty.
 - **SHAP "why" panel:** per-feature contributions that sum exactly to the calibrated logit.
 - **Physiological breakdown:** each measurement against its reference range, with out-of-range warnings.
 - **Plain-language summary:** deterministic template, optionally reworded by Groq when a key is set.
-- **Validation tab:** CV and hold-out metrics, calibration, ROC, and stability across 20 random splits.
+- **Validation and Benchmark tabs:** CV and hold-out metrics, calibration, ROC, stability across 20 random splits, and
+  a same-protocol comparison of models and feature sets (see Results).
+- **Mobile and print:** bottom navigation and an Edit-patient sheet on phones, a print view, keyboard and
+  screen-reader support, automated axe accessibility checks in `make e2e`.
+- **Fast first screen:** a committed `snapshot.json` (predictions and ranges for every preset) paints a result
+  before a sleeping API has woken up.
 
-![LCX selected, camera rotated to the vessel](docs/img/lcx-rotated.png)
-
-![Model performance tab](docs/img/performance.png)
+| Phone: LAD selected | Phone: story mode | Desktop: LCX, camera rotated |
+|---|---|---|
+| ![Phone workspace with the LAD selected and 85% headline](docs/img/v2-phone-workspace.jpg) | ![Phone story card explaining the LCX estimate](docs/img/v2-phone-story.jpg) | ![Desktop view with the LCX selected and the camera turned to the left side](docs/img/v2-desktop-lcx.jpg) |
 
 ## Setup
 
@@ -175,6 +194,23 @@ IP taken from Netlify's `x-nf-client-connection-ip` header, never query strings 
 Render dashboard under the service's Logs. `TRUST_PROXY_HEADERS` (default `true`) and `LOG_IP_MODE`
 (`full` or `truncated`) control this; the headers can be forged, so the IP is for analytics only.
 
+### Environment variables
+
+| Variable | Where | Default | Purpose |
+|---|---|---|---|
+| `GROQ_API_KEY`, `GROQ_MODEL` | API (`.env` or Render) | unset | Optional wording of the summary; the app works without them |
+| `TRUST_PROXY_HEADERS` | API | `true` | Take the visitor IP from Netlify's header for the access log |
+| `LOG_IP_MODE` | API | `full` | `full` or `truncated` (zero the last IPv4 octet) |
+| `WEB_PORT` / `API_PORT` | `make dev` | 5180 / 8010 | Local dev ports |
+| `VITE_POSTHOG_KEY`, `VITE_POSTHOG_HOST`, `VITE_POSTHOG_DOMAINS` | frontend build (Netlify) | unset | Analytics; off unless all conditions in "Analytics" hold |
+
+**Privacy.** Patient values stay in your browser and are sent only to the prediction API, which does not store
+them. Analytics (hosted deployment only) are cookieless PostHog page views and a few anonymous action names;
+never form values, probabilities or free text, and query strings and `#` fragments are stripped from URLs. The API
+access log records the visitor IP, path, status and timing (never query strings or bodies). Only the summary facts
+(percentages, ranges, top factors) go to Groq, and only if you set a key. This is a research demo: do not enter
+real patient data.
+
 ### Optional and advanced
 
 | Command | What it does |
@@ -222,18 +258,24 @@ flowchart LR
   subgraph Config
     F[config/features.yaml]
     A[config/anatomy.yaml]
+    DS[display.yaml, stories.yaml, uncertainty.yaml]
   end
-  D[(Z-Alizadeh Sani CSV)] --> T[ml: preprocess, split, train, calibrate]
+  D[(Z-Alizadeh Sani CSV)] --> T[ml: preprocess, split, train, calibrate, bootstrap]
   F --> T
   T --> ART[(backend/artifacts)]
-  ART --> API[FastAPI /api]
+  ART --> API["FastAPI /api: predict, intervals, summary, benchmark"]
   F --> API
   A --> API
-  BP[BodyParts3D] --> G[build_heart_glb.py] --> GLB[heart.glb]
+  DS --> API
+  API -->|make snapshot| SNAP[public/snapshot.json]
+  BP[BodyParts3D] --> G[build_heart_glb.py] --> GLB[heart.glb, heart.mobile.glb]
   A --> G
   API -->|OpenAPI types| UI[React + three.js]
+  SNAP -->|first paint, before the API wakes| UI
   GLB --> UI
-  UI -->|nginx proxy| API
+  UI -->|Netlify or nginx proxy| API
+  KA[GitHub Actions keep-alive, every 14 min] -->|GET /api/health| API
+  UI -.->|cookieless events| PH[PostHog]
 ```
 
 The design is config-driven. `config/features.yaml` is the single source of truth for inputs, groups,
@@ -262,6 +304,16 @@ Probabilities are calibrated.
 Cross-validation is 5-fold repeated 3 times on the training split. Across 20 random splits the seed-42
 split is the hardest for overall CAD (hold-out ROC-AUC 0.824 against a median of 0.911), so the hold-out
 number is a conservative estimate.
+
+**Benchmark (Benchmark tab, `make benchmark`).** Logistic regression, random forest and XGBoost (the production
+model) were compared under one protocol (5x3 repeated stratified CV on the training split, Platt scaling, paired
+Nadeau-Bengio corrected tests, Holm-Bonferroni within each family), and XGBoost was refit without the ECG and/or
+echocardiography feature groups. After the corrections **no model and no feature set is clearly better** than
+XGBoost with all features: none of the 24 model comparisons is clear, and 1 of 36 ablation comparisons is (dropping
+both ECG and echo worsens the LAD Brier score by about 0.024). With 303 patients the differences are mostly within
+noise, so XGBoost was kept, not because it won. TabPFN is supported offline but was skipped (not installed).
+
+![Benchmark tab: model comparison and feature-group ablation with corrected paired differences](docs/img/v2-desktop-benchmark.jpg)
 
 **Serving throughput** (`scripts/load_test.py`, laptop, WSL2 Docker, 500 `POST /api/predict` at 20 concurrent,
 0 errors): about **59 predictions/s** at 20 concurrent, with 0 errors. The 340 ms median / 462 ms p95 latency

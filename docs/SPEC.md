@@ -425,7 +425,7 @@ Nothing else hard-codes feature or vessel lists.
 - **Events** (property allow-list enforced in `track()`): `preset_loaded {preset, source: auto|user|story}`,
   `target_selected {target, source: 3d|list}`, `tab_viewed {tab}`, `form_edited` (once per session),
   `summary_requested`, `view_toggled {control}`, `story_started {story}`, `story_completed {story}`. Never a field value, probability or free text.
-  `quick_mode_used` and `shared_link_opened` arrive with Phase 18.
+  The optional share link was not built, so there are no events for it.
 - No Netlify `/ingest` reverse proxy: events from ad-blocking visitors are lost, which is accepted.
 - `netlify.toml` sets no CSP, so no allow-listing was needed. `render.yaml` carries `TRUST_PROXY_HEADERS` and
   `LOG_IP_MODE` as plain values. Frontend unit tests use vitest (`npm test`, part of `make test`).
@@ -492,7 +492,42 @@ Nothing else hard-codes feature or vessel lists.
   preset's values are compared with the live ones and anything stale is reset (that query then refetches). A missing or invalid
   file falls back silently to the live path. Seeded values skip the 300/400 ms predict/intervals debounce.
 - Editing the patient is a new key, so it uses the live API (and the wake notice) as before.
-- **Phone headline (below `md`):** large `{p}%`, then `{label} probability · range {lo}–{hi}%` (`headline_compact`,
-  `headline_range_compact` in `config/display.yaml`) and the cut-off label only; `md+` keeps the full sentence. Heart height on
+- **Phone headline (below `md`):** large `{p}%`, then `Probability of {label} · range {lo}–{hi}%` (`headline_compact`,
+  `headline_range_compact` in `config/display.yaml`; `{label}` comes from `compact_labels`, Phase 21) and the cut-off label only; `md+` keeps the full sentence. Heart height on
   phones is 38dvh and the pin hint is hidden, so the first vessel row is on the first screen at 390x844.
 - Print summary and banner take the disclaimer from `features/layout/disclaimer.ts`.
+
+### Phase 14.5 / 19: mobile
+- Phone layout (below `md`): bottom navigation with a compact disclaimer that stays pinned, a sticky collapsible heart, an
+  "Edit patient" bottom sheet for the form, stacked vessel tables, `heart.mobile.glb` and dpr <= 1.25 on coarse pointers, rendering
+  paused off-screen. Touch: taps use a tolerance around vessel samples and ignore points behind the first opaque surface (distance is
+  measured to the segments between samples); long-press shows the tooltip. `make dev-lan` serves the app to a phone on the LAN.
+- `scripts/screenshots.mjs` covers 1440x900, 1024x768, 768x1024, 844x390, 390x844 and 360x800 (filters `SHOTS_VIEWS`,
+  `SHOTS_VIEWPORTS`) and runs a DOM probe: no horizontal overflow and a pinned disclaimer on phone widths.
+
+### Phase 17c / 17.5: startup and benchmark
+- Bootstrap replicates load in a background thread: `/api/health` and `/api/predict` are ready without them; `/api/intervals` and
+  `/api/summary` answer 503 + `Retry-After` until loaded and the frontend retries quietly.
+- **`config/benchmark.yaml`** (validated by `backend/ml/benchmark_config.py`, run by `make benchmark`, output
+  `backend/artifacts/benchmark.json`, served by `GET /api/benchmark`): logistic regression, random forest, XGBoost (reference) and
+  optional offline TabPFN under one protocol (the `make prepare` split, 5x3 repeated stratified CV on train, Platt scaling on
+  out-of-fold scores, Youden threshold), plus an XGBoost ablation by feature group (all, no ECG, no echo, neither). Paired per-fold
+  differences use the Nadeau-Bengio corrected resampled t-test; Holm-Bonferroni adjusts p within each family and metric. A gap is
+  "clear" only if the adjusted p < 0.05 and the corrected CI excludes 0. Hold-out ROC-AUC is reported, never used to choose.
+- **Result (artifacts as committed):** 0 of 24 model comparisons and 1 of 36 ablation comparisons is clear (dropping ECG and echo
+  worsens the LAD Brier score by about 0.024). No model or feature set is clearly better than XGBoost with all features. TabPFN is
+  skipped (not installed; PyTorch is never in the API image). The Benchmark tab states this in plain words.
+
+### Phase 18: help text and pin and compare
+- Every feature has a `help` text (see Phase 16b); each input has an info popover. Pin and compare is described under Phase 16b.
+
+### Phase 21: QA, docs, release
+- **Phone labels:** `compact_labels` in `config/display.yaml` (one plain-words entry per target id, enforced by
+  `tests/test_display_labels.py`) fills `{label}` in `headline_compact`.
+- **CI:** `.github/workflows/ci.yml` runs `make check` (ruff, biome, pytest, vitest, tsc) on push and PR to `main` and `v2`: uv with
+  Python 3.14.4, Node 22 (as `netlify.toml`), caches, `permissions: contents: read`, no secrets (Groq tests run without a key).
+  Playwright e2e/perf stay local (`make e2e`, `make perf`, they need `make dev`).
+- **Demo:** `scripts/record-demo.mjs` (Playwright, 1280x720, needs `make dev`) records story mode, an artery with range and waterfall,
+  then pin and compare; `scripts/make-demo-media.sh` (ffmpeg, `TRIM_START` = seconds of loading screen printed by the recorder)
+  writes `docs/media/demo.mp4` and `docs/media/demo.gif` (<= ~5 MB).
+- Release: merge `v2` into `main` with a merge commit, tag `v2.0.0`. `CHANGELOG.md` lists v1.0.0 to v2.0.0.
