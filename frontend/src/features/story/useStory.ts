@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { FormValues } from '@/features/patient/formSchema'
+import type { Pin } from '@/features/results/pinModel'
 import type { Tab } from '@/store/app'
 
 /** The patient as it was before a story started, restored on exit or finish. */
@@ -9,6 +10,7 @@ export interface Snapshot {
   edited: boolean
   selected: string | null
   tab: Tab
+  pinned: Pin | null
 }
 
 export interface ActiveStory {

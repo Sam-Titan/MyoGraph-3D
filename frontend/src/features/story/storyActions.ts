@@ -16,6 +16,7 @@ function capture(): Snapshot | null {
     edited: app.presetEdited,
     selected: app.selectedTarget,
     tab: app.tab,
+    pinned: app.pinned,
   }
 }
 
@@ -42,7 +43,7 @@ export function beginStory(story: Story): void {
   track('story_started', { story: story.id })
 }
 
-/** Leave the story and put back the patient (values, preset, edited flag, selection) from before it. */
+/** Leave the story and put back the patient (values, preset, edited flag, selection, pin, tab) from before it. */
 export function endStory(completed: boolean): void {
   const active = useStory.getState().active
   if (!active) return
@@ -59,6 +60,8 @@ export function endStory(completed: boolean): void {
   }
   app.setSelectedPresetId(snapshot.presetId)
   app.setPresetEdited(snapshot.edited)
+  app.setPinned(snapshot.pinned)
+  app.setTab(snapshot.tab)
   if (snapshot.selected) focusTarget(snapshot.selected)
   useStory.getState().clear()
   if (completed) track('story_completed', { story: id })
