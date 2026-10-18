@@ -5,6 +5,8 @@
 @import "@fontsource-variable/geist-mono";
 
 @custom-variant dark (&:is(.dark *));
+/* Landscape phones: too little height for a sticky heart. */
+@custom-variant short (@media (max-height: 500px));
 
 @theme inline {
   --font-heading: var(--font-sans);

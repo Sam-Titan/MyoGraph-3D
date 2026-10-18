@@ -17,6 +17,9 @@ interface AppState {
   intervalValues: PredictRequest['values'] | null
   /** Estimates saved by “Pin this result”; later edits are shown as changes against it. */
   pinned: Pin | null
+  /** Header counts of the patient form, shown on the phone's "Edit patient" button. */
+  patientSummary: { edited: number; outside: number }
+  setPatientSummary: (summary: { edited: number; outside: number }) => void
   setPinned: (pin: Pin | null) => void
   setTab: (tab: Tab) => void
   setSelectedTarget: (id: string | null) => void
@@ -34,6 +37,14 @@ export const useAppStore = create<AppState>((set) => ({
   predictValues: null,
   intervalValues: null,
   pinned: null,
+  patientSummary: { edited: 0, outside: 0 },
+  setPatientSummary: (patientSummary) =>
+    set((s) =>
+      s.patientSummary.edited === patientSummary.edited &&
+      s.patientSummary.outside === patientSummary.outside
+        ? s
+        : { patientSummary },
+    ),
   setPinned: (pinned) => set({ pinned }),
   setTab: (tab) => set({ tab }),
   setSelectedTarget: (selectedTarget) => set({ selectedTarget }),

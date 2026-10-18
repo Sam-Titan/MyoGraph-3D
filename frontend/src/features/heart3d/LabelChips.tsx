@@ -68,7 +68,7 @@ export function LabelChips({
             type="button"
             data-target-chip={t.id}
             aria-pressed={t.id === selected}
-            aria-label={`${t.label}, model estimate ${pct(p)}${change}`}
+            aria-label={`${t.id} ${pct(p)}, ${t.label}, model estimate${change}`}
             title={`${t.plain_label}${change}`}
             ref={(el) => {
               getEls(registry, t.id).chip = el
@@ -78,7 +78,7 @@ export function LabelChips({
               track('target_selected', { target: t.id, source: '3d' })
             }}
             className={cn(
-              'num pointer-events-auto invisible absolute top-0 left-0 whitespace-nowrap rounded-md border px-1.5 py-0.5 text-xs font-medium shadow-sm backdrop-blur-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-300 data-[hidden=true]:border-dashed data-[hidden=true]:bg-slate-950/90 sm:px-2 sm:text-sm',
+              'num pointer-events-auto invisible absolute before:absolute before:-inset-x-1 before:-inset-y-[11px] top-0 left-0 whitespace-nowrap rounded-md border px-1.5 py-0.5 text-xs font-medium shadow-sm backdrop-blur-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-300 data-[hidden=true]:border-dashed data-[hidden=true]:bg-slate-950/90 sm:px-2 sm:text-sm',
               t.id === selected
                 ? 'border-white/80 bg-slate-950/85 text-white'
                 : 'border-white/30 bg-slate-950/65 text-slate-100',

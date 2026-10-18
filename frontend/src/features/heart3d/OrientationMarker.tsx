@@ -35,7 +35,7 @@ export function OrientationMarker() {
     <div
       role="img"
       aria-label="Orientation: A anterior, P posterior, L patient's left, R patient's right"
-      className="relative size-10 rounded-full border border-white/20 bg-slate-950/50 text-viewport-foreground"
+      className="relative size-10 shrink-0 rounded-full border border-white/20 bg-slate-950/50 text-viewport-foreground"
     >
       <span className={L} style={at('--ant-x', '--ant-y', 1)}>
         A

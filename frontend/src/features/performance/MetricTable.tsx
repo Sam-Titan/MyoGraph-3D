@@ -37,8 +37,9 @@ export function MetricTable({ metrics }: { metrics: MetricsResponse }) {
       }
     >
       <div className="max-w-full overflow-x-auto">
-        <table className="w-full min-w-[56rem] text-sm">
-          <thead className="border-b text-xs text-muted-foreground">
+        {/* Below sm each target is a stacked card: ten columns do not fit a phone. */}
+        <table className="w-full min-w-[56rem] text-sm max-sm:block max-sm:min-w-0">
+          <thead className="border-b text-xs text-muted-foreground max-sm:hidden">
             <tr>
               <th className={TH}>Target</th>
               <th className={TH}>Cut-off</th>
@@ -51,10 +52,16 @@ export function MetricTable({ metrics }: { metrics: MetricsResponse }) {
               <th className={TH}>Majority-class accuracy</th>
             </tr>
           </thead>
-          <tbody className="divide-y">
+          <tbody className="divide-y max-sm:block">
             {rows.map((r) => (
-              <tr key={r.id}>
-                <th scope="row" className="px-2 py-2 text-left font-normal">
+              <tr
+                key={r.id}
+                className="max-sm:grid max-sm:grid-cols-2 max-sm:gap-x-3 max-sm:gap-y-2 max-sm:py-3"
+              >
+                <th
+                  scope="row"
+                  className="px-2 py-2 text-left font-normal max-sm:col-span-1 max-sm:p-0"
+                >
                   <span
                     aria-hidden
                     className="mr-1.5 inline-block size-2 rounded-full"
@@ -62,22 +69,37 @@ export function MetricTable({ metrics }: { metrics: MetricsResponse }) {
                   />
                   <span className="num font-semibold">{r.id}</span>
                 </th>
-                <td className="num px-2 py-2">{fixed(r.threshold)}</td>
+                <td
+                  data-label="Cut-off"
+                  className="num px-2 py-2 max-sm:p-0 max-sm:before:block max-sm:before:text-xs max-sm:before:text-muted-foreground max-sm:before:content-[attr(data-label)]"
+                >
+                  {fixed(r.threshold)}
+                </td>
                 {r.cells.map((c) => (
-                  <td key={c.key} className="px-2 py-2">
+                  <td
+                    key={c.key}
+                    data-label={METRICS.find((m) => m.key === c.key)?.label}
+                    className="px-2 py-2 max-sm:p-0 max-sm:before:block max-sm:before:text-xs max-sm:before:text-muted-foreground max-sm:before:content-[attr(data-label)]"
+                  >
                     <span className="num block font-semibold">{pm(c.cvMean, c.cvStd)}</span>
                     <span className="num block text-xs text-muted-foreground">
                       hold-out {fixed(c.holdout)}
                     </span>
                   </td>
                 ))}
-                <td className="px-2 py-2">
+                <td
+                  data-label="Prevalence"
+                  className="px-2 py-2 max-sm:p-0 max-sm:before:block max-sm:before:text-xs max-sm:before:text-muted-foreground max-sm:before:content-[attr(data-label)]"
+                >
                   <span className="num block">{pct(r.prevalence.train)} train</span>
                   <span className="num block text-xs text-muted-foreground">
                     {pct(r.prevalence.test)} hold-out
                   </span>
                 </td>
-                <td className="px-2 py-2">
+                <td
+                  data-label="Majority-class accuracy"
+                  className="px-2 py-2 max-sm:p-0 max-sm:before:block max-sm:before:text-xs max-sm:before:text-muted-foreground max-sm:before:content-[attr(data-label)]"
+                >
                   <span className="num block">{pct(r.majority.train)} train</span>
                   <span className="num block text-xs text-muted-foreground">
                     {pct(r.majority.test)} hold-out

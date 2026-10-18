@@ -32,9 +32,20 @@ export async function waitReady(page: Page): Promise<void> {
   await page.waitForTimeout(700)
 }
 
+/** Below 1280 px the patient form lives in a bottom sheet; returns true if it had to be opened. */
+export async function openPatientSheet(page: Page): Promise<boolean> {
+  const edit = page.getByRole('button', { name: 'Edit patient' })
+  if (!(await edit.isVisible())) return false
+  await edit.click()
+  await page.locator('#preset-select').waitFor()
+  return true
+}
+
 export async function pickPreset(page: Page, label: string): Promise<void> {
+  const sheet = await openPatientSheet(page)
   await page.locator('#preset-select').click()
   await page.getByRole('option', { name: label }).click()
+  if (sheet) await page.keyboard.press('Escape')
   await page.waitForTimeout(800)
   await waitReady(page)
 }

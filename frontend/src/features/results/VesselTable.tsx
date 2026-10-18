@@ -66,14 +66,15 @@ export function VesselTable({
   const hovered3d = useViewState((s) => s.hover?.id)
   const thresholdParts = useThresholdParts()
   return (
-    <table className="w-full table-fixed border-collapse text-sm">
-      <colgroup>
+    /* Below sm each vessel becomes a stacked card (4 columns do not fit 360 px). */
+    <table className="w-full table-fixed border-collapse text-sm max-sm:block">
+      <colgroup className="max-sm:hidden">
         <col className="w-[22%]" />
         <col className="w-[29%]" />
         <col className="w-[30%]" />
         <col className="w-[19%]" />
       </colgroup>
-      <thead>
+      <thead className="max-sm:hidden">
         <tr className="t-meta text-left">
           <th scope="col" className="px-3 pb-1 font-medium">
             Vessel
@@ -89,7 +90,7 @@ export function VesselTable({
           </th>
         </tr>
       </thead>
-      <tbody>
+      <tbody className="max-sm:block">
         {vessels.map((t) => {
           const pred = predictions?.[t.id]
           const range = ranges?.[t.id]
@@ -106,10 +107,14 @@ export function VesselTable({
               onPointerLeave={() => setRowHover(null)}
               className={cn(
                 'cursor-pointer transition-colors hover:bg-muted data-[linked=true]:bg-muted',
+                'max-sm:mb-2 max-sm:grid max-sm:grid-cols-2 max-sm:gap-x-3 max-sm:rounded-lg max-sm:border max-sm:p-2',
                 'data-[selected=true]:bg-accent data-[selected=true]:shadow-[inset_2px_0_0_var(--primary)]',
               )}
             >
-              <th scope="row" className="px-3 py-2 text-left align-top font-normal">
+              <th
+                scope="row"
+                className="px-3 py-2 text-left align-top font-normal max-sm:col-span-2 max-sm:px-1 max-sm:py-1"
+              >
                 <button
                   type="button"
                   aria-pressed={isSelected}
@@ -121,7 +126,8 @@ export function VesselTable({
                   <span className="t-meta block">{t.plain_label}</span>
                 </button>
               </th>
-              <td className="px-1 py-2 align-top">
+              <td className="px-1 py-2 align-top max-sm:px-1 max-sm:py-1">
+                <span className="t-meta block sm:hidden">Estimate</span>
                 <span className="block text-[0.9375rem] leading-tight">
                   <TweenedPercent value={pred?.probability} className="num font-semibold" />
                   {range && (
@@ -146,7 +152,8 @@ export function VesselTable({
                   </span>
                 )}
               </td>
-              <td className="px-1 py-2 align-top text-[0.8125rem] leading-snug">
+              <td className="px-1 py-2 align-top text-[0.8125rem] leading-snug max-sm:px-1 max-sm:py-1">
+                <span className="t-meta block sm:hidden">Model</span>
                 {range ? (
                   <>
                     <span className="block">{thresholdParts(range).main}</span>
@@ -158,7 +165,8 @@ export function VesselTable({
                   '—'
                 )}
               </td>
-              <td className="px-1 py-2 align-top">
+              <td className="px-1 py-2 align-top max-sm:col-span-2 max-sm:px-1 max-sm:py-1">
+                <span className="t-meta block sm:hidden">Cath result</span>
                 {actual === undefined ? (
                   <span className="t-meta">—</span>
                 ) : (

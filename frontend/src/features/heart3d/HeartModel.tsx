@@ -1,12 +1,13 @@
 import { Outlines } from '@react-three/drei'
 import { createPortal, type ThreeEvent, useFrame, useThree } from '@react-three/fiber'
-import { Fragment, useEffect, useLayoutEffect, useMemo } from 'react'
+import { Fragment, type RefObject, useEffect, useLayoutEffect, useMemo } from 'react'
 import { Color, type Mesh, SRGBColorSpace } from 'three'
 import { track } from '@/lib/analytics'
 import { NEUTRAL, riskEmissive, riskRgb } from '@/lib/riskColor'
 import { useAppStore } from '@/store/app'
 import { HEART_COLOR, makeRig, type Rig } from './rigs'
 import { injectSupply, makeSupplyUniforms, SUPPLY_MAX } from './supplyShader'
+import type { PickVessel } from './TapPicker'
 import type { NodeBinding } from './useHeartModel'
 import type { Probabilities } from './useProbabilities'
 import { focusTarget, useViewState } from './useViewState'
@@ -34,6 +35,8 @@ interface Props {
   probabilities: Probabilities
   /** From useClickGuard: false when the gesture was a drag. */
   isClick: () => boolean
+  /** Nearest vessel to a screen point within the tap tolerance (touch taps beside a thin artery). */
+  pick?: RefObject<PickVessel>
 }
 
 /** Inverted-hull outline on every mesh of a vessel: thin and dark, thicker and light when active. */
@@ -66,7 +69,7 @@ function VesselOutlines({ rig }: { rig: Rig }) {
  * ~400 ms) and nothing else; identity comes from outlines, labels and position. A selected vessel
  * puts the others into focus mode (faded, desaturated) and tints its supply region on the heart.
  */
-export function HeartModel({ bindings, probabilities, isClick }: Props) {
+export function HeartModel({ bindings, probabilities, isClick, pick }: Props) {
   const invalidate = useThree((s) => s.invalidate)
   const gl = useThree((s) => s.gl)
   const selected = useAppStore((s) => s.selectedTarget)
@@ -203,6 +206,7 @@ export function HeartModel({ bindings, probabilities, isClick }: Props) {
               object={r.b.object}
               onPointerOver={(e: PointerEvent3D) => {
                 e.stopPropagation()
+                if (e.nativeEvent.pointerType === 'touch') return // touch: long-press shows the tooltip
                 setCursor('pointer')
                 useViewState.getState().setHover({
                   id: target.id,
@@ -212,6 +216,7 @@ export function HeartModel({ bindings, probabilities, isClick }: Props) {
               }}
               onPointerMove={(e: PointerEvent3D) => {
                 e.stopPropagation()
+                if (e.nativeEvent.pointerType === 'touch') return
                 useViewState.getState().setHover({
                   id: target.id,
                   x: e.nativeEvent.offsetX,
@@ -226,8 +231,14 @@ export function HeartModel({ bindings, probabilities, isClick }: Props) {
               onClick={(e: PointerEvent3D) => {
                 e.stopPropagation()
                 if (isClick()) {
-                  focusTarget(target.id)
-                  track('target_selected', { target: target.id, source: '3d' })
+                  // A finger lands on the heart surface right beside a thin artery: prefer the vessel.
+                  const near =
+                    target.role !== 'vessel' && ['touch', 'pen'].includes(e.nativeEvent.pointerType)
+                      ? pick?.current(e.nativeEvent.clientX, e.nativeEvent.clientY)
+                      : null
+                  const id = near ?? target.id
+                  focusTarget(id)
+                  track('target_selected', { target: id, source: '3d' })
                 }
               }}
             />

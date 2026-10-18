@@ -2,7 +2,7 @@ WEB_PORT ?= 5180
 API_PORT ?= 8010
 export WEB_PORT API_PORT
 
-.PHONY: setup dev dev-api dev-web prepare train stability benchmark assets types lint fmt test check docker screenshots e2e perf report
+.PHONY: setup dev dev-lan dev-api dev-web dev-web-lan prepare train stability benchmark assets types lint fmt test check docker screenshots e2e perf report
 
 setup:
 	cd backend && uv sync --extra assets
@@ -11,11 +11,18 @@ setup:
 dev:
 	$(MAKE) -j2 dev-api dev-web
 
+# Same as dev, but Vite listens on all interfaces so a phone on the LAN can open it.
+dev-lan:
+	$(MAKE) -j2 dev-api dev-web-lan
+
 dev-api:
 	cd backend && uv run uvicorn app.main:app --reload --port $(API_PORT)
 
 dev-web:
 	cd frontend && npm run dev
+
+dev-web-lan:
+	cd frontend && npm run dev -- --host 0.0.0.0
 
 prepare:
 	cd backend && uv run python -m ml.prepare

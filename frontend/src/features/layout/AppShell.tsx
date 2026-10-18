@@ -1,3 +1,4 @@
+import { BarChart3, HeartPulse, Info, type LucideIcon, Scale } from 'lucide-react'
 import { Toaster } from 'sonner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { AboutPanel } from '@/features/about/AboutPanel'
@@ -13,11 +14,11 @@ import { StoryPrompt } from '@/features/story/StoryPrompt'
 import { track } from '@/lib/analytics'
 import { type Tab, useAppStore } from '@/store/app'
 
-const TABS: { id: Tab; label: string }[] = [
-  { id: 'workspace', label: 'Patient workspace' },
-  { id: 'performance', label: 'Model performance' },
-  { id: 'benchmark', label: 'Benchmark' },
-  { id: 'about', label: 'About and method' },
+const TABS: { id: Tab; label: string; short: string; icon: LucideIcon }[] = [
+  { id: 'workspace', label: 'Patient workspace', short: 'Patient', icon: HeartPulse },
+  { id: 'performance', label: 'Model performance', short: 'Model', icon: BarChart3 },
+  { id: 'benchmark', label: 'Benchmark', short: 'Benchmark', icon: Scale },
+  { id: 'about', label: 'About and method', short: 'About', icon: Info },
 ]
 
 // Inactive panels use keepMounted and stay in the DOM, hidden via the `hidden` attribute. Phase 7
@@ -36,7 +37,7 @@ export function AppShell() {
         setTab(v as Tab)
         track('tab_viewed', { tab: v })
       }}
-      className="h-dvh gap-0 bg-background text-foreground"
+      className="h-dvh gap-0 bg-background text-foreground max-lg:pb-[calc(3.5rem+env(safe-area-inset-bottom))]"
     >
       {/* Banner + header never scroll away: the disclaimer is visible on every tab. */}
       <div className="sticky top-0 z-50 shrink-0">
@@ -46,15 +47,22 @@ export function AppShell() {
             <h1 className="text-lg font-semibold tracking-tight">MyoGraph</h1>
             <span className="text-xs text-muted-foreground">3D</span>
           </div>
-          {/* Scrolls inside its own row on phones instead of widening the page. */}
+          {/* Top tabs from lg; below that the same list is a bottom navigation bar (thumb reach). */}
           <TabsList
             variant="line"
             aria-label="Sections"
-            className="max-w-full min-w-0 justify-start overflow-x-auto"
+            className="max-w-full min-w-0 justify-start overflow-x-auto max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-50 max-lg:grid max-lg:h-[calc(3.5rem+env(safe-area-inset-bottom))] max-lg:w-full max-lg:max-w-none max-lg:grid-cols-4 max-lg:gap-0 max-lg:rounded-none max-lg:border-t max-lg:bg-background max-lg:p-0 max-lg:pb-[env(safe-area-inset-bottom)]"
           >
             {TABS.map((t) => (
-              <TabsTrigger key={t.id} value={t.id} className="shrink-0 px-3">
-                {t.label}
+              <TabsTrigger
+                key={t.id}
+                value={t.id}
+                aria-label={t.label}
+                className="shrink-0 px-3 max-lg:h-14 max-lg:flex-col max-lg:gap-0.5 max-lg:rounded-none max-lg:px-1 max-lg:text-[0.6875rem] max-lg:after:inset-x-3 max-lg:after:top-0 max-lg:after:bottom-auto"
+              >
+                <t.icon aria-hidden className="size-5 lg:hidden" />
+                <span className="lg:hidden">{t.short}</span>
+                <span className="max-lg:hidden">{t.label}</span>
               </TabsTrigger>
             ))}
           </TabsList>
@@ -65,23 +73,25 @@ export function AppShell() {
         </header>
       </div>
 
-      <ErrorBoundary>
-        <TabsContent value="workspace" keepMounted className={PANEL}>
-          <WorkspaceLayout />
-        </TabsContent>
-        <TabsContent value="performance" keepMounted className={`${PANEL} overflow-y-auto`}>
-          {/* Charts measure their container: mounting them while the tab is hidden gives 0x0 (Recharts warns). */}
-          {tab === 'performance' && <PerformancePanel />}
-        </TabsContent>
-        <TabsContent value="benchmark" keepMounted className={`${PANEL} overflow-y-auto`}>
-          {tab === 'benchmark' && <BenchmarkPanel />}
-        </TabsContent>
-        <TabsContent value="about" keepMounted className={`${PANEL} overflow-y-auto`}>
-          <AboutPanel />
-        </TabsContent>
-      </ErrorBoundary>
+      <main className="flex min-h-0 flex-1 flex-col">
+        <ErrorBoundary>
+          <TabsContent value="workspace" keepMounted className={PANEL}>
+            <WorkspaceLayout />
+          </TabsContent>
+          <TabsContent value="performance" keepMounted className={`${PANEL} overflow-y-auto`}>
+            {/* Charts measure their container: mounting them while the tab is hidden gives 0x0 (Recharts warns). */}
+            {tab === 'performance' && <PerformancePanel />}
+          </TabsContent>
+          <TabsContent value="benchmark" keepMounted className={`${PANEL} overflow-y-auto`}>
+            {tab === 'benchmark' && <BenchmarkPanel />}
+          </TabsContent>
+          <TabsContent value="about" keepMounted className={`${PANEL} overflow-y-auto`}>
+            <AboutPanel />
+          </TabsContent>
+        </ErrorBoundary>
+      </main>
       <StoryPrompt />
-      <Toaster position="bottom-right" />
+      <Toaster position="bottom-right" mobileOffset={{ bottom: '4.5rem' }} />
     </Tabs>
   )
 }

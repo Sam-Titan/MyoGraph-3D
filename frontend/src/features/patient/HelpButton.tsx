@@ -7,7 +7,7 @@ export function HelpButton({ label, help }: { label: string; help: string }) {
     <Popover>
       <PopoverTrigger
         aria-label={`About ${label}`}
-        className="inline-flex size-5 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-hidden"
+        className="relative inline-flex size-5 shrink-0 after:absolute after:-inset-3 items-center justify-center rounded-full text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-hidden"
       >
         <Info className="size-3.5" aria-hidden />
       </PopoverTrigger>

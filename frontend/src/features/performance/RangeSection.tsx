@@ -13,7 +13,7 @@ export function RangeSection({ metrics }: { metrics: MetricsResponse }) {
   return (
     <Section title="Ranges on the hold-out set" caption={display?.range_meaning ?? ''}>
       <div className="max-w-full overflow-x-auto">
-        <table className="w-full min-w-[32rem] text-sm">
+        <table className="w-full min-w-[32rem] text-sm max-sm:min-w-0">
           <thead className="border-b text-xs text-muted-foreground">
             <tr>
               <th className={TH}>Target</th>

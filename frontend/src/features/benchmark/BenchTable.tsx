@@ -23,12 +23,13 @@ export function BenchTable({ targetId, targetLabel, color, rows, versus }: Props
         <span className="text-muted-foreground">{targetLabel}</span>
       </h4>
       <div className="relative overflow-x-auto">
-        <table className="w-full min-w-[40rem] border-collapse text-xs">
+        {/* Below sm each model is a stacked card instead of a sideways-scrolling row. */}
+        <table className="w-full min-w-[40rem] border-collapse text-xs max-sm:block max-sm:min-w-0">
           <caption className="sr-only">
             {targetLabel}: cross-validated ROC-AUC (mean ± standard deviation over folds), Brier
             score, recall at the tuned cut-off and hold-out ROC-AUC
           </caption>
-          <thead className="text-left text-muted-foreground">
+          <thead className="text-left text-muted-foreground max-sm:hidden">
             <tr className="border-b">
               <th scope="col" className="py-1 pr-2 font-normal">
                 Model
@@ -50,17 +51,23 @@ export function BenchTable({ targetId, targetLabel, color, rows, versus }: Props
               </th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="max-sm:block">
             {rows.map((r) => {
               const { cv, holdout } = r.cell
               const d = r.cell.vs_reference.roc_auc
               return (
-                <tr key={r.id} className="border-b last:border-0">
-                  <th scope="row" className="py-1.5 pr-2 text-left font-normal">
+                <tr
+                  key={r.id}
+                  className="border-b last:border-0 max-sm:grid max-sm:grid-cols-2 max-sm:gap-x-3 max-sm:gap-y-1 max-sm:py-2"
+                >
+                  <th
+                    scope="row"
+                    className="py-1.5 pr-2 text-left font-normal max-sm:col-span-2 max-sm:py-0 max-sm:font-medium"
+                  >
                     {r.label}
                     {r.isReference && <span className="text-muted-foreground"> (reference)</span>}
                   </th>
-                  <td className="py-1.5 pr-2">
+                  <td className="py-1.5 pr-2 max-sm:col-span-2 max-sm:py-0 max-sm:pr-0">
                     <div className="flex items-center gap-2">
                       <div aria-hidden className="relative h-4 min-w-0 flex-1">
                         <span className="absolute top-1/2 h-px w-full bg-border" />
@@ -83,10 +90,28 @@ export function BenchTable({ targetId, targetLabel, color, rows, versus }: Props
                       <span className="num shrink-0">{pm(cv.roc_auc.mean, cv.roc_auc.std)}</span>
                     </div>
                   </td>
-                  <td className="num py-1.5 pr-2 text-right">{pm(cv.brier.mean, cv.brier.std)}</td>
-                  <td className="num py-1.5 pr-2 text-right">{fixed(cv.recall.mean)}</td>
-                  <td className="num py-1.5 pr-2 text-right">{fixed(holdout.roc_auc)}</td>
-                  <td className="num py-1.5 text-right">
+                  <td
+                    data-label="Brier"
+                    className="num py-1.5 pr-2 text-right max-sm:py-0 max-sm:text-left max-sm:before:block max-sm:before:text-muted-foreground max-sm:before:content-[attr(data-label)]"
+                  >
+                    {pm(cv.brier.mean, cv.brier.std)}
+                  </td>
+                  <td
+                    data-label="Recall"
+                    className="num py-1.5 pr-2 text-right max-sm:py-0 max-sm:text-left max-sm:before:block max-sm:before:text-muted-foreground max-sm:before:content-[attr(data-label)]"
+                  >
+                    {fixed(cv.recall.mean)}
+                  </td>
+                  <td
+                    data-label="Hold-out ROC-AUC"
+                    className="num py-1.5 pr-2 text-right max-sm:py-0 max-sm:text-left max-sm:before:block max-sm:before:text-muted-foreground max-sm:before:content-[attr(data-label)]"
+                  >
+                    {fixed(holdout.roc_auc)}
+                  </td>
+                  <td
+                    data-label={versus}
+                    className="num py-1.5 text-right max-sm:col-span-2 max-sm:py-0 max-sm:text-left max-sm:before:block max-sm:before:text-muted-foreground max-sm:before:content-[attr(data-label)]"
+                  >
                     {r.isReference ? (
                       '—'
                     ) : (

@@ -19,7 +19,7 @@ export function HealthStatus() {
       {state === 'checking' && 'Checking the API…'}
       {state === 'unreachable' && 'API unreachable. Start it with make dev.'}
       {state === 'ok' && (
-        <span className="flex min-w-0 gap-1">
+        <span className="flex min-w-0 gap-1 max-sm:sr-only">
           <span className="shrink-0">API ready, model</span>
           <span className="num min-w-0 truncate" title={data?.model_version}>
             {data?.model_version}

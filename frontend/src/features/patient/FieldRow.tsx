@@ -49,7 +49,7 @@ export function FieldRow({ feature: f, derived }: Props) {
           max={f.input?.max}
           aria-invalid={invalid}
           aria-describedby={invalid ? `${id}-err` : undefined}
-          className="num h-8 w-28"
+          className="num h-8 w-28 pointer-coarse:h-11"
           {...register(f.id, { valueAsNumber: true })}
         />
         {/* Fixed-width unit column so every number input lines up regardless of unit length. */}

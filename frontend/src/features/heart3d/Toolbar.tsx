@@ -5,7 +5,7 @@ import { track } from '@/lib/analytics'
 import { focusTarget, useViewState } from './useViewState'
 
 const BTN =
-  'border-white/15 bg-white/10 text-viewport-foreground hover:bg-white/20 hover:text-white aria-pressed:border-white/50 aria-pressed:bg-white/25'
+  'shrink-0 pointer-coarse:h-11 pointer-coarse:min-w-11 border-white/15 bg-white/10 text-viewport-foreground hover:bg-white/20 hover:text-white aria-pressed:border-white/50 aria-pressed:bg-white/25'
 
 function Tool({
   label,
@@ -46,7 +46,11 @@ export function Toolbar({ overallId }: { overallId: string | null }) {
   const shownNodes = useViewState((s) => s.shownNodes)
   const toggleNode = useViewState((s) => s.toggleNode)
   return (
-    <div role="toolbar" aria-label="3D view controls" className="flex flex-wrap gap-1.5">
+    <div
+      role="toolbar"
+      aria-label="3D view controls"
+      className="flex min-w-0 flex-wrap gap-1.5 max-xl:flex-nowrap max-xl:overflow-x-auto max-xl:[scrollbar-width:none]"
+    >
       <Tool
         label="Reset"
         iconOnlyOnPhone

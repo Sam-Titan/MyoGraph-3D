@@ -27,7 +27,7 @@ export function RocChart({ metrics }: { metrics: MetricsResponse }) {
     >
       <ChartContainer
         config={config}
-        className="mx-auto aspect-[4/3] w-full max-w-xl xl:max-w-none"
+        className="mx-auto aspect-square w-full sm:aspect-[4/3] max-w-xl xl:max-w-none"
       >
         <LineChart data={points} margin={{ top: 8, right: 12, bottom: 24, left: 4 }}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} />

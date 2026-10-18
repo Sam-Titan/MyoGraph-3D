@@ -108,6 +108,18 @@ export function PatientForm({ data }: { data: FeaturesResponse }) {
     }),
   )
 
+  const setSummary = useAppStore((s) => s.setPatientSummary)
+  let totalEdited = 0
+  let totalOutside = 0
+  for (const c of counts.values()) {
+    totalEdited += c.edited
+    totalOutside += c.outside
+  }
+  useEffect(
+    () => setSummary({ edited: totalEdited, outside: totalOutside }),
+    [totalEdited, totalOutside, setSummary],
+  )
+
   return (
     <FormProvider {...form}>
       <form className="space-y-4" onSubmit={(e) => e.preventDefault()} noValidate>
