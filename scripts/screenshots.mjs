@@ -16,6 +16,8 @@ const SEEN = { cookies: [], origins: [{ origin: BASE, localStorage: [{ name: 'my
 const VIEWPORTS = [
   { width: 1440, height: 900 },
   { width: 1024, height: 768 },
+  { width: 768, height: 1024, mobile: true, scale: 2 },
+  { width: 844, height: 390, mobile: true, scale: 3 }, // landscape phone
   { width: 390, height: 844, mobile: true, scale: 3 },
   { width: 360, height: 800, mobile: true, scale: 2 },
 ]
@@ -39,9 +41,20 @@ async function waitReady(page) {
   await settle(page)
 }
 
+// Below 1280 px the patient form is in a bottom sheet behind "Edit patient".
+async function openSheet(page) {
+  const edit = page.getByRole('button', { name: 'Edit patient' })
+  if (!(await edit.isVisible())) return false
+  await edit.click()
+  await page.locator('#preset-select').waitFor()
+  return true
+}
+
 async function pickPreset(page, label) {
+  const sheet = await openSheet(page)
   await page.locator('#preset-select').click()
   await page.getByRole('option', { name: label }).click()
+  if (sheet) await page.keyboard.press('Escape')
   await page.waitForTimeout(800) // debounce + predict round trip
   await waitReady(page)
 }
@@ -90,7 +103,9 @@ const VIEWS = [
   {
     name: 'patient-form',
     run: async (page) => {
+      await openSheet(page)
       await page.evaluate(() => document.querySelector('#preset-select')?.scrollIntoView({ block: 'start' }))
+      await page.waitForTimeout(400)
     },
     keepScroll: true,
   },
