@@ -38,8 +38,8 @@ export function PinButton() {
           <PinOff /> Unpin
         </Button>
       ) : (
-        <Button variant="outline" size="sm" disabled={!ready} onClick={pin}>
-          <Pin /> Pin this result
+        <Button variant="outline" size="sm" disabled={!ready} onClick={pin} className="min-w-36">
+          <Pin /> {ready || predict.isError ? 'Pin this result' : 'Waiting for ranges…'}
         </Button>
       )}
     </div>

@@ -24,6 +24,21 @@ const RANGES_GRACE_MS = 1500
  * the reveal step on shows the real result. Text is filled from the story's own prediction of the
  * hold-out preset, so every number comes from the API.
  */
+/** Widgets that handle Escape and the arrow keys themselves (open popups, menus, dialogs). */
+const POPUP_OWNERS =
+  '[role="listbox"],[role="menu"],[role="dialog"],[role="combobox"],[data-slot="popover-content"],[data-slot="select-content"],[data-slot="sheet-content"]'
+/** Widgets that only use the arrow keys (Escape still leaves the story). */
+const ARROW_OWNERS = '[role="tablist"],[role="slider"],[role="spinbutton"]'
+
+function ownsKeys(e: KeyboardEvent): boolean {
+  if (e.defaultPrevented) return true
+  const el = e.target instanceof HTMLElement ? e.target : null
+  if (!el) return false
+  if (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.isContentEditable) return true
+  if (el.getAttribute('aria-expanded') === 'true' || el.closest(POPUP_OWNERS)) return true
+  return e.key !== 'Escape' && el.closest(ARROW_OWNERS) !== null
+}
+
 export function StoryPlayer() {
   const active = useStory((s) => s.active)
   const storiesData = useStories().data
@@ -115,8 +130,7 @@ export function StoryPlayer() {
     if (!active) return
     next.current?.focus()
     const onKey = (e: KeyboardEvent) => {
-      const el = e.target as HTMLElement | null
-      if (el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) return
+      if (ownsKeys(e)) return
       if (e.key === 'Escape') {
         e.preventDefault()
         endStory(false)

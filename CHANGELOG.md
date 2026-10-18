@@ -1,5 +1,21 @@
 # Changelog
 
+## v2.1.0
+
+UI polish and the v2.0.1 audit fixes. No model, API or data changes.
+
+### Changed
+- **3D toolbar** is one row at every width: icon-only buttons from 1280 px so it fits without arrows; below that it is a
+  scroll-snap carousel with ‹ › arrows (only when it overflows), fade edges and no scrollbar.
+- **Legend** can be hidden (remembered in localStorage). The hidden line keeps "Colour = estimated probability" and the
+  live numbers for every target.
+- **Tab row** never shows a scrollbar (a 1 px underline overflow forced a vertical one on classic-scrollbar browsers).
+
+### Fixed
+- Story keys: Escape and arrows inside popovers, selects and dialogs no longer exit or move the story.
+- Leaving a story restores the previous tab and pin.
+- The Pin button reads "Waiting for ranges…" while ranges load.
+
 ## v2.0.0
 
 Everything since the hackathon submission (v1.0.0). The model, features, targets and hold-out split are unchanged;

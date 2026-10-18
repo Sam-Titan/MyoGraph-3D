@@ -1,9 +1,13 @@
+import { Eye, EyeOff } from 'lucide-react'
+import { useState } from 'react'
 import type { TargetInfo } from '@/api/client'
+import { safeStorage } from '@/features/layout/introPref'
 import { track } from '@/lib/analytics'
 import { pct } from '@/lib/format'
 import { riskCss } from '@/lib/riskColor'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/store/app'
+import { initialLegendHidden, writeLegendHidden } from './legendPref'
 import type { Probabilities } from './useProbabilities'
 import { focusTarget, useViewState } from './useViewState'
 
@@ -30,15 +34,58 @@ export function Legend({
   note?: string
 }) {
   const selected = useAppStore((s) => s.selectedTarget)
+  const [hidden, setHidden] = useState(initialLegendHidden)
+  const toggle = () => {
+    const next = !hidden
+    setHidden(next)
+    writeLegendHidden(safeStorage(), next)
+    track('view_toggled', { control: 'legend' })
+  }
   const ticks = targets.flatMap((t) => {
     const threshold = thresholds[t.id]
     return threshold === undefined ? [] : [{ id: t.id, threshold }]
   })
   const active = ticks.find((t) => t.id === selected)
+  if (hidden) {
+    return (
+      <div
+        data-legend="hidden"
+        className="flex min-h-9 flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-lg border border-white/10 bg-slate-950/55 px-2.5 py-1 text-xs text-viewport-foreground backdrop-blur-sm max-md:px-2"
+      >
+        <span>Colour = estimated probability</span>
+        {/* Always the live numbers: a chip can be off-screen or labels off, and colour never goes without one. */}
+        <ul
+          aria-label="Vessel estimates"
+          className="num order-last flex w-full flex-wrap gap-x-1.5 gap-y-0.5 md:order-none md:w-auto"
+        >
+          {targets.map((t) => {
+            const p = probabilities[t.id]
+            return (
+              <li
+                key={t.id}
+                className="flex items-center gap-1 [&:not(:first-child)]:before:mr-0.5 [&:not(:first-child)]:before:text-viewport-muted [&:not(:first-child)]:before:content-['·']"
+              >
+                <span
+                  aria-hidden
+                  className="size-2 rounded-full border border-white/30"
+                  style={{ background: p === undefined ? 'transparent' : riskCss(p) }}
+                />
+                {t.id} {pct(p)}
+              </li>
+            )
+          })}
+        </ul>
+        <LegendToggle hidden onClick={toggle} />
+      </div>
+    )
+  }
   return (
-    <div className="space-y-2 rounded-lg border border-white/10 bg-slate-950/55 p-2.5 backdrop-blur-sm max-md:space-y-1 max-md:p-2">
+    <div className="relative space-y-2 rounded-lg border border-white/10 bg-slate-950/55 p-2.5 backdrop-blur-sm max-md:space-y-1 max-md:p-2">
+      <div className="absolute top-1 right-1 max-md:top-0.5 max-md:right-0.5">
+        <LegendToggle hidden={false} onClick={toggle} />
+      </div>
       <div>
-        <div className="relative h-7 max-md:h-6">
+        <div className="relative mr-9 h-7 max-md:h-6">
           {active && (
             <span
               className="num absolute top-0 whitespace-nowrap rounded border border-white/25 bg-slate-950/90 px-1.5 py-0.5 text-xs leading-none text-viewport-foreground"
@@ -134,5 +181,23 @@ export function Legend({
         })}
       </ul>
     </div>
+  )
+}
+
+function LegendToggle({ hidden, onClick }: { hidden: boolean; onClick: () => void }) {
+  const Icon = hidden ? Eye : EyeOff
+  const label = hidden ? 'Show legend' : 'Hide legend'
+  return (
+    <button
+      type="button"
+      aria-expanded={!hidden}
+      aria-label={label}
+      title={label}
+      onClick={onClick}
+      // The extra inset makes the touch target 44 px without growing the visible chip.
+      className="relative flex size-7 items-center justify-center rounded text-viewport-muted outline-none before:absolute before:-inset-2 hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-sky-300 max-md:size-6 [&_svg]:size-4"
+    >
+      <Icon />
+    </button>
   )
 }
