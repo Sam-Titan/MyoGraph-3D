@@ -2,7 +2,7 @@ WEB_PORT ?= 5180
 API_PORT ?= 8010
 export WEB_PORT API_PORT
 
-.PHONY: setup dev dev-lan dev-api dev-web dev-web-lan prepare train stability benchmark assets types lint fmt test check docker screenshots e2e perf report
+.PHONY: setup dev dev-lan dev-api dev-web dev-web-lan prepare train stability benchmark assets types lint fmt test check docker screenshots og lighthouse e2e perf report
 
 setup:
 	cd backend && uv sync --extra assets
@@ -46,6 +46,14 @@ types:
 
 report:
 	python3 scripts/report_numbers.py && node scripts/report_pdf.mjs
+
+# Social preview image + PNG icons from the running app (commit the output). Expects `make dev`.
+og:
+	node scripts/og-image.mjs
+
+# Lighthouse mobile + desktop on the production build (npx, not a dependency). Expects `make dev`.
+lighthouse:
+	node scripts/lighthouse.mjs
 
 screenshots:
 	cd frontend && node ../scripts/screenshots.mjs

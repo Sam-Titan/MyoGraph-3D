@@ -9,6 +9,8 @@ interface AppState {
   /** Target id from /api/features; null until features load (see `useInitSelectedTarget`). */
   selectedTarget: string | null
   selectedPresetId: string | null
+  /** The first-visit preset has been loaded (or presets failed): live predict may start, so it never runs on placeholder values first. */
+  presetSettled: boolean
   /** The patient was edited after a preset loaded, so the preset's `truth` no longer applies. */
   presetEdited: boolean
   /** Debounced, zod-valid form values the shared predict query runs on; null while invalid. */
@@ -24,6 +26,7 @@ interface AppState {
   setTab: (tab: Tab) => void
   setSelectedTarget: (id: string | null) => void
   setSelectedPresetId: (id: string | null) => void
+  setPresetSettled: (settled: boolean) => void
   setPresetEdited: (edited: boolean) => void
   setPredictValues: (values: PredictRequest['values'] | null) => void
   setIntervalValues: (values: PredictRequest['values'] | null) => void
@@ -33,6 +36,7 @@ export const useAppStore = create<AppState>((set) => ({
   tab: 'workspace',
   selectedTarget: null,
   selectedPresetId: null,
+  presetSettled: false,
   presetEdited: false,
   predictValues: null,
   intervalValues: null,
@@ -49,6 +53,7 @@ export const useAppStore = create<AppState>((set) => ({
   setTab: (tab) => set({ tab }),
   setSelectedTarget: (selectedTarget) => set({ selectedTarget }),
   setSelectedPresetId: (selectedPresetId) => set({ selectedPresetId }),
+  setPresetSettled: (presetSettled) => set({ presetSettled }),
   setPresetEdited: (presetEdited) => set({ presetEdited }),
   setPredictValues: (predictValues) => set({ predictValues }),
   setIntervalValues: (intervalValues) => set({ intervalValues }),

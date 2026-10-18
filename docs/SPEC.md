@@ -467,3 +467,17 @@ Nothing else hard-codes feature or vessel lists.
   the first estimate has painted (at most 2.5 s); the GLB is preloaded from `index.html`; the results column shows a skeleton of
   its final height and the headline/table reserve their space (CLS). The header no longer shows the model version (tooltip only).
 - `.github/workflows/keepalive.yml`: cron every 14 min, `GET /api/health` on the Render URL from `netlify.toml`.
+
+### Phase 20b: intro, social preview, print, a11y
+- **Intro strip** (`features/layout/IntroStrip.tsx`): what the app is, three steps, "Guided tour · 1 min"; open on a first visit
+  (closed by default below 768 px), choice in `localStorage` `myograph.intro-collapsed`. The disclaimer banner is separate and unchanged.
+- **Live predict waits for the first-visit preset** (`presetSettled` in the store), so a load costs one predict + one intervals call
+  instead of three + two; `usePredict` has `staleTime: Infinity` (same values, same estimate).
+- **Social preview:** Open Graph + Twitter tags use the live Netlify URL (`https://myograph-3d.netlify.app/`; change it in
+  `index.html` for another host). `make og` renders `frontend/public/og-image.png` (1200x630) and the PNG icons from the running app.
+  Per-tab `document.title`; `manifest.webmanifest`.
+- **Print/save:** "Save / print summary" prints only `#print-summary` (estimates with ranges, plain sentence, top factors, disclaimer,
+  model version, date); disabled while the numbers lag the form.
+- **Accessibility:** `e2e/a11y.spec.ts` runs axe-core (WCAG A/AA, fails on serious/critical) on every tab at 1440 and 390 px plus the
+  patient sheet; debounced `aria-live` announcement of new estimates; global reduced-motion CSS.
+- `make lighthouse` (npx, not a dependency): mobile + desktop on the production build; reports in `.lighthouse/` (gitignored).

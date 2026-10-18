@@ -1,5 +1,5 @@
 import { BarChart3, HeartPulse, Info, type LucideIcon, Scale } from 'lucide-react'
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { Toaster } from 'sonner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { DisclaimerBanner } from '@/features/layout/DisclaimerBanner'
@@ -49,6 +49,10 @@ export function AppShell() {
   useInitSelectedTarget()
   const tab = useAppStore((s) => s.tab)
   const setTab = useAppStore((s) => s.setTab)
+  useEffect(() => {
+    const label = TABS.find((t) => t.id === tab)?.label
+    document.title = label ? `${label} · MyoGraph 3D` : 'MyoGraph 3D'
+  }, [tab])
 
   return (
     <Tabs
@@ -57,7 +61,7 @@ export function AppShell() {
         setTab(v as Tab)
         track('tab_viewed', { tab: v })
       }}
-      className="h-dvh gap-0 bg-background text-foreground max-lg:pb-[calc(3.5rem+env(safe-area-inset-bottom))]"
+      className="h-dvh gap-0 bg-background print:hidden text-foreground max-lg:pb-[calc(3.5rem+env(safe-area-inset-bottom))]"
     >
       {/* Banner + header never scroll away: the disclaimer is visible on every tab. */}
       <div className="sticky top-0 z-50 shrink-0">

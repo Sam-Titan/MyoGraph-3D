@@ -7,6 +7,7 @@ import { BreakdownTable } from './BreakdownTable'
 import { DisagreementNote, targetsDisagree } from './DisagreementNote'
 import { Headline } from './Headline'
 import { PinButton } from './PinButton'
+import { PrintButton } from './PrintSummary'
 import { RangeNote } from './RangeNote'
 import { ResultsSkeleton } from './ResultsSkeleton'
 import { SummaryPanel } from './SummaryPanel'
@@ -110,6 +111,7 @@ export function ResultsPanel() {
               </div>
             )}
             <SummaryPanel />
+            <PrintButton />
           </div>
         )
       }}

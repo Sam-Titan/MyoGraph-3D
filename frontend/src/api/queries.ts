@@ -123,6 +123,9 @@ export function usePredict(values: PredictRequest['values'] | null) {
     queryKey: queryKeys.predict(values ?? {}),
     queryFn: ({ signal }) => postPredict({ values: values ?? {} }, signal),
     enabled: values !== null,
+    // The same values always give the same estimate: a component mounting later (the 3D scene, a
+    // panel) reads the cache instead of asking the server again.
+    staleTime: Number.POSITIVE_INFINITY,
     // A 4xx is a deterministic rejection (e.g. 422 field errors): surface it, don't retry. A 5xx or
     // network error keeps retrying while the server is still waking.
     retry: retryWhileWaking(2),

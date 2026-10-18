@@ -18,12 +18,17 @@ export type LiveState = 'live' | 'busy' | 'paused' | 'error'
 export function useLivePredict(values: FormValues, schema: z.ZodType<FormValues, FormValues>) {
   // Key on the serialised values: `watch()` returns a fresh object each render.
   const key = JSON.stringify(values)
-  const debouncedKey = useDebouncedValue(key, PREDICT_DEBOUNCE_MS)
+  // Nothing is predicted before the first-visit preset is in the form: the page would otherwise
+  // pay for (and flash) a full estimate of placeholder values.
+  const settled = useAppStore((s) => s.presetSettled)
+  const gatedKey = settled ? key : null
+  const debouncedKey = useDebouncedValue(gatedKey, PREDICT_DEBOUNCE_MS)
   const setPredictValues = useAppStore((s) => s.setPredictValues)
   const setIntervalValues = useAppStore((s) => s.setIntervalValues)
 
   const valid = useMemo(() => schema.safeParse(values).success, [schema, values])
   const debounced = useMemo(() => {
+    if (debouncedKey === null) return null
     const parsed = schema.safeParse(JSON.parse(debouncedKey))
     return parsed.success ? parsed.data : null
   }, [schema, debouncedKey])
@@ -34,12 +39,12 @@ export function useLivePredict(values: FormValues, schema: z.ZodType<FormValues,
   const slow = useDebouncedValue(debounced, INTERVALS_EXTRA_DEBOUNCE_MS)
   useEffect(() => setIntervalValues(slow), [slow, setIntervalValues])
 
-  const pending = key !== debouncedKey
+  const pending = gatedKey !== debouncedKey
   const stale = pending || query.isFetching || query.isPlaceholderData
   let state: LiveState = 'live'
   if (!valid) state = 'paused'
   else if (query.isError) state = 'error'
-  else if (stale) state = 'busy'
+  else if (stale || !settled) state = 'busy'
 
   return { query, valid, state, /** shown data lags the form */ stale }
 }

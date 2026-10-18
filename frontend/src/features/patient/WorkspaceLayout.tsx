@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { HeartViewport } from '@/features/heart3d/HeartViewport'
+import { IntroStrip } from '@/features/layout/IntroStrip'
 import { Panel } from '@/features/layout/Panel'
 import { ResultsPanel } from '@/features/results/ResultsPanel'
 import { useStory } from '@/features/story/useStory'
@@ -57,52 +58,55 @@ export function WorkspaceLayout() {
   // A story needs the heart, so it expands it again.
   const folded = collapsed && !storyActive
   return (
-    <div className="grid h-full min-w-0 grid-cols-1 auto-rows-min gap-(--panel-gap) overflow-y-auto overflow-x-hidden p-(--gutter) md:max-xl:grid-cols-2 xl:auto-rows-auto xl:grid-cols-[var(--col-left)_minmax(0,1fr)_var(--col-right)] xl:overflow-hidden">
-      {portal}
-      {wide && (
-        <Panel title="Patient">
-          <PatientSlot host={host} />
-        </Panel>
-      )}
-      <div className="sticky top-0 z-30 order-1 max-md:-mx-(--gutter) max-md:bg-background max-md:px-(--gutter) md:max-xl:col-start-1 md:max-xl:row-start-1 md:max-xl:self-start short:static xl:contents">
-        <div className="flex h-14 items-center gap-2 py-1.5 xl:hidden">
-          <EditPatientButton onOpen={() => setSheetOpen(true)} />
-          <Button
-            variant="ghost"
-            size="sm"
-            className="shrink-0 pointer-coarse:h-11 md:hidden"
-            aria-expanded={!folded}
-            aria-controls="heart-section"
-            onClick={() => setCollapsed((c) => !c)}
+    <div className="flex h-full min-h-0 flex-col">
+      <IntroStrip />
+      <div className="grid min-h-0 min-w-0 flex-1 grid-cols-1 auto-rows-min gap-(--panel-gap) overflow-y-auto overflow-x-hidden p-(--gutter) md:max-xl:grid-cols-2 xl:auto-rows-auto xl:grid-cols-[var(--col-left)_minmax(0,1fr)_var(--col-right)] xl:overflow-hidden">
+        {portal}
+        {wide && (
+          <Panel title="Patient">
+            <PatientSlot host={host} />
+          </Panel>
+        )}
+        <div className="sticky top-0 z-30 order-1 max-md:-mx-(--gutter) max-md:bg-background max-md:px-(--gutter) md:max-xl:col-start-1 md:max-xl:row-start-1 md:max-xl:self-start short:static xl:contents">
+          <div className="flex h-14 items-center gap-2 py-1.5 xl:hidden">
+            <EditPatientButton onOpen={() => setSheetOpen(true)} />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="shrink-0 pointer-coarse:h-11 md:hidden"
+              aria-expanded={!folded}
+              aria-controls="heart-section"
+              onClick={() => setCollapsed((c) => !c)}
+            >
+              {folded ? <ChevronDown /> : <ChevronUp />}
+              {folded ? 'Show heart' : 'Hide heart'}
+            </Button>
+          </div>
+          <section
+            id="heart-section"
+            aria-label="3D heart"
+            className={cn(
+              'viewport-surface relative overflow-hidden rounded-xl xl:h-auto xl:min-h-0',
+              // 17rem = banner, intro strip, header, bottom nav, gutter and the Edit-patient bar around the heart.
+              storyActive
+                ? 'h-[calc(100dvh-17rem)]'
+                : 'h-[calc(46dvh-5rem)] md:h-[calc(100dvh-17rem)]',
+              'short:h-[30rem]',
+              folded && 'max-md:hidden',
+            )}
           >
-            {folded ? <ChevronDown /> : <ChevronUp />}
-            {folded ? 'Show heart' : 'Hide heart'}
-          </Button>
+            <HeartViewport />
+          </section>
         </div>
-        <section
-          id="heart-section"
-          aria-label="3D heart"
-          className={cn(
-            'viewport-surface relative overflow-hidden rounded-xl xl:h-auto xl:min-h-0',
-            // 14rem = banner, header, bottom nav, gutter and the Edit-patient bar around the heart.
-            storyActive
-              ? 'h-[calc(100dvh-14rem)]'
-              : 'h-[calc(46dvh-3.5rem)] md:h-[calc(100dvh-14rem)]',
-            'short:h-[30rem]',
-            folded && 'max-md:hidden',
-          )}
-        >
-          <HeartViewport />
-        </section>
+        <Panel title="Model estimates" className="order-3 md:max-xl:col-start-2 xl:order-none">
+          <ResultsPanel />
+        </Panel>
+        <Sheet open={sheetOpen && !wide} onOpenChange={setSheetOpen}>
+          <SheetContent title="Patient">
+            <PatientSlot host={host} />
+          </SheetContent>
+        </Sheet>
       </div>
-      <Panel title="Model estimates" className="order-3 md:max-xl:col-start-2 xl:order-none">
-        <ResultsPanel />
-      </Panel>
-      <Sheet open={sheetOpen && !wide} onOpenChange={setSheetOpen}>
-        <SheetContent title="Patient">
-          <PatientSlot host={host} />
-        </SheetContent>
-      </Sheet>
     </div>
   )
 }

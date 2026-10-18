@@ -16,10 +16,19 @@ export default defineConfig({
   reporter: [['list']],
   use: {
     baseURL: BASE_URL,
-    // The first-visit story offer is a toast; every test starts as a returning visitor (stories.spec covers the offer).
+    // The first-visit story offer is a toast and the intro strip is open on a first visit; every test
+    // starts as a returning visitor (stories.spec covers the offer, intro.spec the strip).
     storageState: {
       cookies: [],
-      origins: [{ origin: BASE_URL, localStorage: [{ name: 'myograph.story-seen', value: '1' }] }],
+      origins: [
+        {
+          origin: BASE_URL,
+          localStorage: [
+            { name: 'myograph.story-seen', value: '1' },
+            { name: 'myograph.intro-collapsed', value: '1' },
+          ],
+        },
+      ],
     },
     viewport: { width: 1440, height: 900 },
     launchOptions: { args: SOFTWARE_GL },

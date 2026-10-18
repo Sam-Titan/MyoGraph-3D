@@ -215,3 +215,27 @@
     color: var(--viewport-foreground);
   }
 }
+
+@media print {
+  @page {
+    margin: 14mm;
+  }
+  html,
+  body {
+    background: #fff;
+    height: auto;
+    overflow: visible;
+  }
+}
+
+/* Reduced motion everywhere (spinners keep turning: they are the busy signal): skeleton pulses, transitions and sheet slides included (3D and number tweens check the preference themselves). */
+@media (prefers-reduced-motion: reduce) {
+  *:not(.animate-spin),
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
