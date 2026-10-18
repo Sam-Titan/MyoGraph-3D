@@ -13,7 +13,7 @@ import {
 import { type ReactNode, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { track } from '@/lib/analytics'
-import { useOverflowArrows } from './useOverflowArrows'
+import { fadeMask, useOverflowArrows } from '@/lib/useOverflowArrows'
 import { focusTarget, useViewState } from './useViewState'
 
 const BTN =
@@ -178,13 +178,4 @@ function ArrowButton({
       <Icon />
     </Button>
   )
-}
-
-/** Fades only the edge that still has hidden content, so the first/last button (and its focus ring) stays unmasked. */
-function fadeMask(canPrev: boolean, canNext: boolean) {
-  if (!canPrev && !canNext) return undefined
-  const left = canPrev ? 'transparent 0, #000 20px' : '#000 0, #000 0'
-  const right = canNext ? '#000 calc(100% - 20px), transparent 100%' : '#000 100%, #000 100%'
-  const image = `linear-gradient(to right, ${left}, ${right})`
-  return { maskImage: image, WebkitMaskImage: image }
 }

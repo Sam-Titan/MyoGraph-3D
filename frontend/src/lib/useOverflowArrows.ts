@@ -1,4 +1,4 @@
-import { type RefObject, useCallback, useEffect, useState } from 'react'
+import { type CSSProperties, type RefObject, useCallback, useEffect, useState } from 'react'
 
 const EDGE_PX = 2
 
@@ -50,4 +50,13 @@ export function useOverflowArrows(ref: RefObject<HTMLElement | null>) {
   )
 
   return { ...state, scrollByPage }
+}
+
+/** Fades only the edge that still has hidden content, so the first/last item (and its focus ring) stays unmasked. */
+export function fadeMask(canPrev: boolean, canNext: boolean): CSSProperties | undefined {
+  if (!canPrev && !canNext) return undefined
+  const left = canPrev ? 'transparent 0, #000 20px' : '#000 0, #000 0'
+  const right = canNext ? '#000 calc(100% - 20px), transparent 100%' : '#000 100%, #000 100%'
+  const image = `linear-gradient(to right, ${left}, ${right})`
+  return { maskImage: image, WebkitMaskImage: image }
 }

@@ -1,5 +1,5 @@
 import { BarChart3, HeartPulse, Info, type LucideIcon, Scale } from 'lucide-react'
-import { lazy, Suspense, useEffect } from 'react'
+import { lazy, Suspense, useEffect, useRef } from 'react'
 import { Toaster } from 'sonner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { DisclaimerBanner } from '@/features/layout/DisclaimerBanner'
@@ -10,6 +10,7 @@ import { WorkspaceLayout } from '@/features/patient/WorkspaceLayout'
 import { StoryLauncher } from '@/features/story/StoryLauncher'
 import { StoryPrompt } from '@/features/story/StoryPrompt'
 import { track } from '@/lib/analytics'
+import { fadeMask, useOverflowArrows } from '@/lib/useOverflowArrows'
 import { type Tab, useAppStore } from '@/store/app'
 
 // The non-workspace tabs (and Recharts) load on first visit, not with the first paint.
@@ -47,6 +48,8 @@ const PANEL = 'min-h-0 flex-1 [&[hidden]]:hidden'
 
 export function AppShell() {
   useInitSelectedTarget()
+  const tabsRef = useRef<HTMLDivElement>(null)
+  const tabsFade = useOverflowArrows(tabsRef)
   const tab = useAppStore((s) => s.tab)
   const setTab = useAppStore((s) => s.setTab)
   useEffect(() => {
@@ -75,7 +78,12 @@ export function AppShell() {
           <TabsList
             variant="line"
             aria-label="Sections"
-            className="max-w-full min-w-0 justify-start overflow-x-auto max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-50 max-lg:grid max-lg:h-[calc(3.5rem+env(safe-area-inset-bottom))] max-lg:w-full max-lg:max-w-none max-lg:grid-cols-4 max-lg:gap-0 max-lg:rounded-none max-lg:border-t max-lg:bg-background max-lg:p-0 max-lg:pb-[env(safe-area-inset-bottom)]"
+            ref={tabsRef}
+            style={fadeMask(tabsFade.canPrev, tabsFade.canNext)}
+            // Never a visible scrollbar: classic (Windows) scrollbars drew one when the row measured
+            // exactly full, and the active underline (1px past the box) forced a vertical one. Taller
+            // box + overflow-y-hidden + side slack; still scrolls horizontally with a fade edge.
+            className="max-w-full min-w-0 justify-start overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:h-9 lg:overflow-y-hidden lg:px-2 max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-50 max-lg:grid max-lg:h-[calc(3.5rem+env(safe-area-inset-bottom))] max-lg:w-full max-lg:max-w-none max-lg:grid-cols-4 max-lg:gap-0 max-lg:rounded-none max-lg:border-t max-lg:bg-background max-lg:p-0 max-lg:pb-[env(safe-area-inset-bottom)]"
           >
             {TABS.map((t) => (
               <TabsTrigger
