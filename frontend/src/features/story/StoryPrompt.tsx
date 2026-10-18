@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { toast } from 'sonner'
-import { useStories } from '@/api/queries'
+import { usePresets, useStories } from '@/api/queries'
 import { beginStory } from './storyActions'
 
 const SEEN_KEY = 'myograph.story-seen'
@@ -24,7 +24,7 @@ function markSeen(): void {
 /** Offers the first story once per browser ("See how it works · 1 min"); skippable, replay lives in the header. */
 export function StoryPrompt() {
   const stories = useStories().data?.stories
-  const first = stories?.[0]
+  const first = usePresets().isSuccess ? stories?.[0] : undefined
 
   useEffect(() => {
     if (!first || alreadySeen()) return

@@ -5,6 +5,19 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#101a2b" />
+    <script>
+      // Start the heart download before the app bundle runs. Same compact rule as useHeartModel.ts.
+      ;(() => {
+        var l = document.createElement('link')
+        l.rel = 'preload'
+        l.as = 'fetch'
+        l.crossOrigin = 'anonymous'
+        l.href = matchMedia('(pointer: coarse), (max-width: 640px)').matches
+          ? '/models/heart.mobile.glb'
+          : '/models/heart.glb'
+        document.head.appendChild(l)
+      })()
+    </script>
     <title>MyoGraph 3D</title>
   </head>
   <body>

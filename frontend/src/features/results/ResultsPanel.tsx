@@ -1,3 +1,4 @@
+import { useDisplay } from '@/api/queries'
 import { QueryBoundary } from '@/features/layout/QueryBoundary'
 import { track } from '@/lib/analytics'
 import { cn } from '@/lib/utils'
@@ -7,6 +8,7 @@ import { DisagreementNote, targetsDisagree } from './DisagreementNote'
 import { Headline } from './Headline'
 import { PinButton } from './PinButton'
 import { RangeNote } from './RangeNote'
+import { ResultsSkeleton } from './ResultsSkeleton'
 import { SummaryPanel } from './SummaryPanel'
 import { usePinDeltas } from './usePinDeltas'
 import { useResults } from './useResults'
@@ -28,6 +30,7 @@ export function ResultsPanel() {
     vessels,
   } = useResults()
   const deltas = usePinDeltas()
+  const display = useDisplay()
   const selectFromList = (id: string) => {
     setSelected(id)
     track('target_selected', { target: id, source: 'list' })
@@ -35,6 +38,8 @@ export function ResultsPanel() {
   const stale = predict.isFetching || predict.isPlaceholderData || rangesStale
   const data = predict.data
 
+  // The wording (display.yaml) is part of the first screen: waiting for it avoids a reflow of the headline.
+  if (features.isPending || display.isPending) return <ResultsSkeleton />
   return (
     <QueryBoundary query={features} what="targets">
       {(f) => {
@@ -49,7 +54,7 @@ export function ResultsPanel() {
         return (
           <div className="space-y-6">
             <div className={cn('space-y-4 transition-opacity', stale && 'opacity-60')}>
-              {data && <PinButton />}
+              <PinButton />
               {overall && (
                 <Headline
                   target={overall}

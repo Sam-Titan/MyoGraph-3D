@@ -19,4 +19,10 @@ export default defineConfig({
     strictPort: true, // fail loudly instead of silently moving to another port
     proxy: { '/api': `http://localhost:${apiPort}` },
   },
+  // `vite preview` serves the production build for Lighthouse; it needs the same API proxy.
+  preview: {
+    port: Number(process.env.PREVIEW_PORT ?? 4180),
+    strictPort: true,
+    proxy: { '/api': `http://localhost:${apiPort}` },
+  },
 })

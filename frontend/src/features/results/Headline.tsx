@@ -44,7 +44,7 @@ export function Headline({ target, prediction, range, delta, selected, onSelect 
           className="mt-2 size-2.5 shrink-0 rounded-full border border-black/10"
           style={{ background: prediction ? riskCss(prediction.probability) : 'transparent' }}
         />
-        <span className="min-w-0 text-[1.25rem] font-semibold leading-snug">
+        <span className="min-h-[2lh] min-w-0 text-[1.0625rem] font-semibold leading-snug sm:text-[1.25rem]">
           <HeadlineSentence
             target={target}
             probability={prediction?.probability}
@@ -55,11 +55,9 @@ export function Headline({ target, prediction, range, delta, selected, onSelect 
         </span>
       </span>
       <PinDelta delta={delta} prefix="Since pinned: " className="mt-1 pl-[1.375rem]" />
-      {prediction && range && (
-        <span className="t-meta mt-1 block pl-[1.375rem]">
-          {labelSentence(range, prediction.threshold, display)}
-        </span>
-      )}
+      <span className="t-meta mt-1 block min-h-[2lh] pl-[1.375rem]">
+        {prediction && range && labelSentence(range, prediction.threshold, display)}
+      </span>
     </button>
   )
 }

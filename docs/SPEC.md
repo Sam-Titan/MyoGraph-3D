@@ -455,3 +455,15 @@ Nothing else hard-codes feature or vessel lists.
 - Base-rate note and baseline caption use the selected target's own prevalence from `metrics.json`. Dot picture: solid dots to the
   start of the range, lighter dots across it, ring on the estimate, number always printed. Story factor tokens use waterfall steps
   (never the "other factors" row); `/api/summary` facts use them too and the validator requires the "trained on N patients" sentence.
+
+### Phase 20a: cold start, first paint, first screen
+- **Wake window** (`frontend/src/lib/wake.ts`): the API may be asleep (Render free). `/api/health` is the probe, fired on first
+  render and retried with backoff (1, 2, 4, then 8 s) for 150 s; every other query retries 5xx/network errors (never 4xx) while the
+  window is open. No toast. Status: quiet for 1.5 s, then "Starting the prediction server (up to a minute on the free plan)…",
+  after 60 s "Still starting, this can take a couple of minutes on the free plan…", after 150 s an error with "Try again".
+- The heart renders at once in neutral grey without targets (context nodes) and takes the risk colours when `/api/features` and
+  the first estimate arrive; a caption says why it is grey (rule 8). Stories and "How it works" wait for the presets.
+- First paint: Performance/Benchmark/About are lazy chunks (Recharts no longer in the entry bundle); the three.js scene loads after
+  the first estimate has painted (at most 2.5 s); the GLB is preloaded from `index.html`; the results column shows a skeleton of
+  its final height and the headline/table reserve their space (CLS). The header no longer shows the model version (tooltip only).
+- `.github/workflows/keepalive.yml`: cron every 14 min, `GET /api/health` on the Render URL from `netlify.toml`.

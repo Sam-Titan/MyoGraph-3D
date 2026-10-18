@@ -1,18 +1,38 @@
 import { BarChart3, HeartPulse, Info, type LucideIcon, Scale } from 'lucide-react'
+import { lazy, Suspense } from 'react'
 import { Toaster } from 'sonner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { AboutPanel } from '@/features/about/AboutPanel'
-import { BenchmarkPanel } from '@/features/benchmark/BenchmarkPanel'
 import { DisclaimerBanner } from '@/features/layout/DisclaimerBanner'
 import { ErrorBoundary } from '@/features/layout/ErrorBoundary'
 import { HealthStatus } from '@/features/layout/HealthStatus'
 import { useInitSelectedTarget } from '@/features/layout/useInitSelectedTarget'
 import { WorkspaceLayout } from '@/features/patient/WorkspaceLayout'
-import { PerformancePanel } from '@/features/performance/PerformancePanel'
 import { StoryLauncher } from '@/features/story/StoryLauncher'
 import { StoryPrompt } from '@/features/story/StoryPrompt'
 import { track } from '@/lib/analytics'
 import { type Tab, useAppStore } from '@/store/app'
+
+// The non-workspace tabs (and Recharts) load on first visit, not with the first paint.
+const AboutPanel = lazy(() =>
+  import('@/features/about/AboutPanel').then((m) => ({ default: m.AboutPanel })),
+)
+const BenchmarkPanel = lazy(() =>
+  import('@/features/benchmark/BenchmarkPanel').then((m) => ({ default: m.BenchmarkPanel })),
+)
+const PerformancePanel = lazy(() =>
+  import('@/features/performance/PerformancePanel').then((m) => ({ default: m.PerformancePanel })),
+)
+
+function PanelSkeleton() {
+  return (
+    <div role="status" aria-busy className="space-y-3 p-(--gutter)">
+      <div className="h-6 w-1/3 animate-pulse rounded bg-muted" />
+      <div className="h-40 animate-pulse rounded-lg bg-muted" />
+      <div className="h-40 animate-pulse rounded-lg bg-muted" />
+      <span className="sr-only">Loading…</span>
+    </div>
+  )
+}
 
 const TABS: { id: Tab; label: string; short: string; icon: LucideIcon }[] = [
   { id: 'workspace', label: 'Patient workspace', short: 'Patient', icon: HeartPulse },
@@ -80,13 +100,25 @@ export function AppShell() {
           </TabsContent>
           <TabsContent value="performance" keepMounted className={`${PANEL} overflow-y-auto`}>
             {/* Charts measure their container: mounting them while the tab is hidden gives 0x0 (Recharts warns). */}
-            {tab === 'performance' && <PerformancePanel />}
+            {tab === 'performance' && (
+              <Suspense fallback={<PanelSkeleton />}>
+                <PerformancePanel />
+              </Suspense>
+            )}
           </TabsContent>
           <TabsContent value="benchmark" keepMounted className={`${PANEL} overflow-y-auto`}>
-            {tab === 'benchmark' && <BenchmarkPanel />}
+            {tab === 'benchmark' && (
+              <Suspense fallback={<PanelSkeleton />}>
+                <BenchmarkPanel />
+              </Suspense>
+            )}
           </TabsContent>
           <TabsContent value="about" keepMounted className={`${PANEL} overflow-y-auto`}>
-            <AboutPanel />
+            {tab === 'about' && (
+              <Suspense fallback={<PanelSkeleton />}>
+                <AboutPanel />
+              </Suspense>
+            )}
           </TabsContent>
         </ErrorBoundary>
       </main>

@@ -14,6 +14,7 @@ import {
   postPredict,
   postSummary,
 } from '@/api/client'
+import { isWaking, markServerReady, retryWhileWaking, wakeDelayMs } from '@/lib/wake'
 
 export const queryKeys = {
   health: ['health'] as const,
@@ -49,10 +50,20 @@ export const retryDelayMs = (err: Error): number =>
 export const isPreparing = (err: Error | null): boolean =>
   err instanceof ApiError && err.status === 503
 
+/**
+ * The wake probe: fired on first render, retried with backoff for the whole wake window (no toast,
+ * no error until it is spent). The first success ends the window for every other query.
+ */
 export function useHealth() {
   return useQuery({
     queryKey: queryKeys.health,
-    queryFn: ({ signal }) => getHealth(signal),
+    queryFn: async ({ signal }) => {
+      const health = await getHealth(signal)
+      markServerReady()
+      return health
+    },
+    retry: () => isWaking(),
+    retryDelay: wakeDelayMs,
   })
 }
 
@@ -112,8 +123,10 @@ export function usePredict(values: PredictRequest['values'] | null) {
     queryKey: queryKeys.predict(values ?? {}),
     queryFn: ({ signal }) => postPredict({ values: values ?? {} }, signal),
     enabled: values !== null,
-    // A 4xx is a deterministic rejection (e.g. 422 field errors): surface it, don't retry.
-    retry: (count, err) => !(err instanceof ApiError && err.status < 500) && count < 2,
+    // A 4xx is a deterministic rejection (e.g. 422 field errors): surface it, don't retry. A 5xx or
+    // network error keeps retrying while the server is still waking.
+    retry: retryWhileWaking(2),
+    retryDelay: wakeDelayMs,
     placeholderData: keepPreviousData,
   })
 }

@@ -1,6 +1,6 @@
 import { Play } from 'lucide-react'
 import { useEffect, useRef } from 'react'
-import { useStories } from '@/api/queries'
+import { usePresets, useStories } from '@/api/queries'
 import { Button } from '@/components/ui/button'
 import { beginStory } from './storyActions'
 import { useStory } from './useStory'
@@ -8,6 +8,8 @@ import { useStory } from './useStory'
 /** Header button "How it works": opens the list of stories (also the replay path after the first visit). */
 export function StoryLauncher() {
   const stories = useStories().data?.stories
+  // A story loads a hold-out patient: wait until the presets are there too, so it never starts on air.
+  const presetsReady = usePresets().isSuccess
   const open = useStory((s) => s.menuOpen)
   const setOpen = useStory((s) => s.setMenuOpen)
   const root = useRef<HTMLDivElement>(null)
@@ -28,7 +30,7 @@ export function StoryLauncher() {
     }
   }, [open, setOpen])
 
-  if (!stories || stories.length === 0) return null
+  if (!presetsReady || !stories || stories.length === 0) return null
   return (
     <div ref={root}>
       <Button

@@ -136,12 +136,15 @@ export function VesselTable({
                     </span>
                   )}
                 </span>
-                {pred && (
+                {pred ? (
                   <EstimateBar
                     p={pred.probability}
                     threshold={pred.threshold}
                     range={range?.interval}
                   />
+                ) : (
+                  // Same height as the bar: the row does not grow when the estimate arrives.
+                  <span aria-hidden className="mt-1 block h-1.5" />
                 )}
                 <PinDelta delta={deltas?.[t.id]} className="mt-1" />
                 {pred && (
@@ -154,16 +157,19 @@ export function VesselTable({
               </td>
               <td className="px-1 py-2 align-top text-[0.8125rem] leading-snug max-sm:px-1 max-sm:py-1">
                 <span className="t-meta block sm:hidden">Model</span>
-                {range ? (
-                  <>
-                    <span className="block">{thresholdParts(range).main}</span>
-                    {thresholdParts(range).qualifier && (
-                      <span className="t-meta block">{thresholdParts(range).qualifier}</span>
-                    )}
-                  </>
-                ) : (
-                  '—'
-                )}
+                {/* Two lines reserved (verdict + qualifier) so the ranges arriving do not shift the page. */}
+                <div className="min-h-[2.6em]">
+                  {range ? (
+                    <>
+                      <span className="block">{thresholdParts(range).main}</span>
+                      {thresholdParts(range).qualifier && (
+                        <span className="t-meta block">{thresholdParts(range).qualifier}</span>
+                      )}
+                    </>
+                  ) : (
+                    '—'
+                  )}
+                </div>
               </td>
               <td className="px-1 py-2 align-top max-sm:col-span-2 max-sm:px-1 max-sm:py-1">
                 <span className="t-meta block sm:hidden">Cath result</span>

@@ -22,6 +22,12 @@ The app is hosted for free: the frontend on Netlify, the API on Render (free tie
 idle, so the first load can take about a minute while it wakes up. If the first prediction fails, wait a
 few seconds and refresh. Deploy config lives in `render.yaml` and `netlify.toml`.
 
+While the API wakes, the page shows the heart in neutral grey with a "Starting the prediction server…" status and
+retries by itself (for up to about 2.5 minutes). `.github/workflows/keepalive.yml` pings `/api/health` every 14
+minutes to keep it awake. Two limits of GitHub Actions: scheduled workflows run only from the default branch (this
+one starts after `v2` is merged into `main`), and GitHub disables them after about 60 days without repository
+activity (re-enable under Actions). Runs may also be delayed.
+
 ## Features
 
 - **Live predictions:** edit any input and the four calibrated probabilities update immediately.
