@@ -19,6 +19,7 @@ import { Legend } from './Legend'
 import type { LabelRegistry } from './labelRegistry'
 import { OrientationMarker, OrientationSync } from './OrientationMarker'
 import { type PickVessel, TapPicker } from './TapPicker'
+import { TestProbe } from './TestProbe'
 import { Toolbar } from './Toolbar'
 import { useClickGuard } from './useClickGuard'
 import { IS_COMPACT, useHeartModel } from './useHeartModel'
@@ -234,6 +235,7 @@ function Scene({ targets, probabilities, isClick, registry, pick, onDecline }: S
       <CameraRig bindings={bindings} />
       <TapPicker bindings={bindings} pick={pick} />
       <FrameBudget onDecline={onDecline} />
+      {import.meta.env.DEV && <TestProbe bindings={bindings} />}
     </>
   )
 }
@@ -277,15 +279,16 @@ export default function HeartScene({ targets }: { targets: TargetInfo[] }) {
   }, [tab, overall])
 
   return (
-    <div ref={containerRef} className="absolute inset-0">
-      {/* Below xl the legend sits under the canvas instead of over the heart. */}
+    <div ref={containerRef} className="absolute inset-0 max-md:flex max-md:flex-col">
+      {/* Phones stack toolbar / canvas / legend (order-*), so nothing sits on the heart. From md the
+          toolbar and legend overlay the card and the canvas is inset to clear them. */}
       <div
         className={cn(
-          // Below xl the toolbar row (top-11) and the legend sit outside the canvas. Phones leave a
-          // right-hand strip that is not the canvas, so a finger there still scrolls the page.
-          'absolute top-0 left-0 right-0 max-md:right-3 max-xl:top-11',
+          'max-md:relative max-md:order-2 max-md:mr-3 max-md:min-h-0 max-md:flex-1',
+          // The right-hand strip (mr-3) is not the canvas, so a finger there still scrolls the page.
+          'md:absolute md:top-0 md:right-0 md:left-0 md:max-xl:top-11',
           // The story card sits under the heart (also on wide screens, where the legend normally overlays it).
-          storyActive ? 'bottom-80 xl:bottom-60' : 'bottom-28 md:bottom-44 xl:bottom-0',
+          storyActive ? 'md:bottom-80 xl:bottom-60' : 'md:bottom-44 xl:bottom-0',
         )}
       >
         <Canvas
@@ -327,13 +330,16 @@ export default function HeartScene({ targets }: { targets: TargetInfo[] }) {
         <LabelChips targets={targets} probabilities={probabilities} registry={registry} />
         <HoverTooltip targets={targets} probabilities={probabilities} ranges={ranges} />
       </div>
-      <div className="pointer-events-none absolute inset-0 z-20 flex flex-col justify-between p-3 max-md:p-2">
-        <div className="pointer-events-auto flex items-center justify-between gap-2">
+      <div className="pointer-events-none absolute inset-0 z-20 flex flex-col justify-between p-3 max-md:contents">
+        <div className="pointer-events-auto flex items-center justify-between gap-2 max-md:order-1 max-md:px-2 max-md:pt-1">
           <Toolbar overallId={overall?.id ?? null} />
           <OrientationMarker />
         </div>
         <SupplyCaption vessel={supplyVessel} />
-        <div className="pointer-events-auto space-y-2">
+        <div
+          data-pinned-strip
+          className="pointer-events-auto space-y-2 max-md:order-3 max-md:p-1.5"
+        >
           <StoryPlayer />
           <Legend
             targets={targets}

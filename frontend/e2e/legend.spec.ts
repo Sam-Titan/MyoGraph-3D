@@ -39,17 +39,30 @@ test('legend: hide/show is remembered and colour keeps its meaning line', async 
 
 test.describe('phone', () => {
   test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true })
-  test('legend toggle: hidden line is shorter and the heart does not move', async ({ page }) => {
+
+  test('starts as the one-line legend with every number; a stored choice is never overwritten', async ({
+    page,
+  }) => {
     await page.goto('/')
     await waitReady(page)
-    const canvas = page.locator('canvas').first()
-    const before = await canvas.boundingBox()
-    const legend = page.locator('[aria-label="Vessel key"]').locator('xpath=..')
-    const h1 = (await legend.boundingBox())?.height ?? 0
-    await page.getByRole('button', { name: 'Hide legend' }).tap()
+    // No stored choice: the one-line legend, and loading did not write one.
     const hidden = page.locator('[data-legend="hidden"]')
-    const h2 = (await hidden.boundingBox())?.height ?? 0
-    expect(h2).toBeLessThan(h1)
-    expect(await canvas.boundingBox()).toEqual(before)
+    await expect(hidden).toBeVisible()
+    await expect(hidden).toContainText('Colour = estimated probability')
+    await expect(page.getByRole('list', { name: 'Vessel estimates' })).toContainText(/CAD \d+%/)
+    expect(await page.evaluate(() => localStorage.getItem('myograph.legend-hidden'))).toBeNull()
+
+    // Showing the full legend takes room from the canvas (the legend sits under it, not over it).
+    const canvas = page.locator('canvas').first()
+    const small = (await canvas.boundingBox())?.height ?? 0
+    await page.getByRole('button', { name: 'Show legend' }).tap()
+    await expect(page.getByRole('list', { name: 'Vessel key' })).toBeVisible()
+    await expect.poll(async () => (await canvas.boundingBox())?.height ?? 0).toBeLessThan(small)
+
+    // The visitor's explicit choice (shown) survives a reload on a phone.
+    await page.reload()
+    await waitReady(page)
+    await expect(page.getByRole('list', { name: 'Vessel key' })).toBeVisible()
+    expect(await page.evaluate(() => localStorage.getItem('myograph.legend-hidden'))).toBe('0')
   })
 })

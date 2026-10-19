@@ -17,13 +17,13 @@ export function Panel({ title, aside, className, children }: Props) {
       aria-label={title}
       className={cn('relative flex min-h-0 min-w-0 flex-col xl:overflow-hidden', className)}
     >
-      <header className="relative z-10 flex shrink-0 items-center justify-between border-b bg-background px-4 pb-3 pt-2">
+      <header className="relative z-10 flex shrink-0 items-center justify-between border-b bg-background px-4 pb-3 pt-2 max-md:pb-1.5 max-md:pt-1">
         <h2 className="t-section">{title}</h2>
         {aside}
       </header>
       <div
         ref={scroller}
-        className="min-h-0 min-w-0 flex-1 overflow-x-hidden p-4 xl:overflow-y-auto"
+        className="min-h-0 min-w-0 flex-1 overflow-x-hidden p-4 max-md:pt-3 xl:overflow-y-auto"
       >
         {children}
       </div>

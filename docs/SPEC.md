@@ -493,13 +493,18 @@ Nothing else hard-codes feature or vessel lists.
   file falls back silently to the live path. Seeded values skip the 300/400 ms predict/intervals debounce.
 - Editing the patient is a new key, so it uses the live API (and the wake notice) as before.
 - **Phone headline (below `md`):** large `{p}%`, then `Probability of {label} · range {lo}–{hi}%` (`headline_compact`,
-  `headline_range_compact` in `config/display.yaml`; `{label}` comes from `compact_labels`, Phase 21) and the cut-off label only; `md+` keeps the full sentence. Heart height on
-  phones is 38dvh and the pin hint is hidden, so the first vessel row is on the first screen at 390x844.
+  `headline_range_compact` in `config/display.yaml`; `{label}` comes from `compact_labels`, Phase 21) and the cut-off label only; `md+` keeps the full sentence. The heart card
+  on phones (v2.1.1) is 44dvh and stacks toolbar / canvas / legend line, so nothing is drawn over the heart; "Pin this result" sits in
+  the "Model estimates" heading row. The headline numeral and its label are fully above the bottom nav at 360x800 and 390x844; the
+  first vessel row is below the fold (it was on the first screen only because the heart was ~93 px tall). Scrolling pins only the
+  legend line (colour key + every target's number); the camera fit keeps a chip column free on each side; the touch pinch speed is
+  3.5x the default (`CameraRig.tsx`).
 - Print summary and banner take the disclaimer from `features/layout/disclaimer.ts`.
 
 ### Phase 14.5 / 19: mobile
-- Phone layout (below `md`): bottom navigation with a compact disclaimer that stays pinned, a sticky collapsible heart, an
-  "Edit patient" bottom sheet for the form, stacked vessel tables, `heart.mobile.glb` and dpr <= 1.25 on coarse pointers, rendering
+- Phone layout (below `md`): bottom navigation with a compact disclaimer that stays pinned, a collapsible heart (v2.1.1: it scrolls away
+  with the page and only its legend line, the colour key plus every target's number, stays sticky; this replaces the Phase 19 sticky
+  heart), an "Edit patient" bottom sheet for the form, stacked vessel tables, `heart.mobile.glb` and dpr <= 1.25 on coarse pointers, rendering
   paused off-screen. Touch: taps use a tolerance around vessel samples and ignore points behind the first opaque surface (distance is
   measured to the segments between samples); long-press shows the tooltip. `make dev-lan` serves the app to a phone on the LAN.
 - `scripts/screenshots.mjs` covers 1440x900, 1024x768, 768x1024, 844x390, 390x844 and 360x800 (filters `SHOTS_VIEWS`,

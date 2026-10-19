@@ -1,5 +1,19 @@
 # Changelog
 
+## v2.1.1
+
+Mobile hotfix for the heart card (seen at ~390 px; present since v2.0.0, not a v2.1.0 regression). No model, API or data changes.
+
+### Fixed
+- **Heart card on phones** is 44dvh and stacks toolbar, canvas and legend line instead of overlaying the canvas: the canvas grows
+  from ~93 px to ~250 px tall and the heart fills it. Label chips are short, clear of the heart and of each other.
+- **Pinch zoom** is roughly proportional on touch devices (a 4x spread zooms ~2.6x, was ~1.3x).
+- **Sticky heart** on phones pins only the legend line (colour key + every target's number) while scrolling, not the whole card.
+
+### Changed
+- On phones the legend starts as the one-line version (a stored choice is never overwritten), "Pin this result" moves into the
+  "Model estimates" heading row, and the intro strip no longer shows a second "Guided tour" button (the header keeps "How it works").
+
 ## v2.1.0
 
 UI polish and the v2.0.1 audit fixes. No model, API or data changes.

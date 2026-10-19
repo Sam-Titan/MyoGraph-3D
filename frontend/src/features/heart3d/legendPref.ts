@@ -1,4 +1,5 @@
 import { safeStorage } from '@/features/layout/introPref'
+import { isPhone } from './phone'
 
 export const LEGEND_KEY = 'myograph.legend-hidden'
 
@@ -20,4 +21,5 @@ export function writeLegendHidden(storage: Pick<Storage, 'setItem'> | null, hidd
   }
 }
 
-export const initialLegendHidden = (): boolean => readLegendHidden(safeStorage()) ?? false
+/** Phones start with the one-line legend (the numbers stay); a stored choice always wins. */
+export const initialLegendHidden = (): boolean => readLegendHidden(safeStorage()) ?? isPhone()
