@@ -502,8 +502,9 @@ Nothing else hard-codes feature or vessel lists.
 - Print summary and banner take the disclaimer from `features/layout/disclaimer.ts`.
 
 ### Phase 14.5 / 19: mobile
-- Phone layout (below `md`): bottom navigation with a compact disclaimer that stays pinned, a sticky collapsible heart, an
-  "Edit patient" bottom sheet for the form, stacked vessel tables, `heart.mobile.glb` and dpr <= 1.25 on coarse pointers, rendering
+- Phone layout (below `md`): bottom navigation with a compact disclaimer that stays pinned, a collapsible heart (v2.1.1: it scrolls away
+  with the page and only its legend line, the colour key plus every target's number, stays sticky; this replaces the Phase 19 sticky
+  heart), an "Edit patient" bottom sheet for the form, stacked vessel tables, `heart.mobile.glb` and dpr <= 1.25 on coarse pointers, rendering
   paused off-screen. Touch: taps use a tolerance around vessel samples and ignore points behind the first opaque surface (distance is
   measured to the segments between samples); long-press shows the tooltip. `make dev-lan` serves the app to a phone on the LAN.
 - `scripts/screenshots.mjs` covers 1440x900, 1024x768, 768x1024, 844x390, 390x844 and 360x800 (filters `SHOTS_VIEWS`,
